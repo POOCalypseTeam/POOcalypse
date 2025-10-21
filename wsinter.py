@@ -5,7 +5,7 @@ Interface web monopage pour python, via http et websocket
 # pour faire tourner des serveurs
 import socket
 import select # select
-import threading # Thread
+import threading # Thread,Lock
 
 # pour la négociation 101 Switching Protocols/Upgrade: websocket
 import hashlib
@@ -15,10 +15,7 @@ import base64
 import json # dumps, loads
 
 # lancer le navigateur
-import webbrowser # open_new
-
-# attendre le lancement des serveurs
-import time # sleep
+import webbrowser # open
 
 class Inter:
     """
@@ -39,183 +36,8 @@ class Inter:
 
     """
     _ws_port = 5056
-    def __init__(self):
-        """
-        Initialise une instance de Inter
-        
-        Paramètres : aucun
-        
-        Valeur renvoyée : self
-        """
-        
-        # port ws
-        Inter._ws_port += 1
-        self._ws_port = Inter._ws_port
-
-        self.liste_connect = [] # liste des sockets à suivre
-        self.wss_on = True      # drapeau de la boucle du serveur wss
-        self.ws_actif = None    # dernier socket ws ouvert
-
-        self._continuer = True # passe à False pour quitter le serveur une fois que toutes les donnés du socket ont été purgées
-
-        self._page_dem=None
-
-#        self._handlers = {"_mh": lambda s,d: print(s,d), "_kh":lambda s,d: print(s,d)}
-        self._handlers = {"_mh": lambda s,d: None, "_kh":lambda s,d: None}
-
-    def gestionnaire(self, message:str,handler:callable):
-        """
-        Associe un gestionnaire à un message
-        Paramètres :
-          - message : le message à intercepter
-          - handler : fonction à deux paramètres à lancer à l'interception
-          
-        Valeur renvoyée : None
-
-        Après le démarrage de l'interface, tous les appels javacript de transmission sont interceptés.
-        Lorsque l'on intercepte transmission(m,o) avec m=message, l'interface déclenchent un appel de
-        handler(m,o)
-        """
-        self._handlers[message] = handler
-
-    def gestionnaire_souris(self, handler:callable):
-        """
-        Définit le gestionnaire de la souris
-        Paramètres :
-          - handler : fonction à deux paramètres appelée lors d'un événement de la souris
-
-        Valeur renvoyée : None
-
-        Pour chaque clic, deux événements ont lieu :
-          - un appel handler("D",p) lorsqu'un bouton est pressé
-          - un appel handler("U",p) lorsqu'un bouton est relâché.
-          
-        Le paramètre p passé à handler est la liste [target.id,buttons,layerX,layerY]
-          - target.id : attribut id de l'objet qui a reçu le clic
-          - buttons   : entier qui indique quels boutons sont pressés
-          - layerX,layerY : coordonnées, en pixels, relativement au coin supérieur gauche de la page
-        """
-        self._handlers["_mh"] = handler
-
-    def gestionnaire_clavier(self, handler:callable):
-        """
-        Définit le gestionnaire de clavier
-        Paramètres :
-          - handler : fonction à deux paramètres appelée lors d'un événement du clavier
-          
-        Valeur renvoyée : None
-
-        Pour chaque touche pressée, deux événements ont lieu :
-          - un appel handler("D",p) lorsqu'une touche est pressée
-          - un appel handler("U",p) lorsqu'une touche est relâchée.
-          
-        Le paramètre p passé à handler est la liste [altKey,ctrlKey,shiftKey,metaKey,key,code,repeat,timeStamp]
-          - altKey,ctrlKey,shiftKey,metaKey : booléens indiquant si Alt, Control, Shift et Meta sont pressées
-          - key : chaine de caractères représentant la saisie de caractère effectuée
-          - code : chaine de caractères représentant la touche pressée sur un clavier satandard Qwerty
-          - repreat : booléen indiquant si la touche est en train d'être maintenue
-          - timeStamp : entier donnant la chronologie des événements
-        """
-        self._handlers["_kh"] = handler
-
-    def init_souris(self):
-        """
-        Configure l'interface pour intercepter les événements de la souris
-        """
-        if self.ws_actif is None:
-            raise Exception("WS inactif")
-
-        self.injecte("""
-  window.addEventListener("mousedown", (e) => { 
-    transmettre('**MD**',[e.target.id,e.buttons,e.layerX,e.layerY]);
-  });
-  window.addEventListener("mouseup", (e) => {
-    transmettre('**MU**',[e.target.id,e.buttons,e.layerX,e.layerY]);    
-  });
-        """)
-
-    def init_clavier(self):
-        """
-        Confirugre l'interface pour intercepter les événements du clavier
-        """
-        if self.ws_actif is None:
-            raise Exception("WS inactif")
-
-        self.injecte("""
-  document.body.addEventListener("keyup", (e) =>{
-    transmettre('**KU**',[e.altKey,e.ctrlKey,e.shiftKey,e.metaKey,e.key,e.code,e.repeat,e.timeStamp]); 
-  });
-        """)
-        self.injecte("""
-  document.body.addEventListener("keydown", (e) => {
-    transmettre('**KD**',[e.altKey,e.ctrlKey,e.shiftKey,e.metaKey,e.key,e.code,e.repeat,e.timeStamp]);
-  });
-        """)
-
-    def demarre(self,page=None, clavier=False, souris=True):
-        """
-        Lancer l'interface.
-        Paramètres :
-          - page : URL de la page d'interface à charger.
-            Le chemin est relatif, donné à partir du dossier d'exécution du script.
-          - clavier : booléen faisant lancer ou non la méthode init_clavier au démarrage
-          - souris  : booléen faisant lancer ou non la méthode init_souris au démarrage
-          
-        Valeur renvoyée : None
-        """
-        if page is not None:
-            self._page_dem=page
-
-        self.wss_instance = threading.Thread(target=self.wss)
-        self.http_instance = threading.Thread(target=self.servir)
-        self.wss_instance.start()
-        self.http_instance.start()
-
-        if clavier or souris:
-            while self.ws_actif is None:
-                time.sleep(0.1)
-
-            if clavier: self.init_clavier()
-            if souris:  self.init_souris()
-
-    def stop(self,fermer=True):
-        """
-        Éteindre les serveurs, attendre les threads et quitter
-        Paramètres:
-          - fermer : booléen indiquant s'il faut exécuter exit(0) ou non.
-          
-        Valeur renvoyée : None
-        """
-        
-        self.wss_on = False
-        self._continuer = False
-        if not self.wss_on: self.wss_instance.join()
-        if not self._continuer: self.http_instance.join()
-        if fermer: exit(0)
-
-    def servir(self,ip : str = '127.0.0.1', port : int = 5080, max_conn : int = -1) -> None:
-        """
-        Démarre la partie serveur http de l'interface.
-        
-        Lors d'une utilisation standard, cette méthode n'est pas appelée par l'utilisateur.
-        """
-        
-#        global _actions
-#        global _continuer
-
-        if self._page_dem is None:
-            page = ""
-        else:
-            page = self._page_dem
-
-        chemin_js = '/js' # version future : pour personnaliser le javascript inséré, en changeant l'ordre des «comm ==»
-        
-        def interlocuteur_js() -> str:
-            """
-            renvoie le code javascript d'une fonction pour communiquer avec le serveur
-            """
-            
-            return """let socket = new WebSocket("ws://127.0.0.1:"""+str(self._ws_port)+"""");
+    _chemin_js = "/js"
+    _js = """let socket = new WebSocket("ws://127.0.0.1:_ws_port");
 
 socket.onopen = function(e) {
   console.log("[open] Connection established");
@@ -262,46 +84,237 @@ document.addEventListener("DOMContentLoaded", (event) => {
 function faire(o){
     for (dico of o)
     {
-/*        if (dico["id"]=="_new_script")
+        let elem = document.getElementById(dico["id"]);
+        let data = dico["data"];
+
+        if ((elem == null) && (dico["tagName"] != undefined))
         {
-            let ns = document.createElement('script');
-            ns.innerHTML=dico["data"]["innerHTML"];
-            document.body.appendChild(ns);
+            elem = document.createElement(dico["tagName"]);
+            for (attr in data)
+            {
+                elem[attr]=data[attr];
+            }
+            document.body.appendChild(elem);
         }
         else
-        {*/
-            let elem = document.getElementById(dico["id"]);
-            let data = dico["data"];
-
-            if ((elem == null) && (dico["tagName"] != undefined))
+        {
+            for (attr in data)
             {
-                elem = document.createElement(dico["tagName"]);
-                for (attr in data)
+                if (attr!="style")
                 {
                     elem[attr]=data[attr];
                 }
-                document.body.appendChild(elem);
             }
-            else
-            {
-                for (attr in data)
-                {
-                    if (attr!="style")
-                    {
-                        elem[attr]=data[attr];
-                    }
-                }
-            }
-            for (sattr in data["style"])
-            {
-                elem.style[sattr] = data["style"][sattr]; 
-            }
-
-        //}
+        }
+        for (sattr in data["style"])
+        {
+            elem.style[sattr] = data["style"][sattr]; 
+        }
     }
 }
 
 """
+
+    def __init__(self):
+        """
+        Initialise une instance de Inter
+        
+        Paramètres : aucun
+        
+        Valeur renvoyée : self
+        """
+        
+        self._verrou_ws = threading.Lock()
+        
+        # port ws
+        Inter._ws_port += 1
+        self._ws_port = Inter._ws_port
+
+        self.liste_connect = [] # liste des sockets à suivre
+        self.wss_on = True      # drapeau de la boucle du serveur wss
+        self.ws_actif = None    # dernier socket ws ouvert
+
+        self._continuer = True # passe à False pour quitter le serveur une fois que toutes les donnés du socket ont été purgées
+
+        self._page_dem=None
+        self._handlers = {"_mh": lambda s,d: None, "_kh":lambda s,d: None}
+
+        self._htresponse = {}
+
+        self.reponse_http(Inter._chemin_js, lambda c,p: (Inter._js.replace("_ws_port",str(self._ws_port),1),"js"))
+
+        self._threads_fils=[]
+
+    def gestionnaire(self, message:str,handler:callable,nonbloc:bool=False):
+        """
+        Associe un gestionnaire à un message
+        Paramètres :
+          - message : le message à intercepter
+          - handler : fonction à deux paramètres à lancer à l'interception
+          - nonbloc : booléen indiquant si le gestionnaire est synchrone (False) ou asynchrone (True)
+
+        Valeur renvoyée : None
+
+        Après le démarrage de l'interface, tous les appels javacript de transmission sont interceptés.
+        Lorsque l'on intercepte transmission(m,o) avec m=message, l'interface déclenchent un appel de
+        handler(m,o)
+        """
+        self._handlers[message] = (handler, nonbloc)
+
+    def gestionnaire_souris(self, handler:callable):
+        """
+        Définit le gestionnaire de la souris
+        Paramètres :
+          - handler : fonction à deux paramètres appelée lors d'un événement de la souris
+
+        Valeur renvoyée : None
+
+        Pour chaque clic, deux événements ont lieu :
+          - un appel handler("D",p) lorsqu'un bouton est pressé
+          - un appel handler("U",p) lorsqu'un bouton est relâché.
+          
+        Le paramètre p passé à handler est la liste [target.id,buttons,layerX,layerY]
+          - target.id : attribut id de l'objet qui a reçu le clic
+          - buttons   : entier qui indique quels boutons sont pressés
+          - layerX,layerY : coordonnées, en pixels, relativement au coin supérieur gauche de la page
+        """
+        self._handlers["_mh"] = (handler,False)
+
+    def gestionnaire_clavier(self, handler:callable):
+        """
+        Définit le gestionnaire de clavier
+        Paramètres :
+          - handler : fonction à deux paramètres appelée lors d'un événement du clavier
+          
+        Valeur renvoyée : None
+
+        Pour chaque touche pressée, deux événements ont lieu :
+          - un appel handler("D",p) lorsqu'une touche est pressée
+          - un appel handler("U",p) lorsqu'une touche est relâchée.
+          
+        Le paramètre p passé à handler est la liste [altKey,ctrlKey,shiftKey,metaKey,key,code,repeat,timeStamp]
+          - altKey,ctrlKey,shiftKey,metaKey : booléens indiquant si Alt, Control, Shift et Meta sont pressées
+          - key : chaine de caractères représentant la saisie de caractère effectuée
+          - code : chaine de caractères représentant la touche pressée sur un clavier satandard Qwerty
+          - repreat : booléen indiquant si la touche est en train d'être maintenue
+          - timeStamp : entier donnant la chronologie des événements
+        """
+        self._handlers["_kh"] = (handler,False)
+
+    def init_souris(self):
+        """
+        Configure l'interface pour intercepter les événements de la souris
+        """
+        if self.ws_actif is None:
+            raise Exception("WS inactif")
+
+        self.injecte("""
+  window.addEventListener("mousedown", (e) => { 
+    transmettre('**MD**',[e.target.id,e.buttons,e.layerX,e.layerY]);
+  });
+  window.addEventListener("mouseup", (e) => {
+    transmettre('**MU**',[e.target.id,e.buttons,e.layerX,e.layerY]);    
+  });
+        """)
+
+    def init_clavier(self):
+        """
+        Confirugre l'interface pour intercepter les événements du clavier
+        """
+        if self.ws_actif is None:
+            raise Exception("WS inactif")
+
+        self.injecte("""
+  document.body.addEventListener("keyup", (e) =>{
+    transmettre('**KU**',[e.altKey,e.ctrlKey,e.shiftKey,e.metaKey,e.key,e.code,e.repeat,e.timeStamp]); 
+  });
+        """)
+        self.injecte("""
+  document.body.addEventListener("keydown", (e) => {
+    transmettre('**KD**',[e.altKey,e.ctrlKey,e.shiftKey,e.metaKey,e.key,e.code,e.repeat,e.timeStamp]);
+  });
+        """)
+
+    def demarre(self,page:str=None, clavier:bool=False, souris:bool=True):
+        """
+        Lancer l'interface.
+        Paramètres :
+          - page : URL de la page d'interface à charger.
+            Le chemin est relatif, donné à partir du dossier d'exécution du script.
+          - clavier : booléen faisant lancer ou non la méthode init_clavier au démarrage
+          - souris  : booléen faisant lancer ou non la méthode init_souris au démarrage
+          
+        Valeur renvoyée : None
+
+        La méthode attend la connexion de la page web d'interface à la boucle websocket.
+        """
+        if page is not None:
+            self._page_dem=page
+
+        self.wss_instance = threading.Thread(target=self.wss)
+        self.http_instance = threading.Thread(target=self.servir)
+        self.wss_instance.start()
+        self.http_instance.start()
+
+        # on attend la connexion de la page au serveur ws
+        self._verrou_ws.acquire()
+        self._verrou_ws.release()
+
+        if clavier: self.init_clavier()
+        if souris:  self.init_souris()
+
+    def stop(self,fermer:bool=True):
+        """
+        Éteindre les serveurs, attendre les threads et quitter
+        Paramètres:
+          - fermer : booléen indiquant s'il faut exécuter exit(0) ou non.
+          
+        Valeur renvoyée : None
+        """
+        
+        self.wss_on = False
+        self._continuer = False
+        for h in self._threads_fils:
+            h.join(1)
+            if h.is_alive():
+                print("Gestionnaire toujours actif...")
+        
+        if not self.wss_on: self.wss_instance.join()
+        if not self._continuer: self.http_instance.join()
+        if fermer: exit(0)
+
+    def reponse_http(self,req:str,gen:callable):
+        """
+        Paramètres:
+          - req : une chaine de caractères donnant un nom de ressource
+          - gen : une fonction à deux paramètres, renvoyant un tuple de deux str
+          
+        Valeur renvoyée : None
+
+        Par défaut, le serveur http cherche la ressource sur le disque dur, et envoie le document trouvé.
+        Il s'agit ici de court-circuiter ce fonctionnement pour générer dynamiquement une réponse.
+        
+        La fonction gen est associée à la ressource req de la façon suivante:
+        quand le serveur http reçoit une requête de la forme "localhost/req?param_1=va_l1&param_2=val_2&...",
+        il appelle gen(req,d), où dictionnaire est le dictionnaire {param_k:val_k}
+        
+        Cette fonction renvoie un tuple (extension, contenu), par exemple
+        ( "html", `"`"`"<!doctype html>\n<html lang="fr"><head><title>Réponse</title></head><body>Rien...</body></html>`"`"`")
+        
+        Le contenu est envoyé à l'interface, comme réponse à la requête.
+        
+        Extensions reconnues
+          - associées à un contenu de type bytes : png, jpg, jpeg, gif, ico
+          - associées à un contenu de type str : htm, html, css, js, csv, json, svg, html, xml
+        """ 
+        self._htresponse[req]=gen
+
+    def servir(self,ip : str = '127.0.0.1', port : int = 5080, max_conn : int = -1) -> None:
+        """
+        Démarre la partie serveur http de l'interface.
+        
+        Lors d'une utilisation standard, cette méthode n'est pas appelée par l'utilisateur.
+        """
         
         def pourcent_dec_get( burl : bytes) -> str:
             """
@@ -405,7 +418,6 @@ function faire(o){
             else:
                 if extension.lower() == "html" :
                     contenu = contenu.replace(b'</head>',b'<script src="/js"></script></head>')
-#                    contenu = contenu.replace(b'<body',b'<body oncontextmenu="return false;" ')
                 return empaqueter(contenu, extension)
         
         # mise en place du socket «s» en écoute sur (ip, port)
@@ -416,11 +428,11 @@ function faire(o){
 
         print("Démarrage du serveur http://"+ip+":"+str(port))
         
-        if page != "" :
-            print("Ouverture de la page "+page)
-            webbrowser.open_new("http://"+ip+":"+str(port)+"/"+page)
+        if self._page_dem is not None: 
+            print("Ouverture de la page "+self._page_dem)
+            webbrowser.open("http://"+ip+":"+str(port)+"/"+self._page_dem)
 
-        # boucle du serveur : accepte les connexions sur s et y répond
+        # boucle du serveur : accepte les connexions sur s et on y répond
         while (self._continuer and max_conn != 0):
             
             pret,_,_=select.select([s],[],[],0.3)
@@ -449,28 +461,26 @@ function faire(o){
                 query = req.split(b'\r\n',1)[0]
                 elts = query.split(b" ")
                 
-                # construction des cookies
-                if b"Cookie: " in req:
-                    i = req.find(b"Cookie: ")+8
-                    cookies = dict([[y.decode() for y in x.split(b"=")] for x in req[i:req.find(b"\r\n",i)].split(b"; ")])
-                else:
-                    cookies = {}
-
                 if elts[0] == b'GET': 
                     url = elts[1].split(b"?",1)
                     comm = pourcent_dec_get((url[0]))
-                    if len(url) == 1:
-                        param = ""
-                    else:
-                        param = pourcent_dec_get(url[1])
-                    params = extraire(param)
-                    for c in cookies:
-                        params[c]=cookies[c]
-                    
-                    # ordre de traitement : js intégré, tictac, touches, api, init, fichier
-                    if comm == chemin_js:
-                        contenu = bytes(interlocuteur_js(),'utf-8')
-                        paquet = empaqueter(contenu, "js")
+                    if comm in self._htresponse:
+                        # on extrait les paramètres après ? dans l'url    
+                        if len(url) == 1:
+                            param = ""
+                        else:
+                            param = pourcent_dec_get(url[1])
+                        params = extraire(param)                    
+                        
+                        # on génère la réponse
+                        resp, ext = self._htresponse[comm](comm,params)
+                        
+                        non_binaire = typemime(ext)[1]
+                        if non_binaire:
+                            contenu = bytes(resp,'utf-8')
+                        else:
+                            contenu = resp
+                        paquet = empaqueter(contenu,ext)
                     else: # on cherche le fichier
                         comm = '.'+comm
                         paquet = gen_fichier(comm) # la fonction gen_fichier se charge de générer le 404 si elle ne trouve pas le fichier
@@ -492,12 +502,15 @@ function faire(o){
         s.close()
         print("Arrêt du serveur http")
 
-    def wss(self,ip:str="127.0.0.1"):#,port:int=5057):
+    def wss(self,ip:str="127.0.0.1"):
         """
         Partie serveur websocket de l'interface.
         
-        Lor d'une utilisation standard, cette méthode n'est pas lancée par l'utilisateur.
+        Lors d'une utilisation standard, cette méthode n'est pas lancée par l'utilisateur.
         """
+
+        # on bloque le démarrage de l'interface
+        self._verrou_ws.acquire()
 
         port = self._ws_port
 
@@ -507,20 +520,19 @@ function faire(o){
         s.listen()
 
         print("Démarrage du serveur ws://"+ip+":"+str(port))
+        print("En attente de connexion.")
 
         self.liste_connect.append(s)
 
         while self.wss_on:
             prets_pour_lecture,_,_=select.select(self.liste_connect,[],[],0.3) #0.01
-
             for rec in prets_pour_lecture:
                 data=b''
                 if rec != s:
                     while rec in select.select([rec],[],[],0.01)[0]:
                         data += rec.recv(2048)
-    #            if len(data)>0:
                 while len(data)>0:
-    #                print(data) #
+#                    print(data) #
                     data_start = 2
                     if data[0]==129:
     #                    print("Text frame isolée") #
@@ -555,20 +567,24 @@ function faire(o){
                         data=data[data_start+payload:]
                         self._process(chaine)
                     elif data[0] == 136: # close frame
-    #                    print("Closing frame","Index",self.liste_connect.index(rec)) #
-    # #                    rec.close() # non
+#                        print("Closing frame","Index",self.liste_connect.index(rec)) #
+                        self.liste_connect.remove(rec)
+                        if self.ws_actif == rec: # ?
+                            self.ws_actif == None # ?
+                        rec.close()
                         data=b''
                         break
                     else:
-    #                    print("Non text frame",data[0]) #
+#                        print("Non text frame",data[0]) #
                         data=b''
                         break
                         
                 else:
-    #                print("Warning : empty frame") #
+#                    print("Warning : empty frame") #
                     pass
 
             if s in prets_pour_lecture:
+                print("Nouvelle connexion")
                 t,(h,p) = s.accept()
                 req = t.recv(2048)
                 deb = req.find(b'Sec-WebSocket-Key: ')
@@ -580,6 +596,9 @@ function faire(o){
                 t.send(b'Connection: Upgrade\r\n')
                 t.send(b'Sec-WebSocket-Accept: '+key2+b'\r\n\r\n')
                 self.liste_connect.append(t)
+                # on débloque demarre une fois la connexion WS établie
+                if self.ws_actif is None:
+                    self._verrou_ws.release()
                 self.ws_actif=t
         print("Arrêt du serveur ws")
 
@@ -678,17 +697,23 @@ function faire(o){
         
         if data[0]=="**MD**":
 #            print("MD event")
-            self._handlers["_mh"](data[0][3],data[1])
+            self._handlers["_mh"][0](data[0][3],data[1])
         elif data[0]=="**MU**":
 #            print("MU event")
-            self._handlers["_mh"](data[0][3],data[1])
+            self._handlers["_mh"][0](data[0][3],data[1])
         elif data[0]=="**KD**":
 #            print("KD event")
-            self._handlers["_kh"](data[0][3],data[1])
+            self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0]=="**KU**":
 #            print("KU event")
-            self._handlers["_kh"](data[0][3],data[1])
+            self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0] in self._handlers and self._handlers[data[0]] is not None:
-            self._handlers[data[0]](data[0],data[1])
+            handler,nonbloc = self._handlers[data[0]]
+            if nonbloc:
+                handler_thread = threading.Thread(target=lambda : handler(data[0][3],data[1]))
+                self._threads_fils.append(handler_thread)
+                handler_thread.start()
+            else:
+                handler(data[0],data[1])
         else:
             print("Message :", data[0], "; Données :", data[1])
