@@ -2,11 +2,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "Launch Web server interactive",
             "type": "node-terminal",
             "request": "launch",
-            "cwd": "${workspaceFolder}",
-            "command": "python3 -i test.py"
+            "command": "python3 -i ${workspaceFolder}/src/server/main.py",
+            "cwd": "${workspaceFolder}/src",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/src/libs/"
+            }
         }
     ]
 }

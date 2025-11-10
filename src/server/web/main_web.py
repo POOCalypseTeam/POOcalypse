@@ -1,11 +1,6 @@
 import wsinter
 from time import sleep
-
 from random import randint
-
-test=wsinter.Inter()
-
-test.demarre(page="page.html",clavier=True)
 
 y = 100
 x = 100
@@ -42,9 +37,17 @@ def animer():
         test.attributs('img01',style={"left":str(x)+"px"})
         
 
-# ajouter l'image dynamiquement
-test.insere("img01","img",attr={'src':'sprite.png'},style={"position":"absolute","left":str(x)+"px","top":str(y)+"px"})
+def start():
+    global test
+    test = wsinter.Inter()
+    test.demarre(page="content/pages/index.html", clavier=True)
 
-# définir les événements clavier et souris
-test.gestionnaire_clavier(hbgd)
-test.gestionnaire_souris(jump)
+    # ajouter l'image dynamiquement
+    test.insere("img01","img",attr={'src':'../assets/spritesheets/sprite.png'},style={"position":"absolute","left":str(x)+"px","top":str(y)+"px"})
+
+    # définir les événements clavier et souris
+    test.gestionnaire_clavier(hbgd)
+    test.gestionnaire_souris(jump)
+    
+    return test
+    
