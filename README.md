@@ -12,3 +12,4 @@ Si vous voulez apporter des modifications aux configurations, modifiez dans `lau
 
 Pour lancer via la console simplement, exécuter cette commande en se situant dans le dossier `/src/` du projet, sinon adaptez la commande:
 `PYTHONPATH=./libs/ python3 -i ./server/main.py`.<br>
+Pour stopper le serveur, écrire la commande `stop()` dans le terminal intéractif et attendre que le processus Python soit fini, sinon les ports utilisés par le processus resteront utilisés et ne pourront pas être réutilisés.<br>
