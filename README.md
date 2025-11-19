@@ -1,7 +1,7 @@
 # POOcalypse
 
 **POOCalypse** est un jeu 2D en vue de dessus dans lequel on incarne un personnage dont le but est de vaincre un méchant boss qui a fait du mal à son village.<br>
-Le thème est Steampunk et le personnage navigue dans un monde post-apocalyptique, détruit par le méchant boss POO.<br>
+Le thème est medieval fantasy et le personnage navigue dans un monde post-apocalyptique, détruit par le méchant boss POO.<br>
 En collectant des artefacts et de nouvelles technologies, il sera possible de vaincre des boss de plus en plus imposants, jusqu'à POO...
 
 ## Lancer
