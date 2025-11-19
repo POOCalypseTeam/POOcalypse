@@ -5,22 +5,10 @@ from random import randint
 y = 100
 x = 100
 
+window_width = 1080
+window_height = 720
+
 last_img_id = 0
-
-# deplacer l'image au clavier
-def hbgd(s,d):
-    global x,y
-    if s=="D":
-        if d[5]=='KeyW':
-            y-=2
-        elif d[5]=='KeyS':
-            y+=2
-        elif d[5]=='KeyA':
-            x-=2
-        elif d[5]=='KeyD':
-            x+=2
-
-    ws.attributs('img01',style={"left":str(x)+"px","top":str(y)+"px"})
 
 # faire sauter l'image quand on clic dessus
 def jump(s,d):
@@ -73,11 +61,43 @@ def change_dimensions(id: str, position: tuple=None, size: tuple=None):
         style["height"] = str(size[1]) + "px"        
     ws.attributs(id, style=style)
 
+def set_window_size(_, size: list):
+    """
+    Actualise la taille de la page Web
+    
+    Ne prend pas effet sur l'affichage dans le navigateur
+    
+    Utilise seulement par le gestionnaire d'evenement lors d'un appel par le client
+    """
+    global window_width
+    global window_height
 
-def start():
+    window_width = size[0]
+    window_height = size[1]
+    
+def get_window_size():
+    """
+    Recupere la taille de la page Web
+    """
+    global window_width
+    global window_height
+    return (window_width, window_height)
+
+
+def start() -> wsinter.Inter:
     global ws
     ws = wsinter.Inter()
     ws.demarre(page="content/pages/index.html", clavier=True)
+    
+    # Permet d'avoir la taille de la fenetre en temps reel
+    ws.gestionnaire("get_window_size", set_window_size)
+    ws.injecte("""
+window.addEventListener("resize", (e) => {
+   transmettre("get_window_size", [window.innerWidth, window.innerHeight]); 
+});
+""")
+    # On la recupere une fois au debut
+    ws.injecte('transmettre("get_window_size", [window.innerWidth, window.innerHeight]);')
     
     return ws
     
