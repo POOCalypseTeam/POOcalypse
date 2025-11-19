@@ -25,7 +25,7 @@ def main():
     # Gestionnaires inputs
     web_manager.gestionnaire_clavier(web.inputs.keyboard.handle_input)
     web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
-    
+        
     player = Player((50, 50))
     web.inputs.keyboard.add_event(player.move_input, "D", ["KeyW", "KeyA", "KeyS", "KeyD"])
     web.inputs.mouse.add_event(player.move_random, "U", [player.id])
