@@ -5,3 +5,6 @@
 
 .vscode/*
 !.vscode/*.default
+
+# Pas censé être là mais on sait jamais
+launched
