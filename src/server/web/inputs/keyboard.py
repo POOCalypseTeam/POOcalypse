@@ -60,7 +60,7 @@ def remove_event(handler: callable, state: str, keys: list):
 
 def handle_input(state: str, key: list):
     """
-    Parametres :
+    Parametres:
         - state: 
             - "D" si la touche est pressee
             - "U" si la touche est relachee

@@ -1,5 +1,5 @@
 from player import Player
-from web.main_web import *
+from web.main_web import start
 import web.inputs.keyboard
 import web.inputs.mouse
 import os
@@ -20,7 +20,7 @@ def main():
         exit(0)
         return
     
-    web_manager = web.main_web.start()
+    web_manager = start()
     
     # Gestionnaires inputs
     web_manager.gestionnaire_clavier(web.inputs.keyboard.handle_input)

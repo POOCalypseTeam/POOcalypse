@@ -17,15 +17,16 @@ events = []
 
 def add_event(handler: callable, state: str, ids: list):
     """
-    Ajoute un evenement
-    
     Parametres:
-    
-        - handler : Fonction a appeler en cas de declenchement
-        - state : Une chaine de caractere donnant l'etat du bouton :
-            - "D" : Bouton appuye
-            - "U" : Bouton relache
-        - ids : Liste des IDs des objets lancant un appel        
+        - handler: Fonction a appeler en cas de declenchement
+        
+        - state: Une chaine de caractere donnant l'etat du bouton:
+            - "D": Bouton appuye
+            - "U": Bouton relache
+            
+        - ids: Liste des IDs des objets lancant un appel     
+           
+    Ajoute un evenement
     """
     event = MEvent(state, ids, handler)
     events.append(event)
