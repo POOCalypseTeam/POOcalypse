@@ -3,7 +3,9 @@
 En ouvrant VSCode, cherchez "Cloner le projet" : https://github.com/POOcalypseTeam/POOcalypse.
 
 Attention, si vous pouvez pas vous connecter à votre compte GitHub, il faut utiliser un token, celui qui vous a été donné. Pour l'utiliser il faut aller dans un terminal et taper :<br>
-<code>git remote set-url origin https://%TOKEN%:%USER%@github.com/POOCalypseTeam/POOcalypse.git</code> en remplacant `%TOKEN%` par le token, et `%USER%` par votre nom d'utilisateur, si vous voulez éviter de taper le token manuellement, remplacez `%TOKEN%` par <code>$(cat chemin/relatif/vers/token)</code>
+<code>git remote set-url origin https://%USER%:%TOKEN%@github.com/POOCalypseTeam/POOcalypse.git</code> en remplacant `%TOKEN%` par le token, et `%USER%` par votre nom d'utilisateur, si vous voulez éviter de taper le token manuellement, remplacez `%TOKEN%` par <code>$(cat chemin/relatif/vers/token)</code><br>
+Puis ensuite il faut config une adresse mail et un nom d'utilisateur, l'adresse peut etre vide mais au moins le nom d'utilisateur:<br>
+<code>git config user.name "NOM" && git config user.email "EMAIL"</code>
 
 Prendre connaissance de `README.md` et `STRUCTURE.md`.
 
