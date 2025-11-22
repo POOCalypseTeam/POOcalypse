@@ -144,6 +144,8 @@ function faire(o){
         self.reponse_http(Inter._chemin_js, lambda c,p: (Inter._js.replace("_ws_port",str(self._ws_port),1),"js"))
 
         self._threads_fils=[]
+        
+        self.pressed_keys = {}
 
     def gestionnaire(self, message:str,handler:callable,nonbloc:bool=False):
         """
@@ -707,9 +709,16 @@ function faire(o){
             self._handlers["_mh"][0](data[0][3],data[1])
         elif data[0]=="**KD**":
 #            print("KD event")
+            # On veut pas de repetition dans les touches, la premiere n'est jamais repetee donc aucun probleme
+            if data[1][6]:
+                for pressed_key in self.pressed_keys.values():
+                    self._process(pressed_key)
+                return
+            self.pressed_keys[data[1][5]] = chaine
             self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0]=="**KU**":
 #            print("KU event")
+            self.pressed_keys.pop(data[1][5], None)
             self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0] in self._handlers and self._handlers[data[0]] is not None:
             handler,nonbloc = self._handlers[data[0]]
