@@ -689,6 +689,7 @@ function faire(o){
                 """
         self._push([{'id':'_new_script','tagName':'script','data':{'innerHTML':code}}])
 
+    pressed_keys = None
     def _process(self,chaine:str):
         """
         chaine reçue via websocket
@@ -698,6 +699,9 @@ function faire(o){
             data = json.loads(chaine)
         except:
             print("Erreur à l'analyse des données")
+            
+        if self.pressed_keys == None:
+            self.pressed_keys = dict()
         
         if data[0]=="**MD**":
 #            print("MD event")
@@ -707,9 +711,16 @@ function faire(o){
             self._handlers["_mh"][0](data[0][3],data[1])
         elif data[0]=="**KD**":
 #            print("KD event")
-            self._handlers["_kh"][0](data[0][3],data[1])
+            if data[1][6]:
+                self.pressed_keys[data[1][5]] = data[1]
+                for key in self.pressed_keys.values():
+                    self._handlers["_kh"][0]("D",key)
+            else:
+                self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0]=="**KU**":
 #            print("KU event")
+            if data[1][5] in self.pressed_keys.keys():
+                del self.pressed_keys[data[1][5]]
             self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0] in self._handlers and self._handlers[data[0]] is not None:
             handler,nonbloc = self._handlers[data[0]]
