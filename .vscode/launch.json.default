@@ -5,7 +5,7 @@
             "name": "Launch Web server interactive",
             "type": "node-terminal",
             "request": "launch",
-            "command": "python3 -i ${workspaceFolder}/src/server/main.py",
+            "command": "python3 -i ${workspaceFolder}/src/server/main.py > log",
             "cwd": "${workspaceFolder}/src",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/src/libs/"
