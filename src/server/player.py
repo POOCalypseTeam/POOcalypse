@@ -3,7 +3,7 @@ from random import randint
 
 IMG_PATH = "assets/spritesheets/blonde_man/blonde_man_001.png"
 IMG_SIZE = 32
-MOVE_AMOUNT = 2
+MOVE_AMOUNT = 10
 MIN_X = 0
 MIN_Y = 0
 
@@ -16,6 +16,62 @@ class Player:
         self.width = IMG_SIZE
         self.height = IMG_SIZE
         self.id = add_image(IMG_PATH, (self.x, self.y))
+        
+        self.movement_vector = [0, 0]
+        # Changés par le sol / environnement
+        self.max_movement = (1, 1)
+        self.friction_coef = 0.8
+        
+    def move_range(self, movement: tuple):
+        self.movement_vector[0] += movement[0]
+        if self.movement_vector[0] < 0 and self.movement_vector[0] < -1 * self.max_movement[0]:
+            self.movement_vector[0] = -1 * self.max_movement[0]
+        if self.movement_vector[0] > 0 and self.movement_vector[0] > self.max_movement[0]:
+            self.movement_vector[0] = self.max_movement[0]
+
+        self.movement_vector[1] += movement[1]
+        if self.movement_vector[1] < 0 and self.movement_vector[1] < -1 * self.max_movement[1]:
+            self.movement_vector[1] = -1 * self.max_movement[1]
+        if self.movement_vector[1] > 0 and self.movement_vector[1] > self.max_movement[1]:
+            self.movement_vector[1] = self.max_movement[1]
+            
+    def update(self, delta_time: float, keys: list):
+        """
+        delta_time est le temps en secondes depuis la derniere update, il sert de coefficient sur la vitesse de deplacement notamment
+        """
+        # On applique le vecteur mouvement sur la position, en tenant compte des inputs et de la friction s'il n'y a pas d'inputs
+        # Tant que la friction n'est pas supérieure à 1, on a pas besoin de vérifier avec le vecteur max_movement, car le mouvement diminue,
+        # Mais si dans le futur il y a changement sur ca il faudra check tout le temps
+        movement = self._process_keys(keys)
+        self.movement_vector[0] *= self.friction_coef
+        self.movement_vector[1] *= self.friction_coef
+        if movement != [0, 0]:
+            movement[0] *= delta_time
+            movement[1] *= delta_time
+            self.move_range(movement)
+            
+        self.move(self.movement_vector)
+        self.render()
+        
+    def _process_keys(self, keys: list) -> list:
+        """
+        keys -- liste de touches appuyees, identifiees par leur code
+        
+        Renvoie un tuple definissant le mouvement selon le mouvement
+        """
+        move = [0, 0]
+        for key in keys:
+            match key:
+                case "KeyW":
+                    move[1] -= MOVE_AMOUNT
+                case "KeyA":
+                    move[0] -= MOVE_AMOUNT
+                case "KeyS":
+                    move[1] += MOVE_AMOUNT
+                case "KeyD":
+                    move[0] += MOVE_AMOUNT
+        return move
+
         
     def move(self, movement: tuple):
         """
@@ -35,8 +91,6 @@ class Player:
         self.y = min(self.y, window_size[1] - self.height)
         self.y = max(MIN_Y, self.y)
         
-        self.render()
-        
     def move_input(self, key):
         """
         Recupere l'evenement d'appui de touche pour bouger le joueur
@@ -54,6 +108,7 @@ class Player:
     def move_random(self, button):
         if button[1] == 0:
             self.move((randint(-100, 100), randint(-100, 100)))
+        self.render()
         
     def render(self):
         change_dimensions(self.id, (self.x, self.y))

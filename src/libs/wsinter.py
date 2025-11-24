@@ -145,7 +145,7 @@ function faire(o){
 
         self._threads_fils=[]
         
-        self.pressed_keys = {}
+        self.pressed_keys = []
 
     def gestionnaire(self, message:str,handler:callable,nonbloc:bool=False):
         """
@@ -311,6 +311,12 @@ function faire(o){
           - associées à un contenu de type str : htm, html, css, js, csv, json, svg, html, xml
         """ 
         self._htresponse[req]=gen
+        
+    def touches(self):
+        """
+        Renvoie une liste de touches appuyees en cet instant
+        """
+        return self.pressed_keys
 
     def servir(self,ip : str = '127.0.0.1', port : int = 5080, max_conn : int = -1) -> None:
         """
@@ -710,15 +716,13 @@ function faire(o){
         elif data[0]=="**KD**":
 #            print("KD event")
             # On veut pas de repetition dans les touches, la premiere n'est jamais repetee donc aucun probleme
-            if data[1][6]:
-                for pressed_key in self.pressed_keys.values():
-                    self._process(pressed_key)
-                return
-            self.pressed_keys[data[1][5]] = chaine
+            if not data[1][6]:
+                # Logiquement, pas de doublons, car quand on relache la touche, l'element est supprime
+                self.pressed_keys.append(data[1][5])
             self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0]=="**KU**":
 #            print("KU event")
-            self.pressed_keys.pop(data[1][5], None)
+            self.pressed_keys.remove(data[1][5])
             self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0] in self._handlers and self._handlers[data[0]] is not None:
             handler,nonbloc = self._handlers[data[0]]
