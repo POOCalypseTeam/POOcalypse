@@ -144,6 +144,8 @@ function faire(o){
         self.reponse_http(Inter._chemin_js, lambda c,p: (Inter._js.replace("_ws_port",str(self._ws_port),1),"js"))
 
         self._threads_fils=[]
+        
+        self.pressed_keys = []
 
     def gestionnaire(self, message:str,handler:callable,nonbloc:bool=False):
         """
@@ -309,6 +311,12 @@ function faire(o){
           - associées à un contenu de type str : htm, html, css, js, csv, json, svg, html, xml
         """ 
         self._htresponse[req]=gen
+        
+    def touches(self):
+        """
+        Renvoie une liste de touches appuyees en cet instant
+        """
+        return self.pressed_keys
 
     def servir(self,ip : str = '127.0.0.1', port : int = 5080, max_conn : int = -1) -> None:
         """
@@ -707,9 +715,14 @@ function faire(o){
             self._handlers["_mh"][0](data[0][3],data[1])
         elif data[0]=="**KD**":
 #            print("KD event")
+            # On veut pas de repetition dans les touches, la premiere n'est jamais repetee donc aucun probleme
+            if not data[1][6]:
+                # Logiquement, pas de doublons, car quand on relache la touche, l'element est supprime
+                self.pressed_keys.append(data[1][5])
             self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0]=="**KU**":
 #            print("KU event")
+            self.pressed_keys.remove(data[1][5])
             self._handlers["_kh"][0](data[0][3],data[1])
         elif data[0] in self._handlers and self._handlers[data[0]] is not None:
             handler,nonbloc = self._handlers[data[0]]
