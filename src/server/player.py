@@ -53,23 +53,21 @@ class Player:
         self.move(self.movement_vector)
         self.render()
         
-    def _process_keys(self, keys: list) -> list:
+    def _process_keys(self, keys: dict) -> list:
         """
         keys -- liste de touches appuyees, identifiees par leur code
         
         Renvoie un tuple definissant le mouvement selon le mouvement
         """
         move = [0, 0]
-        for key in keys:
-            match key:
-                case "KeyW":
-                    move[1] -= MOVE_AMOUNT
-                case "KeyA":
-                    move[0] -= MOVE_AMOUNT
-                case "KeyS":
-                    move[1] += MOVE_AMOUNT
-                case "KeyD":
-                    move[0] += MOVE_AMOUNT
+        if "KeyW" in keys:
+            move[1] -= MOVE_AMOUNT
+        if "KeyA" in keys:
+            move[0] -= MOVE_AMOUNT
+        if "KeyS" in keys:
+            move[1] += MOVE_AMOUNT
+        if "KeyD" in keys:
+            move[0] += MOVE_AMOUNT
         return move
 
         
