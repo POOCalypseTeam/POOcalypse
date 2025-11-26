@@ -4,7 +4,7 @@ import threading # Threading
 
 from player import Player
 import web.main_web # start
-import web.inputs.keyboard
+from web.inputs.keyboard import Keyboard
 import web.inputs.mouse
 
 game = None
@@ -37,13 +37,10 @@ class Game:
         self.web_manager = web.main_web.start()
         
         # Gestionnaires inputs
-        self.web_manager.gestionnaire_clavier(web.inputs.keyboard.handle_input)
+        self.keyboard_manager = Keyboard(self.web_manager)
         self.web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
             
         self.player = Player((50, 50))
-        #web.inputs.keyboard.add_event(player.move_input, "D", ["KeyW", "KeyA", "KeyS", "KeyD"])
-        # Tmp, for testing purposes
-        web.inputs.mouse.add_event(self.player.move_random, "U", [self.player.id])
         
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
@@ -68,7 +65,7 @@ class Game:
             if delta_time < 0.017:
                 continue
             
-            keys = self.web_manager.touches()
+            keys = self.keyboard_manager.get_keys()
             self.player.update(delta_time, keys)
             
             last_loop_time = time.time()
