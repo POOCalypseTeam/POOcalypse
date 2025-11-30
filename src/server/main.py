@@ -3,6 +3,7 @@ import time # time, sleep
 import threading # Threading
 
 from player import Player
+from npc import NPC
 import web.main_web # start
 from web.inputs.keyboard import Keyboard
 import web.inputs.mouse
@@ -42,6 +43,14 @@ class Game:
             
         self.player = Player((50, 50))
         
+        # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
+        # On crée une lste de NPC pour pouvoir en gérer plusieurs
+        self.npc = []
+        base_npc_1 = NPC((200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png")
+        base_npc_2 = NPC((150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png")
+        self.npc.append(base_npc_1)
+        self.npc.append(base_npc_2)
+        
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()
@@ -66,8 +75,14 @@ class Game:
                 continue
             
             keys = self.keyboard_manager.get_keys()
+            
             self.player.update(delta_time, keys)
             
+            for npc in self.npc:
+                if npc.within_distance(self.player.get_position()):
+                    npc.hide()
+                    self.npc.remove(npc)
+                
             last_loop_time = time.time()
 
     def stop(self):

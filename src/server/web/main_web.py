@@ -58,8 +58,14 @@ def change_dimensions(id: str, position: tuple=None, size: tuple=None):
         style["top"] = str(position[1]) + "px"
     if size != None:
         style["width"] = str(size[0]) + "px"
-        style["height"] = str(size[1]) + "px"        
+        style["height"] = str(size[1]) + "px"  
     ws.attributs(id, style=style)
+    
+def remove_html(id: str):
+    # TODO: Bien supprimer l'élément au lieu de le cacher
+    # demander modification wsinter car demande du JS mais pas opti de fare des injecte
+    # car ca créé un element script a chaque fois, pas renta
+    ws.attributs(id, style={"display": "none"})
 
 def set_window_size(_, size: list):
     """

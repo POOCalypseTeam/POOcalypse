@@ -89,24 +89,8 @@ class Player:
         self.y = min(self.y, window_size[1] - self.height)
         self.y = max(MIN_Y, self.y)
         
-    def move_input(self, key):
-        """
-        Recupere l'evenement d'appui de touche pour bouger le joueur
-        """
-        match key:
-            case "KeyW":
-                self.move((0, -MOVE_AMOUNT))
-            case "KeyA":
-                self.move((-MOVE_AMOUNT, 0))
-            case "KeyS":
-                self.move((0, MOVE_AMOUNT))
-            case "KeyD":
-                self.move((MOVE_AMOUNT, 0))
-                
-    def move_random(self, button):
-        if button[1] == 0:
-            self.move((randint(-100, 100), randint(-100, 100)))
-        self.render()
+    def get_position(self):
+        return (self.x, self.y)
         
     def render(self):
         change_dimensions(self.id, (self.x, self.y))
