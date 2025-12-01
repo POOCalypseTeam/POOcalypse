@@ -1,30 +1,9 @@
 import wsinter
-from time import sleep
-from random import randint
-
-y = 100
-x = 100
 
 window_width = 1080
 window_height = 720
 
 last_img_id = 0
-
-# faire sauter l'image quand on clic dessus
-def jump(s,d):
-    global x,y
-    if s=="D":
-        if d[0]=='img01':
-            x=randint(0,800)
-            y=randint(0,800)
-            ws.attributs('img01',style={"left":str(x)+"px","top":str(y)+"px"})
-
-def animer():
-    global x
-    while x < 800:
-        sleep(0.05)
-        x+=1
-        ws.attributs('img01',style={"left":str(x)+"px"})
        
 def add_image(path: str, position: tuple, size: tuple=None):
     """
