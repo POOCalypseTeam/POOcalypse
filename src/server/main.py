@@ -2,8 +2,9 @@ import os # remove
 import time # time, sleep
 import threading # Threading
 
+# Réorganiser player et npc pour respecter la structure et pas avoir des fichiers n'importe où dans la racine
 from player import Player
-from npc import NPC
+from npc import Npc
 import web.main_web # start
 from web.inputs.keyboard import Keyboard
 import web.inputs.mouse
@@ -45,9 +46,9 @@ class Game:
         
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs
-        self.npc = []
-        base_npc_1 = NPC((200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png")
-        base_npc_2 = NPC((150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png")
+        self.npc: list[Npc] = []
+        base_npc_1 = Npc((200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
+        base_npc_2 = Npc((150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png")
         self.npc.append(base_npc_1)
         self.npc.append(base_npc_2)
         
