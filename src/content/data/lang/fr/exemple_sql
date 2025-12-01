@@ -1,0 +1,6 @@
+CREATE TABLE exchanges (id INTEGER PRIMARY KEY, sentence TEXT);
+CREATE TABLE dialogs (id TEXT PRIMARY KEY, start INTEGER, FOREIGN KEY (start) REFERENCES exchanges(id));
+CREATE TABLE choices (id INTEGER PRIMARY KEY AUTOINCREMENT, exchange_id INTEGER, sentence TEXT, next_exchange INTEGER, FOREIGN KEY (exchange_id) REFERENCES exchanges(id), FOREIGN KEY (next_exchange) REFERENCES exchanges(id));
+INSERT INTO exchanges VALUES (0, "Bonjour, ca va ?"),(1, "Cool"),(2, "Pourquoi ?"),(3, "OK");
+INSERT INTO dialogs VALUES ("dialog1", 0);
+INSERT INTO choices (exchange_id, sentence, next_exchange) VALUES (0, "Bien", 1),(0, "Pas bien", 2),(2, "Parce que", 3),(2, "Si en fait", 1);

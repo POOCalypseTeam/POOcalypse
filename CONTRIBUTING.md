@@ -70,7 +70,7 @@ Ressources visuelles :
 
 ### `./data/`
 
-Ressources autres (JSON) :
+Ressources autres, dans des bases de données :
 
 
 - `./attributes/` : Attributs
