@@ -1,6 +1,6 @@
 import sqlite3
 
-#from web.main_web import add_image, remove_html
+from web.main_web import add_image, remove_html
 
 DIALOGS_PATH = "content/data/lang/%LANG%/dialogs.db"
 
