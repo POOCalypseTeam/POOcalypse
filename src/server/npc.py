@@ -4,7 +4,7 @@ import sqlite3
 
 DIALOGS_PATH = "content/data/lang/%LANG%/dialogs.db"
 
-def explore_choices(cursor: sqlite3.Cursor, dialogs: list, exchange_id: int, parent: int):
+def explore_choices(cursor: sqlite3.Cursor, dialogs: list, exchange_id: int, parent: int = 0, ids_dict: dict = {}):
     """
     Fonction recursive qui lit la base de donnees pour trouver tous les choix descendants de `exchange_id`
     
@@ -22,7 +22,8 @@ def explore_choices(cursor: sqlite3.Cursor, dialogs: list, exchange_id: int, par
     
     - `parent`: l'indice du parent, echange qui a donne lieu au choix actuel, dans `dialogs`
     """
-    # On cherche tous les choix dans le SGBD avec l'id
+    if ids_dict == {}:
+        ids_dict[exchange_id] = 0
     
     cursor.execute("SELECT sentence FROM exchanges WHERE id=? LIMIT 1;", (exchange_id,))
     sentence = cursor.fetchone()[0]
@@ -36,11 +37,14 @@ def explore_choices(cursor: sqlite3.Cursor, dialogs: list, exchange_id: int, par
         return
         
     for choice in data:
-        # Attention, si les echanges dans choices forment une boucle, il y a une boucle infinie ici
-        # Il faudrait regarder quels ids sont passes pour ne pas les repasser une deuxieme fois
-
-        dialogs[parent][1][choice[0]] = choice[1]
-        explore_choices(cursor, dialogs, choice[1], len(dialogs))  
+        # On veut créer un dictionnaire qui associe l'id (choice[1]) dans la BD avec l'indice
+        exploring = False
+        if not choice[1] in ids_dict:
+            exploring = True
+            ids_dict[choice[1]] = len(dialogs)
+        dialogs[parent][1][choice[0]] = ids_dict[choice[1]]
+        if exploring:
+            explore_choices(cursor, dialogs, choice[1], ids_dict[choice[1]], ids_dict)
 
 def dialog_parse(dialog: str) -> list[tuple[str, dict[str, int]]]:
     """
@@ -66,38 +70,7 @@ def dialog_parse(dialog: str) -> list[tuple[str, dict[str, int]]]:
     base.execute("SELECT start FROM dialogs WHERE id=? LIMIT 1;", (dialog,))
     data = base.fetchone()
     
-    # Pile de tous les dialogues pour lesquels il faut encore aller chercher les prochains echanges
-    exchanges_stack: list[int] = []
-    exchanges_stack.append(data[0])
-    
-    # On cherche donc dans choices les lignes avec exchange_id=start
-    # TODO: Fix, ne marche pas car IDs dans SGBD pas pareil que l'indice dans dialogs
-    # Il faut faire une fonction recursive qui parcourt chaque choix jusqu'a ce qu'il n'y ait plus de choix
-    # Ainsi les indices dans dialogs match et ceux dans le SGBD servet juste pour naviguer le SGBD
-    while len(exchanges_stack) > 0:
-        # TODO: Optimiser pour eviter de deplacer la liste a chaque fois, avec retrait puis ajout a chaque iteration
-        exchange = exchanges_stack.pop()
-        
-        # On recupere la phrase du NPC
-        base.execute("SELECT sentence FROM exchanges WHERE id=? LIMIT 1;", (exchange,))
-        data = base.fetchall()
-        
-        element = (data[0][0], {})
-        
-        # On recupere tous les choix possibles pour cette phrase
-        base.execute("SELECT sentence, next_exchange FROM choices WHERE exchange_id=?;", (exchange,))
-        data = base.fetchall()
-        
-        # Pour chaque choix on ajoute au dictionnaire la paire texte_choix:prochain_echange
-        for choice in data:
-            element[1][choice[0]] = choice[1]
-            exchanges_stack.append(choice[1])
-            
-        dialogs.append(element)
-            
-        
-    # Puis on ajoute a dialogs au premier indice (exchanges[start], {choices[0].sentence: choices[0].next_exchange, choices[1].sentence: choices[1].next_exchange})
-    # Tout en ajoutant a une pile les prochains "start" a traiter, qui sont choices[i].next_exchange
+    explore_choices(base, dialogs, data[0])
     
     return dialogs
 
