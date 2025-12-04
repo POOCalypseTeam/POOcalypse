@@ -79,10 +79,14 @@ class Game:
             
             self.player.update(delta_time, keys)
             
+            interact = False
             for npc in self.npc:
                 if npc.within_distance(self.player.get_position()):
-                    npc.hide()
-                    self.npc.remove(npc)
+                    interact = True
+                    self.web_manager.inner_text("action-bar", "Appuyez sur E pour interagir")
+                    
+            if not interact:
+                self.web_manager.inner_text("action-bar", "")
                 
             last_loop_time = time.time()
 

@@ -80,14 +80,7 @@ class Npc:
         self.y = position[1]
         
         if dialogs != "":
-            try:
-                # TODO: Remplacer fr par la langue
-                file_path = "content/data/lang/fr/dialogs/" + dialogs
-                file = open(file_path, "r")
-            except FileNotFoundError:
-                print(f"Impossible d'ouvrir le fichier dialogues: {file_path}")
-                
-            self.dialogs = dialog_parse(file.read())
+            self.dialogs = dialog_parse(dialogs)
             self.dialog_step = 0
         
         self.distance = distance

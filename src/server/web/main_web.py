@@ -40,6 +40,9 @@ def change_dimensions(id: str, position: tuple=None, size: tuple=None):
         style["height"] = str(size[1]) + "px"  
     ws.attributs(id, style=style)
     
+def change_text(id: str, new_text: str):
+    ws.attributs(id, )
+
 def remove_html(id: str):
     # TODO: Bien supprimer l'élément au lieu de le cacher
     # demander modification wsinter car demande du JS mais pas opti de fare des injecte
