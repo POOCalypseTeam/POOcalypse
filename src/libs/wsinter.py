@@ -122,7 +122,12 @@ function faire(o){
             {
                 elem[attr]=data[attr];
             }
-            document.body.appendChild(elem);
+            let parent = document.getElementById(dico["parent_id"]);
+            if ((parent == null) || (parent == undefined))
+            {
+                parent = document.body;
+            }
+            parent.appendChild(elem);
         }        
     }
 }
@@ -684,19 +689,20 @@ function faire(o){
     def inner_text(self,id_objet:str,inner_text:str):
         self._push([{"id":id_objet,"type":"content","data":inner_text}])
 
-    def insere(self, id_objet:str, balise: str,attr:dict={},style:dict={}):
+    def insere(self, id_objet:str, balise: str,attr:dict={},style:dict={},parent:str="body"):
         """
-        Insère un élément sur la page, dans <body>
+        Insère un élément sur la page, dans l'élément dont l'id est spécifié par parent
 
         Paramètres:
           - id_objet: attribut id de l'objet créé
           - balise: balise de l'objet créé
           - attr: dictionnaire attribut:valeur définissant les atributs de l'objet créé
           - style: dictionnaire attrobut:valeur définissant les attributs de style de l'objet créé
-              
+          - parent: id de l'objet où insérer l'élément créé (default: body)
+          
         Valeur renvoyée : None
         """
-        self._push([{'id':'_nobj','type':'create','tagName':balise,'data':{'id':id_objet}}])
+        self._push([{'id':'_nobj','type':'create','tagName':balise,'parent_id':parent,'data':{'id':id_objet}}])
         if attr != {}:
             self._push([{"id":id_objet,'type':'attributes',"data":attr}])
         if style != {}:
