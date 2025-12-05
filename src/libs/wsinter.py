@@ -93,22 +93,22 @@ function faire(o){
         let data = dico["data"];
         let type = dico["type"];
         
-        if (type == "delete")
+        if (type == "delete" && elem != null)
         {
             elem.parentNode.removeChild(elem);
         }
-        else if (type == "content")
+        else if (type == "content" && elem != null)
         {
             elem.innerText = data;
         }
-        else if (type == "attributes")
+        else if (type == "attributes" && elem != null)
         {
             for (attr in data)
             {
                 elem[attr]=data[attr];
             }
         }
-        else if (type == "style")
+        else if (type == "style" && elem != null)
         {
             for (sattr in data["style"])
             {
@@ -127,7 +127,10 @@ function faire(o){
             {
                 parent = document.body;
             }
-            parent.appendChild(elem);
+            if (parent != null)
+            {
+                parent.appendChild(elem);
+            }
         }        
     }
 }
@@ -702,11 +705,13 @@ function faire(o){
           
         Valeur renvoyée : None
         """
-        self._push([{'id':'_nobj','type':'create','tagName':balise,'parent_id':parent,'data':{'id':id_objet}}])
+        l = []
+        l.append({'id':'_nobj','type':'create','tagName':balise,'parent_id':parent,'data':{'id':id_objet}})
         if attr != {}:
-            self._push([{"id":id_objet,'type':'attributes',"data":attr}])
+            l.append({"id":id_objet,'type':'attributes',"data":attr})
         if style != {}:
-            self._push([{"id":id_objet,'type':'style',"data":{"style":style}}])    
+            l.append({"id":id_objet,'type':'style',"data":{"style":style}})
+        self._push(l)
 
     def injecte(self,code:str)->None:
         """
