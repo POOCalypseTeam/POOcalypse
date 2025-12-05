@@ -84,10 +84,38 @@ document.addEventListener("DOMContentLoaded", (event) => {
 function faire(o){
     for (dico of o)
     {
+        if (dico["type"] == undefined)
+        {
+            continue;
+        }
+        
         let elem = document.getElementById(dico["id"]);
         let data = dico["data"];
-
-        if ((elem == null) && (dico["tagName"] != undefined))
+        let type = dico["type"];
+        
+        if (type == "delete")
+        {
+            elem.parentNode.removeChild(elem);
+        }
+        else if (type == "content")
+        {
+            elem.innerText = data;
+        }
+        else if (type == "attributes")
+        {
+            for (attr in data)
+            {
+                elem[attr]=data[attr];
+            }
+        }
+        else if (type == "style")
+        {
+            for (sattr in data["style"])
+            {
+                elem.style[sattr] = data["style"][sattr]; 
+            }
+        }
+        else if (type == "create" && (elem == null) && (dico["tagName"] != undefined))
         {
             elem = document.createElement(dico["tagName"]);
             for (attr in data)
@@ -651,7 +679,7 @@ function faire(o){
         Valeur renvoyée : None
         """
         if attr != {}:
-            self._push([{"id":id_objet,"data":attr}])
+            self._push([{"id":id_objet,"type":"attributes","data":attr}])
         if style != {}:
             self._push([{"id":id_objet,"type":"style","data":{"style":style}}])
             
@@ -676,9 +704,9 @@ function faire(o){
         """
         self._push([{'id':'_nobj','type':'create','tagName':balise,'parent_id':parent,'data':{'id':id_objet}}])
         if attr != {}:
-            self._push([{"id":id_objet,"data":attr}])
+            self._push([{"id":id_objet,'type':'attributes',"data":attr}])
         if style != {}:
-            self._push([{"id":id_objet,"data":{"style":style}}])        
+            self._push([{"id":id_objet,'type':'style',"data":{"style":style}}])    
 
     def injecte(self,code:str)->None:
         """
@@ -698,7 +726,7 @@ function faire(o){
             # envoi du code javascript faisant envoyer la valeur par la page
             interface.injecte('transmettre("recup_pin",PIN.value)')          
                 """
-        self._push([{'id':'_new_script','tagName':'script','data':{'innerHTML':code}}])
+        self._push([{'id':'_new_script','type':'create','tagName':'script','data':{'innerHTML':code}}])
 
     def _process(self,chaine:str):
         """
