@@ -2,6 +2,7 @@ import os # remove
 import time # time, sleep
 import threading # Threading
 
+from boardlaunch import *
 from player import Player
 import web.main_web # start
 from web.inputs.keyboard import Keyboard
@@ -41,6 +42,7 @@ class Game:
         self.web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
             
         self.player = Player((50, 50))
+        self.web_manager.attributs(self.player.id, style={"z-index": 10})
         
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)

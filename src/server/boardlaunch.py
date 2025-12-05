@@ -1,8 +1,31 @@
 from web.main_web import add_image, change_dimensions, get_window_size
 import json
+map = [["000","251","000"],
+       ["251","000","251"],
+       ["000","251","000"]]
 # on doit découper le fichier json de coordonnées des tiles pour launch le plateau
 def load():
     with open("content/data/worlds/base_world.json", "r") as f:
         data = json.load(f)
         board = data["layers"][0]["tiles"]
+        # on créer une liste de dictionnaires à partir du json
         print(board)
+
+def load_map():
+    IMG_PATH = "assets/tilesets/basic/grass/grass_"
+    IMG_SIZE = 32
+    for y in range(len(map)):
+        for x in range(len(map[0])):
+            id = add_image(IMG_PATH+map[x][y]+".png",(x*IMG_SIZE,y*IMG_SIZE),(IMG_SIZE,IMG_SIZE))
+
+def add_tile(x,y,tile):
+    """
+    Modifie la case de coordonnées x,y
+    
+    tile : string
+    x,y : integer
+    """
+    try:
+        map[x][y] = tile
+    except:
+        raise ValueError("BRUUUUUUH cheeeeeeeef ? Les bonnes valeurs peut-être non ?")
