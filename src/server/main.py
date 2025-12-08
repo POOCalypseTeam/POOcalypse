@@ -67,7 +67,7 @@ class Game:
         Ainsi on conditionne le temps
         """
         self.do_loop = True
-        last_loop_time = time.time()
+        last_loop_time = 0
         
         while self.do_loop:
             delta_time = time.time() - last_loop_time

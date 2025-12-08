@@ -16,5 +16,9 @@ body {
 }
 
 img {
-    image-rendering: pixellated;
+    image-rendering: pixelated;
+}
+
+#img0 {
+    transition: top 50ms, left 50ms;
 }
