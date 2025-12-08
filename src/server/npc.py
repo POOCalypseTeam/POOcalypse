@@ -1,6 +1,6 @@
 import sqlite3
 
-from web.main_web import add_image, remove_html
+from web.main_web import add_image, change_text
 
 DIALOGS_PATH = "content/data/lang/%LANG%/dialogs.db"
 
@@ -74,7 +74,17 @@ def dialog_parse(dialog: str) -> list[tuple[str, dict[str, int]]]:
     
     return dialogs
 
-class Npc:
+class Interactable:
+    def interact(self):
+        pass
+    
+    def is_opened(self):
+        return False
+    
+    def key(self, key: str):
+        pass
+
+class Npc(Interactable):
     def __init__(self, position: tuple, img_path: str, dialogs: str = "", distance: int = 50):
         self.x = position[0]
         self.y = position[1]
@@ -87,11 +97,32 @@ class Npc:
         
         self.id = add_image(img_path, (self.x, self.y))
         
+    def interact(self):
+        """
+        Implementation de la methode interact() definie dans Interactable
+        
+        Cette methode est appelee lors de l'appui de la touuche d'interaction
+        
+        Ici, elle affiche le dialogue a l'ecran
+        """
+        dialog = self.get_dialog()
+        change_text("dialog-content", dialog[0])
+        
+    def is_opened(self):
+        # TODO: Mieux gerer ca mdr
+        return True
+    
+    def key(self, key: str):
+        # TODO: Faire vraiment, pour l'instant c'est un simple apercu
+        if key == 'ArrowLeft':
+            self.choice -= 1
+        elif key == 'ArrowRight':
+            self.choice += 1
+        elif key == 'Enter':
+            self.dialog_step += 1
+        
     def get_dialog(self):
         return self.dialogs[self.dialog_step]
-        
-    def hide(self):
-        remove_html(self.id)
         
     def within_distance(self, position: tuple) -> bool:
         """

@@ -41,7 +41,7 @@ def change_dimensions(id: str, position: tuple=None, size: tuple=None):
     ws.attributs(id, style=style)
     
 def change_text(id: str, new_text: str):
-    ws.attributs(id, )
+    ws.inner_text(id, new_text)
 
 def remove_html(id: str):
     # TODO: Bien supprimer l'élément au lieu de le cacher

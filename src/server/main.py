@@ -4,7 +4,7 @@ import threading # Threading
 
 # Réorganiser player et npc pour respecter la structure et pas avoir des fichiers n'importe où dans la racine
 from player import Player
-from npc import Npc
+from npc import Interactable, Npc
 import web.main_web # start
 from web.inputs.keyboard import Keyboard
 import web.inputs.mouse
@@ -48,13 +48,27 @@ class Game:
         # On crée une lste de NPC pour pouvoir en gérer plusieurs
         self.npc: list[Npc] = []
         base_npc_1 = Npc((200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
-        base_npc_2 = Npc((150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png")
+        base_npc_2 = Npc((150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
         self.npc.append(base_npc_1)
         self.npc.append(base_npc_2)
+        
+        self.interactable: Interactable = None
+        
+        self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowLeft', 'ArrowRight', 'Enter'])
         
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()
+        
+    def interact_key_handler(self, key):
+        if self.interactable == None or not issubclass(type(self.interactable), Interactable):
+            return
+        match key:
+            case 'KeyE':
+                self.interactable.interact()
+            case 'ArrowLeft', 'ArrowRight', 'Enter':
+                if self.interactable.is_opened():
+                    self.interactable.key(key)
 
     def loop(self):
         """
@@ -79,13 +93,13 @@ class Game:
             
             self.player.update(delta_time, keys)
             
-            interact = False
+            self.interactable = None
             for npc in self.npc:
                 if npc.within_distance(self.player.get_position()):
-                    interact = True
+                    self.interactable = npc
                     self.web_manager.inner_text("action-bar", "Appuyez sur E pour interagir")
                     
-            if not interact:
+            if self.interactable == None:
                 self.web_manager.inner_text("action-bar", "")
                 
             last_loop_time = time.time()
