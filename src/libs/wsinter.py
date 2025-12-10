@@ -78,6 +78,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementsByTagName('BODY')[0].id="body"; 
     document.getElementsByTagName('HEAD')[0].id="head"; 
     document.body.oncontextmenu=(e)=>{return false;};
+    transmettre("ready", "");
 });
 
 
@@ -166,6 +167,9 @@ function faire(o){
         self.reponse_http(Inter._chemin_js, lambda c,p: (Inter._js.replace("_ws_port",str(self._ws_port),1),"js"))
 
         self._threads_fils=[]
+
+        self.ready: bool = False
+        self.pending: list[str] = []
 
     def gestionnaire(self, message:str,handler:callable,nonbloc:bool=False):
         """
@@ -303,6 +307,14 @@ function faire(o){
 
         if clavier: self.init_clavier()
         if souris:  self.init_souris()
+
+        self.gestionnaire("ready", self._ready)
+
+    def _ready(self, _m, _o):
+        self.ready = True
+        for pending in self.pending:
+            self._envoi(pending)
+        del self._handlers["ready"]
 
     def stop(self,fermer:bool=True):
         """
@@ -669,7 +681,11 @@ function faire(o){
         Envoie la représentation json d'un objet.
         Côté javascript, faire() prend en charge une liste de dictionnaires seulement.
         """
-        self._envoi(json.dumps(o))
+        data = json.dumps(o)
+        if self.ready:
+            self._envoi(data)
+        else:
+            self.pending.append(data)
 
     def attributs(self,id_objet,attr={},style={}):
         """
