@@ -38,9 +38,14 @@ class Inter:
     _ws_port = 5056
     _chemin_js = "/js"
     _js = """let socket = new WebSocket("ws://127.0.0.1:_ws_port");
+let readySent = true;
 
 socket.onopen = function(e) {
   console.log("[open] Connection established");
+  if (readySent == false)
+  {
+      transmettre("ready", "");
+  }
 };
 
 socket.onmessage = function(event) {
@@ -78,7 +83,12 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementsByTagName('BODY')[0].id="body"; 
     document.getElementsByTagName('HEAD')[0].id="head"; 
     document.body.oncontextmenu=(e)=>{return false;};
-    transmettre("ready", "");
+    if (socket.readyState == 1) {
+        transmettre("ready", "");
+    }
+    else {
+        readySent = false;
+    }
 });
 
 
