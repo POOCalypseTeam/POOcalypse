@@ -1,5 +1,6 @@
 import sqlite3
 
+import wsinter
 from web.main_web import add_image, change_text
 
 DIALOGS_PATH = "content/data/lang/%LANG%/dialogs.db"
@@ -85,15 +86,20 @@ class Interactable:
         pass
 
 class Npc(Interactable):
-    def __init__(self, position: tuple, img_path: str, dialogs: str = "", distance: int = 50):
+    def __init__(self, ws: wsinter.Inter, position: tuple, img_path: str, dialogs: str = "", distance: int = 30):
+        self.ws = ws
+        
         self.x = position[0]
         self.y = position[1]
+        self.distance = distance
         
         if dialogs != "":
             self.dialogs = dialog_parse(dialogs)
             self.dialog_step = 0
+            self.choices = self.get_dialog()[1].keys()
+            self.choice = 0
         
-        self.distance = distance
+        self.opened = False
         
         self.id = add_image(img_path, (self.x, self.y))
         
@@ -105,21 +111,54 @@ class Npc(Interactable):
         
         Ici, elle affiche le dialogue a l'ecran
         """
+        self.opened = True
+        self.ws.attributs("dialogs", style={"display":"grid"})
+        
+        # On remet le dialogue au debut
+        self.dialog_step = 0
+        self.choices = list(self.get_dialog()[1].keys())
+        self.choice = 0
+        
         dialog = self.get_dialog()
         change_text("dialog-content", dialog[0])
         
+        self._display_dialog()
+        
     def is_opened(self):
-        # TODO: Mieux gerer ca mdr
-        return True
+        return self.opened
     
     def key(self, key: str):
-        # TODO: Faire vraiment, pour l'instant c'est un simple apercu
+        # TODO: Corriger, le dialog_step ne correspond pas a ce qu'il faut, et on peut aller chercher une cle d'un entier
         if key == 'ArrowLeft':
+            self.ws.attributs(self.choices[self.choice], style={"text-decoration":"none"})
             self.choice -= 1
+            if self.choice < 0:
+                self.choice = len(self.choices) - 1
+            self.ws.attributs(self.choices[self.choice], style={"text-decoration":"underline"})
         elif key == 'ArrowRight':
+            self.ws.attributs(self.choices[self.choice], style={"text-decoration":"none"})
             self.choice += 1
+            if self.choice >= len(self.choices):
+                self.choice = 0
+            self.ws.attributs(self.choices[self.choice], style={"text-decoration":"underline"})
         elif key == 'Enter':
+            if self.dialog_step >= len(self.dialogs):
+                self.opened = False
+                self.ws.attributs("dialogs", style={"display":"none"})
+                return
+            self.choices = list(self.get_dialog()[1][self.choices[self.choice]].keys())
             self.dialog_step += 1
+            self.choice = 0
+            
+    def _display_dialog(self):
+        self.ws.remove_children("choices")
+        
+        for choice in list(self.choices):
+            style = {}
+            if choice == self.choices[self.choice]:
+                style["text-decoration"] = "underline"
+            self.ws.insere(choice, "li", style=style, parent="choices")
+            self.ws.inner_text(choice, choice)
         
     def get_dialog(self):
         return self.dialogs[self.dialog_step]

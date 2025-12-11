@@ -10,10 +10,11 @@ def add_image(path: str, position: tuple, size: tuple=None):
     Ajoute l'image pointee par path sur la page
     
     Parametres:
-    
-        - path : Chemin vers l'image relatif au dossier /src/content
-        - position : Position pour l'image sur la page sous la forme d'un tuple (x, y)
-        - size : Taille de l'image, 0 pour la taille native de l'image, sous la forme d'un tuple (w, h)
+        - path: Chemin vers l'image relatif au dossier /src/content
+        
+        - position: Position pour l'image sur la page sous la forme d'un tuple (x, y)
+        
+        - size: Taille de l'image, 0 pour la taille native de l'image, sous la forme d'un tuple (w, h)
     
     Renvoie l'id de l'image
     """
@@ -29,6 +30,9 @@ def add_image(path: str, position: tuple, size: tuple=None):
     return img_id    
     
 def change_dimensions(id: str, position: tuple=None, size: tuple=None):
+    """
+    Change la position et ou la taille de l'element dans la page
+    """
     if position == None and size == None:
         raise ValueError("BRUH, faut mettre des valeurs quand meme")
     style = {"position": "absolute"}
@@ -41,13 +45,16 @@ def change_dimensions(id: str, position: tuple=None, size: tuple=None):
     ws.attributs(id, style=style)
     
 def change_text(id: str, new_text: str):
+    """
+    Change l'attribut innerText de l'element designe par id avec newText
+    """
     ws.inner_text(id, new_text)
 
 def remove_html(id: str):
-    # TODO: Bien supprimer l'élément au lieu de le cacher
-    # demander modification wsinter car demande du JS mais pas opti de fare des injecte
-    # car ca créé un element script a chaque fois, pas renta
-    ws.attributs(id, style={"display": "none"})
+    """
+    Supprime l'element designe par id de la page
+    """
+    ws.remove(id)
 
 def set_window_size(_, size: list):
     """

@@ -41,14 +41,15 @@ class Game:
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
         self.web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
-            
+        
+        # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         self.player = Player((50, 50))
         
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
-        # On crée une lste de NPC pour pouvoir en gérer plusieurs
+        # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
         self.npc: list[Npc] = []
-        base_npc_1 = Npc((200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
-        base_npc_2 = Npc((150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
+        base_npc_1 = Npc(self.web_manager, (200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
+        base_npc_2 = Npc(self.web_manager, (150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
         self.npc.append(base_npc_1)
         self.npc.append(base_npc_2)
         
@@ -65,8 +66,9 @@ class Game:
             return
         match key:
             case 'KeyE':
-                self.interactable.interact()
-            case 'ArrowLeft', 'ArrowRight', 'Enter':
+                if not self.interactable.is_opened():
+                    self.interactable.interact()
+            case 'ArrowLeft' | 'ArrowRight' | 'Enter':
                 if self.interactable.is_opened():
                     self.interactable.key(key)
 

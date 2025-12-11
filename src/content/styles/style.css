@@ -1,5 +1,7 @@
-body {
-    height: 100vh;
+* {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 #action-bar {
@@ -19,15 +21,24 @@ body {
     position: absolute;
     left: 0;
     bottom: 0;
-    margin-bottom: 10px;
-    width: 100%;
+    margin: 10px 0.5% 20px 0.5%;
+    padding: 10px 0;
+    width: 99%;
 
-    background-color: gray;
+    /* Change en grid par le serveur */
+    display: none;
+    grid-template-columns: 1fr auto;
+
+    background-color: #EAC797;
+    border-width: 10px;
+    border-radius: 5px;
+    border-color: #936B3E;
 }
 
-p#dialog {
+#dialogs > * {
     font-size: 26px;
-    font-weight: bold;
+    color: #936B3E;
+    margin: 10px;
 }
 
 img {

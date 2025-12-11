@@ -108,6 +108,12 @@ function faire(o){
         {
             elem.parentNode.removeChild(elem);
         }
+        else if (type == "children" && elem != null)
+        {
+            while (elem.firstChild){
+                elem.removeChild(elem.lastChild);
+            }
+        }
         else if (type == "content" && elem != null)
         {
             elem.innerText = data;
@@ -142,7 +148,10 @@ function faire(o){
             {
                 parent.appendChild(elem);
             }
-        }        
+        }
+        else {
+            console.log("Couldn't handle the request. Type: " + type);
+        }
     }
 }
 
@@ -712,13 +721,16 @@ function faire(o){
         if style != {}:
             self._push([{"id":id_objet,"type":"style","data":{"style":style}}])
             
-    def remove(self,id_objet):
+    def remove(self,id_objet:str):
         self._push([{"id":id_objet,"type":"delete"}])
+        
+    def remove_children(self,id_objet:str):
+        self._push([{"id":id_objet,"type":"children"}])
     
     def inner_text(self,id_objet:str,inner_text:str):
         self._push([{"id":id_objet,"type":"content","data":inner_text}])
 
-    def insere(self, id_objet:str, balise: str,attr:dict={},style:dict={},parent:str="body"):
+    def insere(self, id_objet:str,balise:str,attr:dict={},style:dict={},parent:str="body"):
         """
         Insère un élément sur la page, dans l'élément dont l'id est spécifié par parent
 
