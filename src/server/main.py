@@ -7,6 +7,7 @@ from player import Player
 import web.main_web # start
 from web.inputs.keyboard import Keyboard
 import web.inputs.mouse
+from boardlaunch import *
 
 game = None
 
@@ -35,6 +36,7 @@ class Game:
         """
         Point d'entree du programme quand on lance le serveur
         """        
+        global idimg
         self.web_manager = web.main_web.start()
         
         # Gestionnaires inputs
