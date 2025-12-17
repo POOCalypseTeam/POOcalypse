@@ -1,3 +1,5 @@
+from math import sqrt, atan2, sin, cos
+
 from web.main_web import add_image, change_dimensions, get_window_size
 from random import randint
 
@@ -19,21 +21,26 @@ class Player:
         
         self.movement_vector = [0, 0]
         # Changés par le sol / environnement
-        self.max_movement = (1, 1)
+        self.max_movement = 1
         self.friction_coef = 0.8
         
     def move_range(self, movement: tuple):
+        """
+        Cette fonction ajoute a self.movement_vector le vecteur movement, passe en parametre
+        
+        Elle ajuste cette somme pour ne pas exceder le mouvement maximum
+        """
+        # On calcule la distance qui serait parcourue
         self.movement_vector[0] += movement[0]
-        if self.movement_vector[0] < 0 and self.movement_vector[0] < -1 * self.max_movement[0]:
-            self.movement_vector[0] = -1 * self.max_movement[0]
-        if self.movement_vector[0] > 0 and self.movement_vector[0] > self.max_movement[0]:
-            self.movement_vector[0] = self.max_movement[0]
-
         self.movement_vector[1] += movement[1]
-        if self.movement_vector[1] < 0 and self.movement_vector[1] < -1 * self.max_movement[1]:
-            self.movement_vector[1] = -1 * self.max_movement[1]
-        if self.movement_vector[1] > 0 and self.movement_vector[1] > self.max_movement[1]:
-            self.movement_vector[1] = self.max_movement[1]
+        distance = sqrt(self.movement_vector[0] ** 2 + self.movement_vector[1] ** 2)
+        if distance <= self.max_movement:
+            return
+        # On calcule l'angle de deplacement
+        a = atan2(-self.movement_vector[1], self.movement_vector[0])
+        # On calcule les nouveaux x et y
+        self.movement_vector[0] = cos(a)
+        self.movement_vector[1] = -sin(a)
             
     def update(self, delta_time: float, keys: list):
         """
