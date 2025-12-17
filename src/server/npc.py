@@ -94,10 +94,14 @@ class Npc(Interactable):
         self.distance = distance
         
         if dialogs != "":
-            self.dialogs = dialog_parse(dialogs)
-            self.dialog_step = 0
+            """Liste de tuples de chaine et de dictionnaire"""
+            self.dialogs: list[tuple[str, dict[str, int]]] = dialog_parse(dialogs)
+            # Indice dans self.dialogs, il evolue au cours des echanges
+            self.dialog_step: int = 0
+            # Choix possibles pour l'utilisateur
             self.choices = self.get_dialog()[1].keys()
-            self.choice = 0
+            # Indice das self.choices
+            self.choice: int = 0
         
         self.opened = False
         
@@ -128,7 +132,6 @@ class Npc(Interactable):
         return self.opened
     
     def key(self, key: str):
-        # TODO: Corriger, le dialog_step ne correspond pas a ce qu'il faut, et on peut aller chercher une cle d'un entier
         if key == 'ArrowLeft':
             self.ws.attributs(self.choices[self.choice], style={"text-decoration":"none"})
             self.choice -= 1
@@ -142,15 +145,18 @@ class Npc(Interactable):
                 self.choice = 0
             self.ws.attributs(self.choices[self.choice], style={"text-decoration":"underline"})
         elif key == 'Enter':
-            if self.dialog_step >= len(self.dialogs):
+            if self.dialog_step >= len(self.dialogs) or len(self.choices) == 0:
                 self.opened = False
                 self.ws.attributs("dialogs", style={"display":"none"})
                 return
-            self.choices = list(self.get_dialog()[1][self.choices[self.choice]].keys())
-            self.dialog_step += 1
+            self.dialog_step = self.get_dialog()[1][self.choices[self.choice]]
+            self.choices = list(self.get_dialog()[1].keys())
             self.choice = 0
+            self._display_dialog()
             
     def _display_dialog(self):
+        self.ws.inner_text("dialog-content", self.get_dialog()[0])
+        
         self.ws.remove_children("choices")
         
         for choice in list(self.choices):
