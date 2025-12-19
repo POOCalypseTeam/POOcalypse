@@ -29,6 +29,9 @@ def add_image(path: str, position: tuple, size: tuple=None):
     ws.insere(img_id, "img", attr={'src':f'../{path}'}, style=style)
     last_img_id += 1
     return img_id
+
+def change_image(id, img):
+    ws.attributs(id, attr = {'src' : f'../{img}'})
     
 def change_dimensions(id: str, position: tuple=None, size: tuple=None):
     if position == None and size == None:
@@ -82,7 +85,5 @@ window.addEventListener("resize", (e) => {
     
     return ws
 
-def change_image(src):
-    ws.attributs(id, attr, style)
 
     

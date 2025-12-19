@@ -1,7 +1,11 @@
-from web.main_web import add_image, change_dimensions, get_window_size
+from web.main_web import add_image, change_dimensions, get_window_size, change_image
 from random import randint
 
 IMG_PATH = "assets/spritesheets/blonde_man/blonde_man_001.png"
+IMG_LEFT = 'assets/spritesheets/blonde_man/blonde_man_005.png'
+IMG_RIGHT = 'assets/spritesheets/blonde_man/blonde_man_009.png'
+IMG_TOP = 'assets/spritesheets/blonde_man/blonde_man_013.png'
+IMG_BOTTOM = 'assets/spritesheets/blonde_man/blonde_man_017.png'
 IMG_SIZE = 32
 MOVE_AMOUNT = 10
 MIN_X = 0
@@ -49,7 +53,16 @@ class Player:
             movement[0] *= delta_time
             movement[1] *= delta_time
             self.move_range(movement)
+            if movement[0] > 0:
+                change_image(self.id, IMG_RIGHT)
+            elif movement[0] < 0:
+                change_image(self.id, IMG_LEFT)
+            elif movement[1] > 0 :
+                change_image(self.id, IMG_BOTTOM)
+            elif movement[1] < 0:
+                change_image(self.id, IMG_TOP)
             
+        
         self.move(self.movement_vector)
         self.render()
         
