@@ -45,7 +45,10 @@ class Game:
             
         self.player = Player((50, 50))
         self.web_manager.attributs(self.player.id, style={"z-index": 10})
-        
+        self.a = Board(0)
+        self.a.load()
+        self.web_manager.insere("div_board", "div",{"z-index":0,"position":"absolute","top":"0px","left":"0px"})
+
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()

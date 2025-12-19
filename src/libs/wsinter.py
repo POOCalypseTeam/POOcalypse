@@ -28,7 +28,7 @@ class Inter:
 
         interface=Inter()
 
-        interface.demarre(page="page.html")
+        interface.demarre(page="page.html",clavier=False)
 
         interface.gestionnaire_souris(lambda m, d: m=="D" and interface.injecte('alert("Clic !")'))
 
@@ -38,9 +38,14 @@ class Inter:
     _ws_port = 5056
     _chemin_js = "/js"
     _js = """let socket = new WebSocket("ws://127.0.0.1:_ws_port");
+let readySent = true;
 
 socket.onopen = function(e) {
   console.log("[open] Connection established");
+  if (readySent == false)
+  {
+      transmettre("ready", "");
+  }
 };
 
 socket.onmessage = function(event) {
@@ -78,37 +83,74 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementsByTagName('BODY')[0].id="body"; 
     document.getElementsByTagName('HEAD')[0].id="head"; 
     document.body.oncontextmenu=(e)=>{return false;};
+    if (socket.readyState == 1) {
+        transmettre("ready", "");
+    }
+    else {
+        readySent = false;
+    }
 });
 
 
 function faire(o){
     for (dico of o)
     {
+        if (dico["type"] == undefined)
+        {
+            continue;
+        }
+        
         let elem = document.getElementById(dico["id"]);
         let data = dico["data"];
-
-        if ((elem == null) && (dico["tagName"] != undefined))
+        let type = dico["type"];
+        
+        if (type == "delete" && elem != null)
+        {
+            elem.parentNode.removeChild(elem);
+        }
+        else if (type == "children" && elem != null)
+        {
+            while (elem.firstChild){
+                elem.removeChild(elem.lastChild);
+            }
+        }
+        else if (type == "content" && elem != null)
+        {
+            elem.innerText = data;
+        }
+        else if (type == "attributes" && elem != null)
+        {
+            for (attr in data)
+            {
+                elem[attr]=data[attr];
+            }
+        }
+        else if (type == "style" && elem != null)
+        {
+            for (sattr in data["style"])
+            {
+                elem.style[sattr] = data["style"][sattr]; 
+            }
+        }
+        else if (type == "create" && (elem == null) && (dico["tagName"] != undefined))
         {
             elem = document.createElement(dico["tagName"]);
             for (attr in data)
             {
                 elem[attr]=data[attr];
             }
-            document.body.appendChild(elem);
-        }
-        else
-        {
-            for (attr in data)
+            let parent = document.getElementById(dico["parent_id"]);
+            if ((parent == null) || (parent == undefined))
             {
-                if (attr!="style")
-                {
-                    elem[attr]=data[attr];
-                }
+                parent = document.body;
+            }
+            if (parent != null)
+            {
+                parent.appendChild(elem);
             }
         }
-        for (sattr in data["style"])
-        {
-            elem.style[sattr] = data["style"][sattr]; 
+        else {
+            console.log("Couldn't handle the request. Type: " + type);
         }
     }
 }
@@ -137,13 +179,16 @@ function faire(o){
         self._continuer = True # passe à False pour quitter le serveur une fois que toutes les donnés du socket ont été purgées
 
         self._page_dem=None
-        self._handlers = {"_mh": lambda s,d: None, "_kh":lambda s,d: None}
+        self._handlers = {"_mh": ((lambda s,d: None),False), "_kh":((lambda s,d: None),False)}
 
         self._htresponse = {}
 
         self.reponse_http(Inter._chemin_js, lambda c,p: (Inter._js.replace("_ws_port",str(self._ws_port),1),"js"))
 
         self._threads_fils=[]
+
+        self.ready: bool = False
+        self.pending: list[str] = []
 
     def gestionnaire(self, message:str,handler:callable,nonbloc:bool=False):
         """
@@ -155,14 +200,28 @@ function faire(o){
 
         Valeur renvoyée : None
 
-        Après le démarrage de l'interface, tous les appels javacript de la fonction 
-        transmission, définie dans la page d'interface par ce module, sont interceptés.
+        Après le démarrage de l'interface, tous les appels javacript de transmission sont interceptés.
         Lorsque l'on intercepte transmission(m,o) avec m=message, l'interface déclenchent un appel de
         handler(m,o)
         """
         self._handlers[message] = (handler, nonbloc)
 
-    def gestionnaire_souris(self, handler:callable):
+    def gss(self, handler:callable):
+        """
+        Définit un gestionnaire de souris simple
+        Paramètres :
+          - handler : fonction à trois paramètres appelée lors d'une pression sur un bouton de la souris
+
+        Valeur renvoyée : None
+
+        Les pararmètres passés à handler sont
+          - objet   : l'id de l'objet qui a reçu le clic
+          - x       : abscisse dans l'objet du pointeur  au moment du clic, en pixel
+          - y       : ordonnée dans l'objet du pointeur  au moment du clic, en pixel        
+        """
+        self._handlers["_mh"] = ((lambda e,p: handler(p[0],p[2],p[3]) if e=="D" else None),True)
+
+    def gestionnaire_souris(self, handler:callable,nonbloc:bool=False):
         """
         Définit le gestionnaire de la souris
         Paramètres :
@@ -251,6 +310,10 @@ function faire(o){
         """
         if page is not None:
             self._page_dem=page
+        else:
+            self.reponse_http("/_default.html", lambda c,p: ("""<!doctype html>\n<html lang="fr">\n    <head>\n        <title>wsinter</title>\n    </head>\n    <body>\n    </body>\n</html>\n""","html"))
+
+            self._page_dem="_default.html"
 
         self.wss_instance = threading.Thread(target=self.wss)
         self.http_instance = threading.Thread(target=self.servir)
@@ -263,6 +326,14 @@ function faire(o){
 
         if clavier: self.init_clavier()
         if souris:  self.init_souris()
+
+        self.gestionnaire("ready", self._ready)
+
+    def _ready(self, _m, _o):
+        self.ready = True
+        for pending in self.pending:
+            self._envoi(pending)
+        del self._handlers["ready"]
 
     def stop(self,fermer:bool=True):
         """
@@ -299,8 +370,8 @@ function faire(o){
         quand le serveur http reçoit une requête de la forme "localhost/req?param_1=va_l1&param_2=val_2&...",
         il appelle gen(req,d), où dictionnaire est le dictionnaire {param_k:val_k}
         
-        Cette fonction renvoie un tuple (contenu,extension), par exemple
-        ( \"\"\"<!doctype html>\n<html lang="fr"><head><title>Réponse</title></head><body>Rien...</body></html>\"\"\", "html")
+        Cette fonction renvoie un tuple (extension, contenu), par exemple
+        ( "html", `"`"`"<!doctype html>\n<html lang="fr"><head><title>Réponse</title></head><body>Rien...</body></html>`"`"`")
         
         Le contenu est envoyé à l'interface, comme réponse à la requête.
         
@@ -309,12 +380,6 @@ function faire(o){
           - associées à un contenu de type str : htm, html, css, js, csv, json, svg, html, xml
         """ 
         self._htresponse[req]=gen
-        
-    def touches(self):
-        """
-        Renvoie une liste de touches appuyees en cet instant
-        """
-        return self.pressed_keys
 
     def servir(self,ip : str = '127.0.0.1', port : int = 5080, max_conn : int = -1) -> None:
         """
@@ -424,7 +489,8 @@ function faire(o){
                 return bytes('HTTP/1.1 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\nContent-Length:17\r\n\r\nPas trouvé !\r\n\r\n','utf-8')
             else:
                 if extension.lower() == "html" :
-                    contenu = contenu.replace(b'</head>',b'<script src="'+bytes(Inter._chemin_js,"utf-8")+b'"></script></head>')
+#                    contenu = contenu.replace(b'</head>',b'<script src="/js"></script></head>')
+                    contenu = contenu.replace(b'</head>',b'<script src="'+bytes(self._chemin_js,'utf-8')+b'"></script></head>')
                 return empaqueter(contenu, extension)
         
         # mise en place du socket «s» en écoute sur (ip, port)
@@ -452,7 +518,7 @@ function faire(o){
             t.settimeout(0.05)
 
             try:
-                req = t.recv(4096)
+                req = t.recv(2048)
             except socket.timeout:
                 pass
     #            print ('Timeout !')
@@ -484,8 +550,8 @@ function faire(o){
                         
                         non_binaire = typemime(ext)[1]
                         if non_binaire:
-                            if ext=="html":
-                                resp = resp.replace('</head>','<script src="'+Inter._chemin_js+'"></script></head>')
+                            if ext == 'html':
+                                resp = resp.replace('</head>','<script src="'+self._chemin_js+'"></script></head>')
                             contenu = bytes(resp,'utf-8')
                         else:
                             contenu = resp
@@ -607,17 +673,15 @@ function faire(o){
                 self.liste_connect.append(t)
                 # on débloque demarre une fois la connexion WS établie
                 if self.ws_actif is None:
-                    self.ws_actif=t
                     self._verrou_ws.release()
-                else:
-                    self.ws_actif=t
+                self.ws_actif=t
         print("Arrêt du serveur ws")
 
     def _envoi(self, chaine:str):
         """
         envoie chaine en websocket
         """
-        t=self.ws_actif
+        t=self.ws_actif # TODO : exception file closed quand on ferme la page dans une boucle asynchrone
         taille = len(chaine)
         if taille < 126:
             return t.send(bytes([129,taille])+chaine.encode(encoding="utf-8"))
@@ -636,7 +700,11 @@ function faire(o){
         Envoie la représentation json d'un objet.
         Côté javascript, faire() prend en charge une liste de dictionnaires seulement.
         """
-        self._envoi(json.dumps(o))
+        data = json.dumps(o)
+        if self.ready:
+            self._envoi(data)
+        else:
+            self.pending.append(data)
 
     def attributs(self,id_objet,attr={},style={}):
         """
@@ -649,27 +717,39 @@ function faire(o){
         Valeur renvoyée : None
         """
         if attr != {}:
-            self._push([{"id":id_objet,"data":attr}])
+            self._push([{"id":id_objet,"type":"attributes","data":attr}])
         if style != {}:
-            self._push([{"id":id_objet,"data":{"style":style}}])        
+            self._push([{"id":id_objet,"type":"style","data":{"style":style}}])
+            
+    def remove(self,id_objet:str):
+        self._push([{"id":id_objet,"type":"delete"}])
+        
+    def remove_children(self,id_objet:str):
+        self._push([{"id":id_objet,"type":"children"}])
+    
+    def inner_text(self,id_objet:str,inner_text:str):
+        self._push([{"id":id_objet,"type":"content","data":inner_text}])
 
-    def insere(self, id_objet:str, balise: str,attr:dict={},style:dict={}):
+    def insere(self, id_objet:str,balise:str,attr:dict={},style:dict={},parent:str="body"):
         """
-        Insère un élément sur la page, dans <body>
+        Insère un élément sur la page, dans l'élément dont l'id est spécifié par parent
 
         Paramètres:
           - id_objet: attribut id de l'objet créé
           - balise: balise de l'objet créé
-          - attr: dictionnaire attribut:valeur définissant les attributs de l'objet créé
-          - style: dictionnaire attribut:valeur définissant les attributs de style de l'objet créé
-              
+          - attr: dictionnaire attribut:valeur définissant les atributs de l'objet créé
+          - style: dictionnaire attrobut:valeur définissant les attributs de style de l'objet créé
+          - parent: id de l'objet où insérer l'élément créé (default: body)
+          
         Valeur renvoyée : None
         """
-        self._push([{'id':'_nobj','tagName':balise,'data':{'id':id_objet}}])
+        l = []
+        l.append({'id':'_nobj','type':'create','tagName':balise,'parent_id':parent,'data':{'id':id_objet}})
         if attr != {}:
-            self._push([{"id":id_objet,"data":attr}])
+            l.append({"id":id_objet,'type':'attributes',"data":attr})
         if style != {}:
-            self._push([{"id":id_objet,"data":{"style":style}}])
+            l.append({"id":id_objet,'type':'style',"data":{"style":style}})
+        self._push(l)
 
     def injecte(self,code:str)->None:
         """
@@ -684,16 +764,12 @@ function faire(o){
             Si la page web contient un élément <input> dont l'attribut id vaut "PIN",
             on peut récupérer sa valeur dans le programme python comme suit:
             
+            # définir quoi faire de la valeur, ici l'afficher avec print
             interface.gestionnaire("recup_pin",lambda m,p: print(p))
+            # envoi du code javascript faisant envoyer la valeur par la page
             interface.injecte('transmettre("recup_pin",PIN.value)')          
-
-            La première ligne indique à l'interface qu'elle devra réagir à l'événement
-            «recup_pin» en affichant l'objet p reçu avec l'événement
-            
-            La seconde ligne déclenche dans le navigateur l'événement recup_pin accompagné
-            de l'attribut value de l'objet PIN de la page.
                 """
-        self._push([{'id':'_new_script','tagName':'script','data':{'innerHTML':code}}])
+        self._push([{'id':'_new_script','type':'create','tagName':'script','data':{'innerHTML':code}}])
 
     def _process(self,chaine:str):
         """
@@ -705,25 +781,20 @@ function faire(o){
         except:
             print("Erreur à l'analyse des données")
         
-        if data[0]=="**MD**":
-#            print("MD event")
-            self._handlers["_mh"][0](data[0][3],data[1])
-        elif data[0]=="**MU**":
-#            print("MU event")
-            self._handlers["_mh"][0](data[0][3],data[1])
-        elif data[0]=="**KD**":
-#            print("KD event")
-            self._handlers["_kh"][0](data[0][3],data[1])
-        elif data[0]=="**KU**":
-#            print("KU event")
-            self._handlers["_kh"][0](data[0][3],data[1])
-        elif data[0] in self._handlers and self._handlers[data[0]] is not None:
-            handler,nonbloc = self._handlers[data[0]]
+        if data[0] in ["**MD**","**MU**","**KD**","**KU**"] or (data[0] in self._handlers and self._handlers[data[0]] is not None):
+            if data[0] in ["**MD**","**MU**","**KD**","**KU**"]:
+                he = "_"+str.lower(data[0][2])+"h"
+                hd = data[0][3]
+            else:
+                he = data[0]
+                hd = data[0]
+
+            handler,nonbloc = self._handlers[he]
             if nonbloc:
-                handler_thread = threading.Thread(target=lambda : handler(data[0][3],data[1]))
+                handler_thread = threading.Thread(target=lambda : handler(hd,data[1]))
                 self._threads_fils.append(handler_thread)
                 handler_thread.start()
             else:
-                handler(data[0],data[1])
+                handler(hd,data[1])
         else:
             print("Message :", data[0], "; Données :", data[1])

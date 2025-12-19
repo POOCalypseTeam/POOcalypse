@@ -1,5 +1,6 @@
 from web.main_web import add_image, change_dimensions, get_window_size
 import json
+from wsinter import *
 
 map = [["000","251","000"],
        ["251","000","251"],
