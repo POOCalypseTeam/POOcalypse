@@ -22,10 +22,7 @@ class Player:
         # Changés par le sol / environnement
         self.max_movement = 1
         self.friction_coef = 0.8
-        
-    # TODO: Si le joueur va en diagonale, il peut aller plus vite
-    # Soit regarder si la distance parcourue depasse celle voulue, si oui
-    # Soit faire un angle et une vitesse de déplacement au lieu d'un vecteur (cartésien -> polaire)
+
     def move_range(self, movement: tuple):
         """
         Cette fonction ajoute a self.movement_vector le vecteur movement, passe en parametre

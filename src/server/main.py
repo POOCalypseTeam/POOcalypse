@@ -41,6 +41,8 @@ class Game:
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
         self.web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
+
+        time.sleep(0.5)
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         self.player = Player((50, 50))
@@ -112,7 +114,7 @@ class Game:
         """
         self.do_loop = False
         self.loop_thread.join()
-        self.web_manager.stop(fermer=False)
+        self.web_manager.stop()
     
 # On verifie que le programme n'est pas importe mais bien lance
 if __name__ == "__main__":
