@@ -41,8 +41,6 @@ class Game:
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
         self.web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
-
-        time.sleep(0.5)
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         self.player = Player((50, 50))
@@ -95,7 +93,9 @@ class Game:
             
             keys = self.keyboard_manager.get_keys()
             
-            self.player.update(delta_time, keys)
+            # On ne bouge pas si une interaction est en cours
+            if self.interactable is None or not self.interactable.is_opened():
+                self.player.update(delta_time, keys)
             
             self.interactable = None
             for npc in self.npc:
