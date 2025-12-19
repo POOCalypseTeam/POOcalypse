@@ -26,7 +26,7 @@ def animer():
         x+=1
         ws.attributs('img01',style={"left":str(x)+"px"})
        
-def add_image(path: str, position: tuple, size: tuple=None, zindex: int=None, parent=None):
+def add_image(path: str, position: tuple, size: tuple=None, zindex: int=None, parent="body"):
     """
     Ajoute l'image pointee par path sur la page
     
@@ -48,7 +48,7 @@ def add_image(path: str, position: tuple, size: tuple=None, zindex: int=None, pa
     if zindex != None:
         style["z-index"] = str(zindex)
     img_id = "img" + str(last_img_id)
-    ws.insere(img_id, "img", attr={'src':f'../{path}'}, style=style)
+    ws.insere(img_id, "img", attr={'src':f'../{path}'}, style=style, parent=parent)
     last_img_id += 1
     return img_id
     
