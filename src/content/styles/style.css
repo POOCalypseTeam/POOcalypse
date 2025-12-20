@@ -45,6 +45,29 @@ img {
     image-rendering: pixelated;
 }
 
+/* Player */
 #img0 {
-    transition: top 50ms, left 50ms;
+    transition: top 50ms linear, left 50ms linear;
+    /* margin-left = (60px - 32px) / 2 
+    60px = health-bar.width
+    32px = self.width */
+    margin-left: 14px;
+}
+
+#health-bar {
+    border-width: 2px;
+    border-color: black;
+    border-style: solid;
+    background-color: dimgray;
+
+    height: 10px;
+    width: 60px;
+}
+
+#health {
+    background-color: crimson;
+    transition: right ease 100ms;
+
+    height: 10px;
+    width: 60px;
 }

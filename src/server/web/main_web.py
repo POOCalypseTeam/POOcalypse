@@ -3,7 +3,7 @@ import wsinter
 window_width = 1080
 window_height = 720
 
-last_img_id = 0
+last_img_id = 1
        
 def add_image(path: str, position: tuple, size: tuple=None):
     """
