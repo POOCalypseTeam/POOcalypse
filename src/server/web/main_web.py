@@ -81,8 +81,8 @@ def get_window_size():
 
 def start() -> wsinter.Inter:
     global ws
-    ws = wsinter.Inter()
-    ws.demarre(page="content/pages/index.html", clavier=True)
+    ws = wsinter.Inter("content/pages/index.html")
+    ws.demarre(clavier=True)
     
     # Permet d'avoir la taille de la fenetre en temps reel
     ws.gestionnaire("get_window_size", set_window_size)

@@ -17,23 +17,12 @@ import json # dumps, loads
 # lancer le navigateur
 import webbrowser # open
 
+class StopInter(Exception): pass
+
 class Inter:
     """
     Interface par une page web, dont les éléments sont manipulables et consultables 
     depuis python, à qui elle envoie tous ses événements clavier et souris.
-    
-    Exemple:
-    
-        from wsinter import Inter
-
-        interface=Inter()
-
-        interface.demarre(page="page.html",clavier=False)
-
-        interface.gestionnaire_souris(lambda m, d: m=="D" and interface.injecte('alert("Clic !")'))
-
-        interface.insere("message","p",{"innerHTML":"Page qui réagit au clic par un message."})
-
     """
     _ws_port = 5056
     _chemin_js = "/js"
@@ -153,17 +142,33 @@ function faire(o){
             console.log("Couldn't handle the request. Type: " + type);
         }
     }
-}
+};
+
+const ueh = (event) => {
+  event.preventDefault();
+  event.returnValue = true;
+};
 
 """
 
-    def __init__(self):
+    def __init__(self,page:str=None):
         """
         Initialise une instance de Inter
         
-        Paramètres : aucun
+        Paramètres :
+          - page : URL de la page d'interface à charger un démarrage.
+            Le chemin est relatif, donné à partir du dossier d'exécution du script.
         
         Valeur renvoyée : self
+        
+        Lorsqu'aucune page n'est indiquée en paramètre, l'interface est générée automatiquement par le serveur,
+        c'est une page vide à la racine du site.
+        
+        Lorsqu'une page est indiquée, elle peut être interceptée par un générateur défini par la méthode reponse_http.
+        Sinon, le fichier est cherché sur le disque dur.
+        
+        Dans les deux cas, le code javascript nécessaire à l'interface est automatiquement injecté juste avant
+        la balise </head>, qui doit être écrite en minuscules.
         """
         
         self._verrou_ws = threading.Lock()
@@ -176,10 +181,16 @@ function faire(o){
         self.wss_on = True      # drapeau de la boucle du serveur wss
         self.ws_actif = None    # dernier socket ws ouvert
 
+        self.ready: bool = False
+        self.pending: list[str] = []
+
         self._continuer = True # passe à False pour quitter le serveur une fois que toutes les donnés du socket ont été purgées
 
-        self._page_dem=None
-        self._handlers = {"_mh": ((lambda s,d: None),False), "_kh":((lambda s,d: None),False)}
+        self._handlers = {  "_mh": ((lambda s,d: None),False), 
+                            "_kh":((lambda s,d: None),False),
+                            "_skh":((lambda k: None),False)}
+
+        self._touches = {}
 
         self._htresponse = {}
 
@@ -187,8 +198,27 @@ function faire(o){
 
         self._threads_fils=[]
 
-        self.ready: bool = False
-        self.pending: list[str] = []
+        self._page_dem=page
+
+        self._dem_page_loaded = False
+
+        self._stop_handler = lambda : print("Extinction.")
+
+        self._stopped=False
+
+    def touches(self):
+        """
+        Renvoie un dictionnaire dont l'ensemble des clés est l'ensemble des touches actuellement pressées.
+        Paramètres : aucun.
+        
+        Valeur renvoyée : un dicitonnaire dont les clés sont les KeyCode des touches actuellement pressées.
+        
+        Pré-requis : avec initialisé le clavier et mis en place un gestionnaire simple avec Inter().gcs
+        
+        La valeur associée à une clé de ce dictionnaire est la liste transmise par l'interface, celle qui
+        est passée en paramètre p au gestionnaire défini par la méthode gestionnaire_clavier.
+        """
+        return self._touches
 
     def gestionnaire(self, message:str,handler:callable,nonbloc:bool=False):
         """
@@ -216,10 +246,54 @@ function faire(o){
 
         Les pararmètres passés à handler sont
           - objet   : l'id de l'objet qui a reçu le clic
-          - x       : abscisse dans l'objet du pointeur  au moment du clic, en pixel
-          - y       : ordonnée dans l'objet du pointeur  au moment du clic, en pixel        
+          - x       : abscisse dans l'objet du pointeur au moment du clic, en pixel
+          - y       : ordonnée dans l'objet du pointeur au moment du clic, en pixel        
         """
         self._handlers["_mh"] = ((lambda e,p: handler(p[0],p[2],p[3]) if e=="D" else None),True)
+
+    def _kh(self,e,p):
+        """
+        handler clavier pour gcs : 
+         - filtre les "U" 
+         - gère Inter()._touches
+         - effectue l'appel bloquant ou non du handler simple
+        """
+        touches = self._touches
+
+        if e=="D":
+            touches[p[5]]=p
+            key=p[4]
+        if e=="U":
+            if p[5] in touches:
+                del touches[p[5]]
+            key=''
+
+        handler,nonbloc = self._handlers["_skh"]
+        if nonbloc:
+            handler_thread = threading.Thread(target=lambda : handler(key))
+            self._threads_fils.append(handler_thread)
+            handler_thread.start()
+        else:
+            handler(key)
+
+    def gcs(self, handler:callable=lambda _: None,nonbloc:bool=True):
+        """
+        Définit un gestionnaire de clavier simple
+        Paramètres :
+          - handler : fonction à un paramètre appelée lors d'une pression sur une touche
+
+        Valeur renvoyée : None
+
+        Le pararmètres passé à handler est une chaîne qui indique la touche pressée.
+
+        En cas de pressions multiples, on peut obtenir l'ensemble des KeyCode des touches 
+        actuellement pressées comme l'ensemble des clés du dictionnaire renvoyé par
+        la méthode touches()
+        
+        Lorsque gcs est appelée sans paramètre, seul le dictionnaire touches() est géré.
+        """
+        self._handlers["_kh"] = (self._kh,False)
+        self._handlers["_skh"] = (handler,nonbloc)
 
     def gestionnaire_souris(self, handler:callable,nonbloc:bool=False):
         """
@@ -237,6 +311,8 @@ function faire(o){
           - target.id : attribut id de l'objet qui a reçu le clic
           - buttons   : entier qui indique quels boutons sont pressés
           - layerX,layerY : coordonnées, en pixels, relativement au coin supérieur gauche de la page
+          
+        Le recours à cette méthode est inutile si l'on gère la souris avec gss.
         """
         self._handlers["_mh"] = (handler,False)
 
@@ -255,15 +331,22 @@ function faire(o){
         Le paramètre p passé à handler est la liste [altKey,ctrlKey,shiftKey,metaKey,key,code,repeat,timeStamp]
           - altKey,ctrlKey,shiftKey,metaKey : booléens indiquant si Alt, Control, Shift et Meta sont pressées
           - key : chaine de caractères représentant la saisie de caractère effectuée
-          - code : chaine de caractères représentant la touche pressée sur un clavier satandard Qwerty
+          - code : chaine de caractères représentant la touche pressée sur un clavier standard Qwerty
           - repreat : booléen indiquant si la touche est en train d'être maintenue
           - timeStamp : entier donnant la chronologie des événements
+          
+        Le recours à cette méthode est inutile si l'on gère le clavier avec gcs.
         """
         self._handlers["_kh"] = (handler,False)
 
     def init_souris(self):
         """
-        Configure l'interface pour intercepter les événements de la souris
+        Configure l'interface pour intercepter les événements de la souris.
+        
+        À exécuter avant la mise en place d'un gestionnaire de souris avec 
+        gestionnaire_souris ou gss.
+        
+        Effectué par défaut au démarrage de l'interface.
         """
         if self.ws_actif is None:
             raise Exception("WS inactif")
@@ -279,10 +362,18 @@ function faire(o){
 
     def init_clavier(self):
         """
-        Confirugre l'interface pour intercepter les événements du clavier
+        Configure l'interface pour intercepter les événements du clavier.
+        
+        Action à affectuer avant la mise en place d'un gestionnaire de clavier
+        avec gestionnaire_clavier ou gcs.
+        
+        Cette initialisation n'est pas effectuée par défaut au démarrage 
+        de l'interface.
         """
         if self.ws_actif is None:
             raise Exception("WS inactif")
+
+#        self._touches={}
 
         self.injecte("""
   document.body.addEventListener("keyup", (e) =>{
@@ -295,25 +386,26 @@ function faire(o){
   });
         """)
 
-    def demarre(self,page:str=None, clavier:bool=False, souris:bool=True):
+    def demarre(self, clavier:bool=False, souris:bool=True):
         """
         Lancer l'interface.
         Paramètres :
-          - page : URL de la page d'interface à charger.
-            Le chemin est relatif, donné à partir du dossier d'exécution du script.
           - clavier : booléen faisant lancer ou non la méthode init_clavier au démarrage
           - souris  : booléen faisant lancer ou non la méthode init_souris au démarrage
           
         Valeur renvoyée : None
 
-        La méthode attend la connexion de la page web d'interface à la boucle websocket.
+        La méthode attend la connexion de la page web d'interface à la boucle websocket,
+        puis rend la main au programme principal qui peut agir sur la page affichée par
+        le navigateur et définir les gestionnaires d'événement.
+        
+        Suivant les événements définis, il est possible de les faire s'exécuter dans la
+        boucle du serveur websocket, ou bien dans les thread séparés.
         """
-        if page is not None:
-            self._page_dem=page
-        else:
-            self.reponse_http("/_default.html", lambda c,p: ("""<!doctype html>\n<html lang="fr">\n    <head>\n        <title>wsinter</title>\n    </head>\n    <body>\n    </body>\n</html>\n""","html"))
-
-            self._page_dem="_default.html"
+                
+        if self._page_dem is None:
+            self.reponse_http("/", lambda c,p: ("""<!doctype html>\n<html lang="fr">\n    <head>\n        <title>wsinter</title>\n    </head>\n    <body>\n    </body>\n</html>\n""","html"))
+            self._page_dem=""
 
         self.wss_instance = threading.Thread(target=self.wss)
         self.http_instance = threading.Thread(target=self.servir)
@@ -323,6 +415,12 @@ function faire(o){
         # on attend la connexion de la page au serveur ws
         self._verrou_ws.acquire()
         self._verrou_ws.release()
+
+        self.injecte("window.addEventListener('beforeunload', ueh);")
+
+        self.injecte("""window.addEventListener("unload", (e) => {transmettre('**STOP**',null);});""")
+
+        self.gestionnaire("**STOP**",lambda m,p: self.stop(), False)
 
         if clavier: self.init_clavier()
         if souris:  self.init_souris()
@@ -335,25 +433,68 @@ function faire(o){
             self._envoi(pending)
         del self._handlers["ready"]
 
-    def stop(self,fermer:bool=True):
+    def gestionnaire_stop(self, handler:callable=lambda : print("Extinction.")):
+        """
+        Définit le gestionnaire prenant en charge la fermeture du programme.
+        Paramètres : gestionnaire à utiliser
+        
+        Valeur renvoyée : None
+        
+        La fonction passée en paramètre est appelée par la méthode stop() après l'extionction des thread
+        fils et l'arrêt des boucles des serveurs http et websocket.
+        
+        Le programme principal ne reçoit a priori aucune indication à propos de l'extinction de l'interface.
+
+        Pour interrompre une boucle du programme principale, le gestionnaire peut provoquer l'exception
+        KeyboardInterrupt, mais peut également passer un message ad hoc par un autre moyen.
+        """
+        self._stop_handler = handler
+        
+
+    def stop(self):
         """
         Éteindre les serveurs, attendre les threads et quitter
-        Paramètres:
-          - fermer : booléen indiquant s'il faut exécuter exit(0) ou non.
           
         Valeur renvoyée : None
-        """
+
+        La méthode stop exécute sans paramètres la fonction définie par la méthode
+        gestionnaire_stop
+
+        La méthode stop affiche un message dans l'interface, indiquant que python
+        s'arrête.
         
+        La méthode stop est exécutée lorsque la fenêtre du navigateur est fermée: il
+        est ainsi possible d'utiliser d'utiliser gestionnaire_stop pour effectuer des
+        actions spécifiques à la fermeture du programme, comme des sauvegardes.
+        """
+
+        self.injecte("window.removeEventListener('beforeunload',ueh);")
+        self.injecte("alert('Python arrêté.');")
+
         self.wss_on = False
         self._continuer = False
         for h in self._threads_fils:
-            h.join(1)
+            try:
+                h.join(1)
+            except RuntimeError:
+                pass # quand on stop() l'interface depuis un événement souris asynchrone
+
             if h.is_alive():
                 print("Gestionnaire toujours actif...")
-        
-        if not self.wss_on: self.wss_instance.join()
+
         if not self._continuer: self.http_instance.join()
-        if fermer: exit(0)
+
+        try:
+            if not self.wss_on: self.wss_instance.join()
+        except RuntimeError:
+
+            self._stopped=True
+
+            raise StopInter
+
+        self._stopped=True
+
+        self._stop_handler()
 
     def reponse_http(self,req:str,gen:callable):
         """
@@ -363,13 +504,16 @@ function faire(o){
           
         Valeur renvoyée : None
 
+        Le nom de la ressource est un chemin absolu depuis la racine du serveur.
+        Il commence par /
+
         Par défaut, le serveur http cherche la ressource sur le disque dur, et envoie le document trouvé.
         Il s'agit ici de court-circuiter ce fonctionnement pour générer dynamiquement une réponse.
         
         La fonction gen est associée à la ressource req de la façon suivante:
         quand le serveur http reçoit une requête de la forme "localhost/req?param_1=va_l1&param_2=val_2&...",
-        il appelle gen(req,d), où dictionnaire est le dictionnaire {param_k:val_k}
-        
+        il appelle gen(req,d), où d est le dictionnaire {param_k:val_k}
+
         Cette fonction renvoie un tuple (extension, contenu), par exemple
         ( "html", `"`"`"<!doctype html>\n<html lang="fr"><head><title>Réponse</title></head><body>Rien...</body></html>`"`"`")
         
@@ -488,8 +632,14 @@ function faire(o){
             except: # s'il n'existe pas (ou autre erreur !)
                 return bytes('HTTP/1.1 404 Not Found\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\nContent-Length:17\r\n\r\nPas trouvé !\r\n\r\n','utf-8')
             else:
-                if extension.lower() == "html" :
-#                    contenu = contenu.replace(b'</head>',b'<script src="/js"></script></head>')
+#                if extension.lower() == "html" :
+                if comm == "./"+self._page_dem:
+
+                    if self._dem_page_loaded:
+                        print("Rechargement de la page de démarrage...")
+                    else:
+                        self._dem_page_loaded = True
+
                     contenu = contenu.replace(b'</head>',b'<script src="'+bytes(self._chemin_js,'utf-8')+b'"></script></head>')
                 return empaqueter(contenu, extension)
         
@@ -550,7 +700,12 @@ function faire(o){
                         
                         non_binaire = typemime(ext)[1]
                         if non_binaire:
-                            if ext == 'html':
+#                            if ext == 'html':
+                            if comm == "/"+self._page_dem:
+                                if self._dem_page_loaded:
+                                    print("Rechargement de la page de démarrage...")
+                                else:
+                                    self._dem_page_loaded = True
                                 resp = resp.replace('</head>','<script src="'+self._chemin_js+'"></script></head>')
                             contenu = bytes(resp,'utf-8')
                         else:
@@ -676,24 +831,30 @@ function faire(o){
                     self._verrou_ws.release()
                 self.ws_actif=t
         print("Arrêt du serveur ws")
+        if self._stopped:
+            self._stop_handler()
 
     def _envoi(self, chaine:str):
         """
         envoie chaine en websocket
         """
-        t=self.ws_actif # TODO : exception file closed quand on ferme la page dans une boucle asynchrone
+        # TODO : exception pour attraper la fermeture de la page
+        t=self.ws_actif
         taille = len(chaine)
-        if taille < 126:
-            return t.send(bytes([129,taille])+chaine.encode(encoding="utf-8"))
-        elif taille < 65536:
-            return t.send(bytes([129,126,taille//256,taille%256])+chaine.encode(encoding="utf-8"))
+        if t.fileno()!=-1:
+            if taille < 126:
+                return t.send(bytes([129,taille])+chaine.encode(encoding="utf-8"))
+            elif taille < 65536:
+                return t.send(bytes([129,126,taille//256,taille%256])+chaine.encode(encoding="utf-8"))
+            else:
+                liste = []
+                for _ in range(8):
+                    liste = [taille % 256]+liste
+                    taille //=256
+                liste = [129,127]+liste
+                return t.send(bytes(liste)+chaine.encode(encoding="utf-8"))
         else:
-            liste = []
-            for _ in range(8):
-                liste = [taille % 256]+liste
-                taille //=256
-            liste = [129,127]+liste
-            return t.send(bytes(liste)+chaine.encode(encoding="utf-8"))
+            print("[_envoi]: ws off")
 
     def _push(self,o):
         """
@@ -711,8 +872,8 @@ function faire(o){
         Définit des attributs d'un objet de la page, identifié par son attribut id
         Paramètres:
           - id_objet: attribut id de l'objet
-          - attr: dictionnaire attribut:valeur attribuant une nouvelle valeur à des attributs
-          - style: dictionnaire attribut:valeur attribuant une nouvelle valeur à des attributs de style
+          - attr: dictionnaire {attribut:valeur} attribuant une nouvelle valeur à des attributs
+          - style: dictionnaire {attribut:valeur} attribuant une nouvelle valeur à des attributs de style
 
         Valeur renvoyée : None
         """
@@ -737,10 +898,10 @@ function faire(o){
         Paramètres:
           - id_objet: attribut id de l'objet créé
           - balise: balise de l'objet créé
-          - attr: dictionnaire attribut:valeur définissant les atributs de l'objet créé
-          - style: dictionnaire attrobut:valeur définissant les attributs de style de l'objet créé
+          - attr: dictionnaire {attribut:valeur} définissant les attributs de l'objet créé
+          - style: dictionnaire {attribut:valeur} définissant les attributs de style de l'objet créé
           - parent: id de l'objet où insérer l'élément créé (default: body)
-          
+
         Valeur renvoyée : None
         """
         l = []
@@ -795,6 +956,10 @@ function faire(o){
                 self._threads_fils.append(handler_thread)
                 handler_thread.start()
             else:
-                handler(hd,data[1])
+                try:
+                    handler(hd,data[1])
+                except StopInter:
+#                    raise KeyboardInterrupt
+                    pass
         else:
             print("Message :", data[0], "; Données :", data[1])

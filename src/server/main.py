@@ -93,7 +93,9 @@ class Game:
             
             keys = self.keyboard_manager.get_keys()
             
-            self.player.update(delta_time, keys)
+            # On ne bouge pas si une interaction est en cours
+            if self.interactable is None or not self.interactable.is_opened():
+                self.player.update(delta_time, keys)
             
             self.interactable = None
             for npc in self.npc:
@@ -112,7 +114,7 @@ class Game:
         """
         self.do_loop = False
         self.loop_thread.join()
-        self.web_manager.stop(fermer=False)
+        self.web_manager.stop()
     
 # On verifie que le programme n'est pas importe mais bien lance
 if __name__ == "__main__":
