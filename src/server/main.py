@@ -5,6 +5,7 @@ import threading # Threading
 # Réorganiser player et npc pour respecter la structure et pas avoir des fichiers n'importe où dans la racine
 from player import Player
 from npc import Interactable, Npc
+from enemy import Enemy
 import web.main_web # start
 from web.inputs.keyboard import Keyboard
 import web.inputs.mouse
@@ -43,7 +44,7 @@ class Game:
         self.web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
-        self.player = Player((50, 50))
+        self.player = Player(self.web_manager, (50, 50))
         
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
@@ -52,6 +53,11 @@ class Game:
         base_npc_2 = Npc(self.web_manager, (150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
         self.npc.append(base_npc_1)
         self.npc.append(base_npc_2)
+        
+        # TODO: De la meme maniere que les NPC, les ajouter avec la map
+        self.enemies: list[Enemy] = []
+        base_enemy = Enemy(self.web_manager, (600, 300), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
+        self.enemies.append(base_enemy)
         
         self.interactable: Interactable = None
         
@@ -83,7 +89,7 @@ class Game:
         Ainsi on conditionne le temps
         """
         self.do_loop = True
-        last_loop_time = 0
+        last_loop_time = time.time()
         
         while self.do_loop:
             delta_time = time.time() - last_loop_time
@@ -92,10 +98,13 @@ class Game:
                 continue
             
             keys = self.keyboard_manager.get_keys()
-            
-            # On ne bouge pas si une interaction est en cours
+
+            # Toutes les instructions ici sont mises en pauses lorsqu'un menu est ouvert par le joueur            
             if self.interactable is None or not self.interactable.is_opened():
-                self.player.update(delta_time, keys)
+                for enemy in self.enemies:
+                    enemy.update(delta_time, self.player)
+                if not self.player.is_dead():
+                    self.player.update(delta_time, keys)
             
             self.interactable = None
             for npc in self.npc:

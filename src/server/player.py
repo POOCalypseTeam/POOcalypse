@@ -1,4 +1,5 @@
 from math import sqrt, atan2, sin, cos
+import wsinter
 
 from web.main_web import add_image, change_dimensions, get_window_size
 
@@ -10,13 +11,20 @@ MIN_Y = 0
 
 # Contient le joueur
 class Player:
-    def __init__(self, position: tuple):
+    def __init__(self, web_manager: wsinter.Inter, position: tuple):
+        self.ws = web_manager
+        
         self.x = position[0]
         self.y = position[1]
         # TODO: Resize hitbox to fit character best
         self.width = IMG_SIZE
         self.height = IMG_SIZE
-        self.id = add_image(IMG_PATH, (self.x, self.y))
+        self.id = "player"
+        self.render()
+        
+        self.health = 100
+        self.max_health = 100
+        self.dead = False
         
         self.movement_vector = [0, 0]
         # Changés par le sol / environnement
@@ -79,11 +87,10 @@ class Player:
         
     def move(self, movement: tuple):
         """
-        Mouvement sur la position du joueur
+        Effectue le mouvement indique sur le joueur tout en veillant a ce qu'il reste dans les bornes de la fenetre
         
         Parametres:
-        
-            - movement : tuple de la forme (x, y) indiquant la quantite de mouvement dans chacune des directions
+            - movement: tuple de la forme (x,y) indiquant la quantite de mouvement dans chacune des directions
         """
         window_size = get_window_size()
         
@@ -96,7 +103,37 @@ class Player:
         self.y = max(MIN_Y, self.y)
         
     def get_position(self):
+        """
+        Renvoie la position du joueur (x,y) sur la page par rapport a son coin superieur gauche
+        """
         return (self.x, self.y)
         
     def render(self):
+        """
+        Actualise la position du joueur sur la page
+        """
         change_dimensions(self.id, (self.x, self.y))
+        
+    def hit(self, damage: float):
+        """
+        Fait des degats au joueur
+        
+        Parametres:
+            - damage: un flottant donnant le nombre de PV que l'attaque doit infliger
+        
+        Renvoie True si le joueur est mort, False sinon
+        """
+        self.health = max(0, self.health - damage)
+        health_width = self.health * 60 / self.max_health
+        self.ws.attributs("health", style={"width": f"{health_width}px"})
+        if self.health == 0:
+            self.dead = True
+            # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple
+        return self.dead
+    
+    def is_dead(self):
+        """
+        Renvoie True si le joueur est mort, False sinon
+        """
+        return self.dead
+    
