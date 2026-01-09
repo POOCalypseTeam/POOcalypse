@@ -1,5 +1,6 @@
 from web.main_web import add_image, change_dimensions, get_window_size, change_image
 from random import randint
+from time import sleep
 
 IMG_PATH = 'assets/spritesheets/blonde_man/blonde_man_001.png'
 IMG_LEFT = 'assets/spritesheets/blonde_man/blonde_man_005.png'
@@ -20,6 +21,15 @@ class Player:
         self.width = IMG_SIZE
         self.height = IMG_SIZE
         self.id = add_image(IMG_PATH, (self.x, self.y))
+        self.id2 = add_image(IMG_PATH, (0,0))
+        change_image(self.id2, IMG_TOP)
+        sleep(0.1)
+        change_image(self.id2, IMG_LEFT)
+        sleep(0.1)
+        change_image(self.id2, IMG_RIGHT)
+        sleep(0.1)
+        change_image(self.id2, IMG_BOTTOM)
+        
         
         self.movement_vector = [0, 0]
         # Changés par le sol / environnement
@@ -52,7 +62,7 @@ class Player:
         if movement != [0, 0]:
             movement[0] *= delta_time
             movement[1] *= delta_time
-            self.move_range(movement)
+            self.move_range(movement)        
             if movement[0] > 0:
                 change_image(self.id, IMG_RIGHT)
             elif movement[0] < 0:
@@ -62,7 +72,6 @@ class Player:
             elif movement[1] < 0:
                 change_image(self.id, IMG_TOP)
         
-
         self.move(self.movement_vector)
         self.render()
         

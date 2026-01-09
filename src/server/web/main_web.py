@@ -32,6 +32,7 @@ def add_image(path: str, position: tuple, size: tuple=None):
 
 def change_image(id, img):
     ws.attributs(id, attr = {'src' : f'../{img}'})
+
     
 def change_dimensions(id: str, position: tuple=None, size: tuple=None):
     if position == None and size == None:
