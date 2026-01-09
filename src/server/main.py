@@ -46,6 +46,7 @@ class Game:
         self.player = Player((50, 50))
         self.web_manager.attributs(self.player.id, style={"z-index": 10})
         self.web_manager.insere("div_board0", "div",style={"z-index":0,"position":"absolute","top":"0px","left":"0px"})
+        self.web_manager.insere("div_board1", "div",style={"z-index":15,"position":"absolute","top":"0px","left":"0px"})
 
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
@@ -81,7 +82,8 @@ class Game:
         """
         self.do_loop = False
         self.loop_thread.join()
-        self.web_manager.stop(fermer=False)
+        self.web_manager.stop()
+        exit(0)
     
 # On verifie que le programme n'est pas importe mais bien lance
 if __name__ == "__main__":
