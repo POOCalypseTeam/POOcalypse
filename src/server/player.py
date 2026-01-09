@@ -1,5 +1,6 @@
+from math import sqrt, atan2, sin, cos
+
 from web.main_web import add_image, change_dimensions, get_window_size
-from random import randint
 
 IMG_PATH = "assets/spritesheets/blonde_man/blonde_man_001.png"
 IMG_SIZE = 32
@@ -19,21 +20,26 @@ class Player:
         
         self.movement_vector = [0, 0]
         # Changés par le sol / environnement
-        self.max_movement = (1, 1)
+        self.max_movement = 1
         self.friction_coef = 0.8
-        
-    def move_range(self, movement: tuple):
-        self.movement_vector[0] += movement[0]
-        if self.movement_vector[0] < 0 and self.movement_vector[0] < -1 * self.max_movement[0]:
-            self.movement_vector[0] = -1 * self.max_movement[0]
-        if self.movement_vector[0] > 0 and self.movement_vector[0] > self.max_movement[0]:
-            self.movement_vector[0] = self.max_movement[0]
 
+    def move_range(self, movement: tuple):
+        """
+        Cette fonction ajoute a self.movement_vector le vecteur movement, passe en parametre
+        
+        Elle ajuste cette somme pour ne pas exceder le mouvement maximum
+        """
+        # On calcule la distance qui serait parcourue
+        self.movement_vector[0] += movement[0]
         self.movement_vector[1] += movement[1]
-        if self.movement_vector[1] < 0 and self.movement_vector[1] < -1 * self.max_movement[1]:
-            self.movement_vector[1] = -1 * self.max_movement[1]
-        if self.movement_vector[1] > 0 and self.movement_vector[1] > self.max_movement[1]:
-            self.movement_vector[1] = self.max_movement[1]
+        distance = sqrt(self.movement_vector[0] ** 2 + self.movement_vector[1] ** 2)
+        if distance <= self.max_movement:
+            return
+        # On calcule l'angle de deplacement
+        a = atan2(-self.movement_vector[1], self.movement_vector[0])
+        # On calcule les nouveaux x et y
+        self.movement_vector[0] = cos(a)
+        self.movement_vector[1] = -sin(a)
             
     def update(self, delta_time: float, keys: list):
         """
@@ -42,16 +48,16 @@ class Player:
         # On applique le vecteur mouvement sur la position, en tenant compte des inputs et de la friction s'il n'y a pas d'inputs
         # Tant que la friction n'est pas supérieure à 1, on a pas besoin de vérifier avec le vecteur max_movement, car le mouvement diminue,
         # Mais si dans le futur il y a changement sur ca il faudra check tout le temps
+        coef = delta_time * self.friction_coef
+        self.movement_vector[0] *= coef
+        self.movement_vector[1] *= coef
         movement = self._process_keys(keys)
-        self.movement_vector[0] *= self.friction_coef
-        self.movement_vector[1] *= self.friction_coef
         if movement != [0, 0]:
-            movement[0] *= delta_time
-            movement[1] *= delta_time
             self.move_range(movement)
-            
-        self.move(self.movement_vector)
-        self.render()
+        
+        if self.movement_vector != [0, 0]:    
+            self.move(self.movement_vector)
+            self.render()
         
     def _process_keys(self, keys: dict) -> list:
         """
@@ -89,24 +95,8 @@ class Player:
         self.y = min(self.y, window_size[1] - self.height)
         self.y = max(MIN_Y, self.y)
         
-    def move_input(self, key):
-        """
-        Recupere l'evenement d'appui de touche pour bouger le joueur
-        """
-        match key:
-            case "KeyW":
-                self.move((0, -MOVE_AMOUNT))
-            case "KeyA":
-                self.move((-MOVE_AMOUNT, 0))
-            case "KeyS":
-                self.move((0, MOVE_AMOUNT))
-            case "KeyD":
-                self.move((MOVE_AMOUNT, 0))
-                
-    def move_random(self, button):
-        if button[1] == 0:
-            self.move((randint(-100, 100), randint(-100, 100)))
-        self.render()
+    def get_position(self):
+        return (self.x, self.y)
         
     def render(self):
         change_dimensions(self.id, (self.x, self.y))

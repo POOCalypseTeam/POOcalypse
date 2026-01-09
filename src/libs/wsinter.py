@@ -19,6 +19,8 @@ import webbrowser # open_new
 
 class StopInter(Exception): pass
 
+class StopInter(Exception): pass
+
 class Inter:
     """
     Interface par une page web, dont les éléments sont manipulables et consultables 
@@ -27,9 +29,14 @@ class Inter:
     _ws_port = 5056
     _chemin_js = "/js"
     _js = """let socket = new WebSocket("ws://127.0.0.1:_ws_port");
+let readySent = true;
 
 socket.onopen = function(e) {
   console.log("[open] Connection established");
+  if (readySent == false)
+  {
+      transmettre("ready", "");
+  }
 };
 
 socket.onmessage = function(event) {
@@ -67,16 +74,56 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementsByTagName('BODY')[0].id="body"; 
     document.getElementsByTagName('HEAD')[0].id="head"; 
     document.body.oncontextmenu=(e)=>{return false;};
+    if (socket.readyState == 1) {
+        transmettre("ready", "");
+    }
+    else {
+        readySent = false;
+    }
 });
 
 
 function faire(o){
     for (dico of o)
     {
+        if (dico["type"] == undefined)
+        {
+            continue;
+        }
+        
         let elem = document.getElementById(dico["id"]);
         let data = dico["data"];
-
-        if ((elem == null) && (dico["tagName"] != undefined))
+        let type = dico["type"];
+        
+        if (type == "delete" && elem != null)
+        {
+            elem.parentNode.removeChild(elem);
+        }
+        else if (type == "children" && elem != null)
+        {
+            while (elem.firstChild){
+                elem.removeChild(elem.lastChild);
+            }
+        }
+        else if (type == "content" && elem != null)
+        {
+            elem.innerText = data;
+        }
+        else if (type == "attributes" && elem != null)
+        {
+            for (attr in data)
+            {
+                elem[attr]=data[attr];
+            }
+        }
+        else if (type == "style" && elem != null)
+        {
+            for (sattr in data["style"])
+            {
+                elem.style[sattr] = data["style"][sattr]; 
+            }
+        }
+        else if (type == "create" && (elem == null) && (dico["tagName"] != undefined))
         {
             elem = document.createElement(dico["tagName"]);
             for (attr in data)
@@ -88,21 +135,13 @@ function faire(o){
             {
                 parent = document.body;
             }
-            parent.appendChild(elem);
-        }
-        else
-        {
-            for (attr in data)
+            if (parent != null)
             {
-                if (attr!="style")
-                {
-                    elem[attr]=data[attr];
-                }
+                parent.appendChild(elem);
             }
         }
-        for (sattr in data["style"])
-        {
-            elem.style[sattr] = data["style"][sattr]; 
+        else {
+            console.log("Couldn't handle the request. Type: " + type);
         }
     }
 };
@@ -143,6 +182,9 @@ const ueh = (event) => {
         self.liste_connect = [] # liste des sockets à suivre
         self.wss_on = True      # drapeau de la boucle du serveur wss
         self.ws_actif = None    # dernier socket ws ouvert
+
+        self.ready: bool = False
+        self.pending: list[str] = []
 
         self._continuer = True # passe à False pour quitter le serveur une fois que toutes les donnés du socket ont été purgées
 
@@ -385,7 +427,15 @@ const ueh = (event) => {
         if clavier: self.init_clavier()
         if souris:  self.init_souris()
 
-    def gestionnaire_stop(self,handler:callable=lambda : print("Extinction.")):
+        self.gestionnaire("ready", self._ready)
+
+    def _ready(self, _m, _o):
+        self.ready = True
+        for pending in self.pending:
+            self._envoi(pending)
+        del self._handlers["ready"]
+
+    def gestionnaire_stop(self, handler:callable=lambda : print("Extinction.")):
         """
         Définit le gestionnaire prenant en charge la fermeture du programme.
         Paramètres : gestionnaire à utiliser
@@ -813,7 +863,11 @@ const ueh = (event) => {
         Envoie la représentation json d'un objet.
         Côté javascript, faire() prend en charge une liste de dictionnaires seulement.
         """
-        self._envoi(json.dumps(o))
+        data = json.dumps(o)
+        if self.ready:
+            self._envoi(data)
+        else:
+            self.pending.append(data)
 
     def attributs(self,id_objet,attr={},style={}):
         """
@@ -826,13 +880,22 @@ const ueh = (event) => {
         Valeur renvoyée : None
         """
         if attr != {}:
-            self._push([{"id":id_objet,"data":attr}])
+            self._push([{"id":id_objet,"type":"attributes","data":attr}])
         if style != {}:
-            self._push([{"id":id_objet,"data":{"style":style}}])        
+            self._push([{"id":id_objet,"type":"style","data":{"style":style}}])
+            
+    def remove(self,id_objet:str):
+        self._push([{"id":id_objet,"type":"delete"}])
+        
+    def remove_children(self,id_objet:str):
+        self._push([{"id":id_objet,"type":"children"}])
+    
+    def inner_text(self,id_objet:str,inner_text:str):
+        self._push([{"id":id_objet,"type":"content","data":inner_text}])
 
-    def insere(self, id_objet:str, balise: str,attr:dict={},style:dict={},parent:str="body"):
+    def insere(self, id_objet:str,balise:str,attr:dict={},style:dict={},parent:str="body"):
         """
-        Insère un élément sur la page, dans l'élément dont l'id est spécfié par parent
+        Insère un élément sur la page, dans l'élément dont l'id est spécifié par parent
 
         Paramètres:
           - id_objet: attribut id de l'objet créé
@@ -843,11 +906,13 @@ const ueh = (event) => {
 
         Valeur renvoyée : None
         """
-        self._push([{'id':'_nobj','tagName':balise,'parent_id':parent,'data':{'id':id_objet}}])
+        l = []
+        l.append({'id':'_nobj','type':'create','tagName':balise,'parent_id':parent,'data':{'id':id_objet}})
         if attr != {}:
-            self._push([{"id":id_objet,"data":attr}])
+            l.append({"id":id_objet,'type':'attributes',"data":attr})
         if style != {}:
-            self._push([{"id":id_objet,"data":{"style":style}}])        
+            l.append({"id":id_objet,'type':'style',"data":{"style":style}})
+        self._push(l)
 
     def injecte(self,code:str)->None:
         """
@@ -866,8 +931,8 @@ const ueh = (event) => {
             interface.gestionnaire("recup_pin",lambda m,p: print(p))
             # envoi du code javascript faisant envoyer la valeur par la page
             interface.injecte('transmettre("recup_pin",PIN.value)')          
-        """
-        self._push([{'id':'_new_script','tagName':'script','data':{'innerHTML':code}}])
+                """
+        self._push([{'id':'_new_script','type':'create','tagName':'script','data':{'innerHTML':code}}])
 
     def _process(self,chaine:str):
         """

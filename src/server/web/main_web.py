@@ -1,30 +1,9 @@
 import wsinter
-from time import sleep
-from random import randint
-
-y = 100
-x = 100
 
 window_width = 1080
 window_height = 720
 
 last_img_id = 0
-
-# faire sauter l'image quand on clic dessus
-def jump(s,d):
-    global x,y
-    if s=="D":
-        if d[0]=='img01':
-            x=randint(0,800)
-            y=randint(0,800)
-            ws.attributs('img01',style={"left":str(x)+"px","top":str(y)+"px"})
-
-def animer():
-    global x
-    while x < 800:
-        sleep(0.05)
-        x+=1
-        ws.attributs('img01',style={"left":str(x)+"px"})
        
 def add_image(path: str, position: tuple, size: tuple=None, zindex: int=None, parent="body"):
     """
@@ -53,6 +32,9 @@ def add_image(path: str, position: tuple, size: tuple=None, zindex: int=None, pa
     return img_id
     
 def change_dimensions(id: str, position: tuple=None, size: tuple=None):
+    """
+    Change la position et ou la taille de l'element dans la page
+    """
     if position == None and size == None:
         raise ValueError("BRUH, faut mettre des valeurs quand meme")
     style = {"position": "absolute"}
@@ -61,8 +43,20 @@ def change_dimensions(id: str, position: tuple=None, size: tuple=None):
         style["top"] = str(position[1]) + "px"
     if size != None:
         style["width"] = str(size[0]) + "px"
-        style["height"] = str(size[1]) + "px"        
+        style["height"] = str(size[1]) + "px"  
     ws.attributs(id, style=style)
+    
+def change_text(id: str, new_text: str):
+    """
+    Change l'attribut innerText de l'element designe par id avec newText
+    """
+    ws.inner_text(id, new_text)
+
+def remove_html(id: str):
+    """
+    Supprime l'element designe par id de la page
+    """
+    ws.remove(id)
 
 def set_window_size(_, size: list):
     """
@@ -89,7 +83,7 @@ def get_window_size():
 
 def start() -> wsinter.Inter:
     global ws
-    ws = wsinter.Inter(page="content/pages/index.html")
+    ws = wsinter.Inter("content/pages/index.html")
     ws.demarre(clavier=True)
     
     # Permet d'avoir la taille de la fenetre en temps reel
