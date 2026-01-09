@@ -48,10 +48,10 @@ class Enemy:
 
     def update(self, delta_time: float, player: Player):
         # TODO: Reflechir si c'est pas mieux de faire ca dans la boucle principale pour tous les ennemis et appeler les fonction d'attaques de tous les ennemis concernes a la place
-        if self.within_range(player.get_position()):
+        if self.within_range(player.get_center_pos()):
             self.attack(player)
         else:
-            self.track_player(player.get_position())
+            self.track_player(player.get_center_pos())
             self.x += self.move[0] * delta_time
             self.y += self.move[1] * delta_time
             change_dimensions(self.id, (self.x, self.y))

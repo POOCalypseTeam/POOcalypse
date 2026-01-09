@@ -1,7 +1,8 @@
 from math import sqrt, atan2, sin, cos
 import wsinter
 
-from web.main_web import add_image, change_dimensions, get_window_size
+from web.main_web import change_dimensions, get_window_size
+from weapon import Weapon
 
 IMG_PATH = "assets/spritesheets/blonde_man/blonde_man_001.png"
 IMG_SIZE = 32
@@ -25,6 +26,8 @@ class Player:
         self.health = 100
         self.max_health = 100
         self.dead = False
+
+        self.weapon = Weapon(10, 40, 0.3)
         
         self.movement_vector = [0, 0]
         # Changés par le sol / environnement
@@ -107,6 +110,14 @@ class Player:
         Renvoie la position du joueur (x,y) sur la page par rapport a son coin superieur gauche
         """
         return (self.x, self.y)
+    
+    def get_center_pos(self):
+        """
+        Renvoie la position du joueur (x,y) sur la page centree sur le joueur
+        """
+        x = int(self.x + self.width / 2)
+        y = int(self.y + self.height / 2)
+        return (x,y)
         
     def render(self):
         """
@@ -128,8 +139,12 @@ class Player:
         self.ws.attributs("health", style={"width": f"{health_width}px"})
         if self.health == 0:
             self.dead = True
-            # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple
+            # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement
         return self.dead
+    
+    def attack(self):
+        pass
+        
     
     def is_dead(self):
         """
