@@ -26,7 +26,7 @@
                 {
                     "x": 1,
                     "y": 1,
-                    "tile": "grass_000"
+                    "tile": "grass_251"
                 },
                 {
                     "x": 2,
@@ -34,6 +34,41 @@
                     "tile": "grass_000"
                 }
             ]
+        },
+        {
+            "tileset": "basic/grass",
+            "tiles": [
+                {
+                    "x": 10,
+                    "y": 10,
+                    "tile": "grass_251"
+                },
+                {
+                    "x": 1,
+                    "y": 0,
+                    "tile": "grass_131"
+                },
+                {
+                    "x": 2,
+                    "y": 0,
+                    "tile": "grass_131"
+                },
+                {
+                    "x": 0,
+                    "y": 1,
+                    "tile": "grass_000"
+                },
+                {
+                    "x": 1,
+                    "y": 1,
+                    "tile": "grass_251"
+                },
+                {
+                    "x": 2,
+                    "y": 1,
+                    "tile": "grass_000"
+                }
+            ] 
         }
     ]
 }

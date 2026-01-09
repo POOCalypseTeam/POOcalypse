@@ -2,12 +2,13 @@ import os # remove
 import time # time, sleep
 import threading # Threading
 
-# Réorganiser player et npc pour respecter la structure et pas avoir des fichiers n'importe où dans la racine
+from boardlaunch import *
 from player import Player
 from npc import Interactable, Npc
 import web.main_web # start
 from web.inputs.keyboard import Keyboard
 import web.inputs.mouse
+from boardlaunch import *
 
 game = None
 
@@ -36,6 +37,7 @@ class Game:
         """
         Point d'entree du programme quand on lance le serveur
         """        
+        global idimg
         self.web_manager = web.main_web.start()
         
         # Gestionnaires inputs
@@ -44,6 +46,10 @@ class Game:
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         self.player = Player((50, 50))
+        self.web_manager.attributs(self.player.id, style={"z-index": 10})
+        self.web_manager.insere("div_board0", "div",style={"z-index":0,"position":"absolute","top":"0px","left":"0px"})
+        self.web_manager.insere("div_board1", "div",style={"z-index":15,"position":"absolute","top":"0px","left":"0px"})
+
         
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement

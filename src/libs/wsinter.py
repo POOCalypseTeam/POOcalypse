@@ -15,7 +15,9 @@ import base64
 import json # dumps, loads
 
 # lancer le navigateur
-import webbrowser # open
+import webbrowser # open_new
+
+class StopInter(Exception): pass
 
 class StopInter(Exception): pass
 
@@ -653,7 +655,7 @@ const ueh = (event) => {
         
         if self._page_dem is not None: 
             print("Ouverture de la page "+self._page_dem)
-            webbrowser.open("http://"+ip+":"+str(port)+"/"+self._page_dem)
+            webbrowser.open_new("http://"+ip+":"+str(port)+"/"+self._page_dem)
 
         # boucle du serveur : accepte les connexions sur s et on y répond
         while (self._continuer and max_conn != 0):

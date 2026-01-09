@@ -1,3 +1,7 @@
+body {
+    height: 100vh;
+}
+
 * {
     -webkit-user-select: none;
     -ms-user-select: none;

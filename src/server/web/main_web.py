@@ -5,17 +5,17 @@ window_height = 720
 
 last_img_id = 0
        
-def add_image(path: str, position: tuple, size: tuple=None):
+def add_image(path: str, position: tuple, size: tuple=None, zindex: int=None, parent="body"):
     """
     Ajoute l'image pointee par path sur la page
     
     Parametres:
-        - path: Chemin vers l'image relatif au dossier /src/content
-        
-        - position: Position pour l'image sur la page sous la forme d'un tuple (x, y)
-        
-        - size: Taille de l'image, 0 pour la taille native de l'image, sous la forme d'un tuple (w, h)
     
+        - path : Chemin vers l'image relatif au dossier /src/content
+        - position : Position pour l'image sur la page sous la forme d'un tuple (x, y)
+        - size : Taille de l'image, 0 pour la taille native de l'image, sous la forme d'un tuple (w, h)
+        - zindex : Précision sur l'organisation devant/derrière des images sous forme d'un entier
+        
     Renvoie l'id de l'image
     """
     global last_img_id
@@ -24,8 +24,10 @@ def add_image(path: str, position: tuple, size: tuple=None):
     if size != None:
         style["width"] = str(size[0]) + "px"
         style["height"] = str(size[1]) + "px"
+    if zindex != None:
+        style["z-index"] = str(zindex)
     img_id = "img" + str(last_img_id)
-    ws.insere(img_id, "img", attr={'src':f'../{path}'}, style=style)
+    ws.insere(img_id, "img", attr={'src':f'../{path}'}, style=style, parent=parent)
     last_img_id += 1
     return img_id
     
