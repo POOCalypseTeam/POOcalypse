@@ -37,10 +37,10 @@ class Player:
         if distance <= self.max_movement:
             return
         # On calcule l'angle de deplacement
-        a = atan2(-self.movement_vector[1], self.movement_vector[0])
+        a = atan2(self.movement_vector[1], self.movement_vector[0])
         # On calcule les nouveaux x et y
         self.movement_vector[0] = cos(a)
-        self.movement_vector[1] = -sin(a)
+        self.movement_vector[1] = sin(a)
             
     def update(self, delta_time: float, keys: list):
         """

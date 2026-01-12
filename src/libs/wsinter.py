@@ -15,7 +15,7 @@ import base64
 import json # dumps, loads
 
 # lancer le navigateur
-import webbrowser # open_new
+import webbrowser # open
 
 class StopInter(Exception): pass
 
@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }
 });
 
-document.addEventListener("resize", (e) => {
+window.addEventListener("resize", (e) => {
     transmettre("get_window_size", [window.innerWidth, window.innerHeight]);
 });
 
@@ -438,6 +438,7 @@ const ueh = (event) => {
 
         # Taille de la fenetre en temps reel
         self.gestionnaire("get_window_size", self._set_window_size)
+        self.injecte("transmettre('get_window_size', [window.innerWidth, window.innerHeight]);")
 
     def _ready(self, _m, _o):
         self.ready = True
@@ -679,7 +680,7 @@ const ueh = (event) => {
         
         if self._page_dem is not None: 
             print("Ouverture de la page "+self._page_dem)
-            webbrowser.open_new("http://"+ip+":"+str(port)+"/"+self._page_dem)
+            webbrowser.open("http://"+ip+":"+str(port)+"/"+self._page_dem)
 
         # boucle du serveur : accepte les connexions sur s et on y répond
         while (self._continuer and max_conn != 0):
