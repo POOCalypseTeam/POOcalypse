@@ -131,13 +131,13 @@ class Npc(Interactable):
         return self.opened
     
     def key(self, key: str):
-        if key == 'ArrowLeft':
+        if key == "ArrowUp" or key == 'ArrowLeft':
             self.helper.ws.attributs(self.choices[self.choice], style={"text-decoration":"none"})
             self.choice -= 1
             if self.choice < 0:
                 self.choice = len(self.choices) - 1
             self.helper.ws.attributs(self.choices[self.choice], style={"text-decoration":"underline"})
-        elif key == 'ArrowRight':
+        elif key == "ArrowDown" or key == 'ArrowRight':
             self.helper.ws.attributs(self.choices[self.choice], style={"text-decoration":"none"})
             self.choice += 1
             if self.choice >= len(self.choices):

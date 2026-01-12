@@ -5,11 +5,11 @@ import threading # Threading
 import wsinter
 import web_helper
 
-import board
-from player import Player
-from npc import Interactable, Npc
-from web.inputs.keyboard import Keyboard
-import web.inputs.mouse
+import graphics.board
+from characters.player import Player
+from characters.npc import Interactable, Npc
+from inputs.keyboard import Keyboard
+import inputs.mouse
 
 game = None
 
@@ -45,13 +45,13 @@ class Game:
         
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
-        self.web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
+        self.web_manager.gestionnaire_souris(inputs.mouse.handle_input)
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         self.player = Player(self.web_helper, (50, 50))
         self.web_manager.attributs(self.player.id, style={"z-index": 10})
 
-        self.board = board.Board(self.web_helper, 0)
+        self.board = graphics.board.Board(self.web_helper, 0)
         self.board.load()
 
         self.web_manager.insere("div_board_0", "div",style={"z-index":0,"position":"absolute","top":"0px","left":"0px"})
@@ -67,7 +67,7 @@ class Game:
         
         self.interactable: Interactable = None
         
-        self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowLeft', 'ArrowRight', 'Enter'])
+        self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Enter'])
         
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
@@ -80,7 +80,7 @@ class Game:
             case 'KeyE':
                 if not self.interactable.is_opened():
                     self.interactable.interact()
-            case 'ArrowLeft' | 'ArrowRight' | 'Enter':
+            case 'ArrowUp' | 'ArrowLeft' | 'ArrowDown' | 'ArrowRight' | 'Enter':
                 if self.interactable.is_opened():
                     self.interactable.key(key)
 
