@@ -3,7 +3,11 @@ from random import randint
 from time import sleep
 
 IMG_PATH = 'assets/spritesheets/blonde_man/blonde_man_001.png'
+PNG_PATH = 'assets/spritesheets/blonde_man/blonde_man_000.png'
 IMG_LEFT = 'assets/spritesheets/blonde_man/blonde_man_005.png'
+IMG_LEFT2 = 'assets/spritesheets/blonde_man/blonde_man_006.png'
+IMG_LEFT3 = 'assets/spritesheets/blonde_man/blonde_man_007.png'
+IMG_LEFT4 = 'assets/spritesheets/blonde_man/blonde_man_008.png'
 IMG_RIGHT = 'assets/spritesheets/blonde_man/blonde_man_009.png'
 IMG_TOP = 'assets/spritesheets/blonde_man/blonde_man_013.png'
 IMG_BOTTOM = 'assets/spritesheets/blonde_man/blonde_man_017.png'
@@ -21,15 +25,22 @@ class Player:
         self.width = IMG_SIZE
         self.height = IMG_SIZE
         self.id = add_image(IMG_PATH, (self.x, self.y))
-        self.id2 = add_image(IMG_PATH, (0,0))
+        self.id2 = add_image(PNG_PATH, (0,0))
         change_image(self.id2, IMG_TOP)
         sleep(0.1)
         change_image(self.id2, IMG_LEFT)
         sleep(0.1)
+        change_image(self.id2, IMG_LEFT2)
+        sleep(0.1)
+        change_image(self.id2, IMG_LEFT3)
+        sleep(0.1)
+        change_image(self.id2, IMG_LEFT4)
+        sleep(0.1)
         change_image(self.id2, IMG_RIGHT)
         sleep(0.1)
         change_image(self.id2, IMG_BOTTOM)
-        
+        sleep(0.1)
+        change_image(self.id2, PNG_PATH)
         
         self.movement_vector = [0, 0]
         # Changés par le sol / environnement
@@ -67,11 +78,19 @@ class Player:
                 change_image(self.id, IMG_RIGHT)
             elif movement[0] < 0:
                 change_image(self.id, IMG_LEFT)
+                sleep(0.2)
+                change_image(self.id, IMG_LEFT2)
+                sleep(0.2)
+                change_image(self.id, IMG_LEFT3)
+                sleep(0.2)
+                change_image(self.id, IMG_LEFT4)
+                sleep(0.2)
             elif movement[1] > 0 :
                 change_image(self.id, IMG_BOTTOM)
             elif movement[1] < 0:
                 change_image(self.id, IMG_TOP)
-        
+        else:
+            change_image(self.id, IMG_PATH)
         self.move(self.movement_vector)
         self.render()
         
@@ -91,7 +110,6 @@ class Player:
         if "KeyD" in keys:
             move[0] += MOVE_AMOUNT
         return move
-
         
     def move(self, movement: tuple):
         """
