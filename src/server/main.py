@@ -2,13 +2,14 @@ import os # remove
 import time # time, sleep
 import threading # Threading
 
-from boardlaunch import *
+import wsinter
+import web_helper
+
+import board
 from player import Player
 from npc import Interactable, Npc
-import web.main_web # start
 from web.inputs.keyboard import Keyboard
 import web.inputs.mouse
-from boardlaunch import *
 
 game = None
 
@@ -23,7 +24,7 @@ def main():
         exit(0)
         return
     
-    game = Game()
+    game = Game(start_page = "index.html")
     
 def stop():
     global game
@@ -33,29 +34,34 @@ def stop():
     exit(0)
 
 class Game:
-    def __init__(self):
+    def __init__(self, start_page: str = "index.html"):
         """
         Point d'entree du programme quand on lance le serveur
         """        
-        global idimg
-        self.web_manager = web.main_web.start()
+        self.web_manager = wsinter.Inter("content/pages/" + start_page)
+        self.web_manager.demarre(clavier=True)
+
+        self.web_helper = web_helper.Helper(self.web_manager)
         
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
         self.web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
-        self.player = Player((50, 50))
+        self.player = Player(self.web_helper, (50, 50))
         self.web_manager.attributs(self.player.id, style={"z-index": 10})
-        self.web_manager.insere("div_board0", "div",style={"z-index":0,"position":"absolute","top":"0px","left":"0px"})
-        self.web_manager.insere("div_board1", "div",style={"z-index":15,"position":"absolute","top":"0px","left":"0px"})
 
+        self.board = board.Board(self.web_helper, 0)
+        self.board.load()
+
+        self.web_manager.insere("div_board_0", "div",style={"z-index":0,"position":"absolute","top":"0px","left":"0px"})
+        self.web_manager.insere("div_board_1", "div",style={"z-index":15,"position":"absolute","top":"0px","left":"0px"})
         
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
         self.npc: list[Npc] = []
-        base_npc_1 = Npc(self.web_manager, (200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
-        base_npc_2 = Npc(self.web_manager, (150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
+        base_npc_1 = Npc(self.web_helper, (200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
+        base_npc_2 = Npc(self.web_helper, (150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
         self.npc.append(base_npc_1)
         self.npc.append(base_npc_2)
         

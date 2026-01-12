@@ -82,6 +82,10 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }
 });
 
+document.addEventListener("resize", (e) => {
+    transmettre("get_window_size", [window.innerWidth, window.innerHeight]);
+});
+
 
 function faire(o){
     for (dico of o)
@@ -207,6 +211,9 @@ const ueh = (event) => {
         self._stop_handler = lambda : print("Extinction.")
 
         self._stopped=False
+
+        self.window_width = 1280
+        self.window_height = 720
 
     def touches(self):
         """
@@ -429,11 +436,28 @@ const ueh = (event) => {
 
         self.gestionnaire("ready", self._ready)
 
+        # Taille de la fenetre en temps reel
+        self.gestionnaire("get_window_size", self._set_window_size)
+
     def _ready(self, _m, _o):
         self.ready = True
         for pending in self.pending:
             self._envoi(pending)
         del self._handlers["ready"]
+
+    def _set_window_size(self, _, size: list[int, int]):
+        """
+        Actualise la taille de la page Web pour le serveur
+
+        Ne prend pas effet sur l'affichage dans le navigateur
+
+        Utilise seulement par le gestionnaire d'evenement lors d'un appel par le client
+        """
+        self.window_width= size[0]
+        self.window_height = size[1]
+
+    def get_window_size(self):
+        return (self.window_width, self.window_height)
 
     def gestionnaire_stop(self, handler:callable=lambda : print("Extinction.")):
         """
