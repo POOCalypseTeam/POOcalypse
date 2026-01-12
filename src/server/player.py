@@ -3,6 +3,7 @@ import wsinter
 
 from web.main_web import change_dimensions, get_window_size
 from weapon import Weapon
+from enemy import Enemy
 
 IMG_PATH = "assets/spritesheets/blonde_man/blonde_man_001.png"
 IMG_SIZE = 32
@@ -51,8 +52,13 @@ class Player:
         # On calcule les nouveaux x et y
         self.movement_vector[0] = cos(a)
         self.movement_vector[1] = -sin(a)
-            
-    def update(self, delta_time: float, keys: list):
+    
+    def update(self, delta_time: float, keys: list, enemies: list[Enemy]):
+        self.update_movement(delta_time, keys)
+        if 'KeyR' in keys:
+            self.attack(enemies)
+    
+    def update_movement(self, delta_time: float, keys: list):
         """
         delta_time est le temps en secondes depuis la derniere update, il sert de coefficient sur la vitesse de deplacement notamment
         """
@@ -62,7 +68,7 @@ class Player:
         coef = delta_time * self.friction_coef
         self.movement_vector[0] *= coef
         self.movement_vector[1] *= coef
-        movement = self._process_keys(keys)
+        movement = self._process_move_keys(keys)
         if movement != [0, 0]:
             self.move_range(movement)
         
@@ -70,7 +76,7 @@ class Player:
             self.move(self.movement_vector)
             self.render()
         
-    def _process_keys(self, keys: dict) -> list:
+    def _process_move_keys(self, keys: dict) -> list:
         """
         keys -- liste de touches appuyees, identifiees par leur code
         
@@ -142,10 +148,9 @@ class Player:
             # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement
         return self.dead
     
-    def attack(self):
-        pass
+    def attack(self, enemies: list[Enemy]):
+        self.weapon.attack(enemies)
         
-    
     def is_dead(self):
         """
         Renvoie True si le joueur est mort, False sinon

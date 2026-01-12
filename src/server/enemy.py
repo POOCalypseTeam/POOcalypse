@@ -2,9 +2,9 @@ from math import atan2, sin, cos, sqrt
 import time
 import wsinter
 
-from web.main_web import add_image, change_dimensions
-from player import Player
+from web.main_web import add_image, change_dimensions, remove_html
 
+# TODO: Afficher une barre de vie, seulement lorsqu'elle n'est pas pleine
 class Enemy:
     def __init__(self, web_manager: wsinter.Inter, position: tuple, img_path: str, health: int):
         self.ws = web_manager
@@ -14,7 +14,9 @@ class Enemy:
         
         self.id = add_image(img_path, position)
         
+        # TODO: Ajouter de la regen
         self.health = health
+        self.dead = False
         self.range = 40
         self.last_attack = time.time()
         self.cooldown = 0.5
@@ -41,12 +43,22 @@ class Enemy:
         distance = sqrt(distance)
         return distance <= self.range
         
-    def attack(self, player: Player):
+    def attack(self, player):
         if time.time() - self.last_attack >= self.cooldown:
             player.hit(10)
             self.last_attack = time.time()
+            
+    def hit(self, damage: int):
+        self.health -= damage
+        self.health = max(0, self.health)
+        if self.health == 0:
+            remove_html(self.id)
+            self.dead = True
+            
+    def is_dead(self):
+        return self.dead
 
-    def update(self, delta_time: float, player: Player):
+    def update(self, delta_time: float, player):
         # TODO: Reflechir si c'est pas mieux de faire ca dans la boucle principale pour tous les ennemis et appeler les fonction d'attaques de tous les ennemis concernes a la place
         if self.within_range(player.get_center_pos()):
             self.attack(player)

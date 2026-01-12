@@ -1,8 +1,8 @@
 import os # remove
 import time # time, sleep
 import threading # Threading
+from math import sqrt
 
-# Réorganiser player et npc pour respecter la structure et pas avoir des fichiers n'importe où dans la racine
 from player import Player
 from npc import Interactable, Npc
 from enemy import Enemy
@@ -98,13 +98,23 @@ class Game:
                 continue
             
             keys = self.keyboard_manager.get_keys()
+            
+            # On actualise la liste des ennemis en supprimant ceux qui sont morts
+            for enemy in self.enemies:
+                if enemy.is_dead():
+                    self.enemies.remove(enemy)
 
             # Toutes les instructions ici sont mises en pauses lorsqu'un menu est ouvert par le joueur            
             if self.interactable is None or not self.interactable.is_opened():
+                in_range_enemies = []
+                player_range = self.player.weapon.range
                 for enemy in self.enemies:
                     enemy.update(delta_time, self.player)
+                    dst = sqrt((enemy.x - self.player.x) ** 2 + (enemy.y - self.player.y) ** 2)
+                    if dst <= player_range:
+                        in_range_enemies.append(enemy)
                 if not self.player.is_dead():
-                    self.player.update(delta_time, keys)
+                    self.player.update(delta_time, keys, in_range_enemies)
             
             self.interactable = None
             for npc in self.npc:
