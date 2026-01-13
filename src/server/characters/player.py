@@ -1,9 +1,8 @@
 from math import sqrt, atan2, sin, cos
-import wsinter
+import web_helper
 
-from web.main_web import change_dimensions, get_window_size
-from weapon import Weapon
-from enemy import Enemy
+from .weapon import Weapon
+from .enemy import Enemy
 
 IMG_PATH = "assets/spritesheets/blonde_man/blonde_man_001.png"
 IMG_SIZE = 32
@@ -13,8 +12,8 @@ MIN_Y = 0
 
 # Contient le joueur
 class Player:
-    def __init__(self, web_manager: wsinter.Inter, position: tuple):
-        self.ws = web_manager
+    def __init__(self, helper: web_helper.Helper, position: tuple):
+        self.helper = helper
         
         self.x = position[0]
         self.y = position[1]
@@ -48,10 +47,10 @@ class Player:
         if distance <= self.max_movement:
             return
         # On calcule l'angle de deplacement
-        a = atan2(-self.movement_vector[1], self.movement_vector[0])
+        a = atan2(self.movement_vector[1], self.movement_vector[0])
         # On calcule les nouveaux x et y
         self.movement_vector[0] = cos(a)
-        self.movement_vector[1] = -sin(a)
+        self.movement_vector[1] = sin(a)
     
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]):
         self.update_movement(delta_time, keys)
@@ -92,8 +91,7 @@ class Player:
         if "KeyD" in keys:
             move[0] += MOVE_AMOUNT
         return move
-
-        
+    
     def move(self, movement: tuple):
         """
         Effectue le mouvement indique sur le joueur tout en veillant a ce qu'il reste dans les bornes de la fenetre
@@ -101,7 +99,7 @@ class Player:
         Parametres:
             - movement: tuple de la forme (x,y) indiquant la quantite de mouvement dans chacune des directions
         """
-        window_size = get_window_size()
+        window_size = self.helper.ws.get_window_size()
         
         self.x += movement[0]
         self.x = min(self.x, window_size[0] - self.width)
@@ -129,7 +127,7 @@ class Player:
         """
         Actualise la position du joueur sur la page
         """
-        change_dimensions(self.id, (self.x, self.y))
+        self.helper.change_dimensions(self.id, (self.x, self.y))
         
     def hit(self, damage: float):
         """
@@ -142,7 +140,7 @@ class Player:
         """
         self.health = max(0, self.health - damage)
         health_width = self.health * 60 / self.max_health
-        self.ws.attributs("health", style={"width": f"{health_width}px"})
+        self.helper.ws.attributs("health", style={"width": f"{health_width}px"})
         if self.health == 0:
             self.dead = True
             # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement

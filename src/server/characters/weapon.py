@@ -1,7 +1,5 @@
 import time
 
-from enemy import Enemy
-
 class Weapon:
     def __init__(self, damage: int, range: int, cooldown: float, durability: int=-1):
         self.damage = damage
@@ -12,7 +10,7 @@ class Weapon:
 
         self.last_attack = time.time()
     
-    def attack(self, targets: list[Enemy]):
+    def attack(self, targets):
         if time.time() - self.last_attack >= self.cooldown:
             for target in targets:
                 target.hit(self.damage)
