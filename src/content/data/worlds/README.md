@@ -1,3 +1,12 @@
-# Format des fichiers mondes
+# Structure base de données
 
-Ces fichiers sont tous écrits en JSON, ils contiennent essentiellement l'emplacement des tiles dans ce monde
+Tous les mondes sont stockées dans la même base de données, `mondes.db`
+
+Une première table stocke les différents mondes:
+
+```SQL
+CREATE TABLE worlds (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+);
+```
