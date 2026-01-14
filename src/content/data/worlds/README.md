@@ -17,12 +17,13 @@ On crée aussi une table `layers` qui contient les couches de chaque monde :
 CREATE TABLE layers (
     world VARCHAR,
     layer_index INT,
-    tilesheet TEXT, -- Chemin vers le dossier des images, exemple: "assets/tilesheets/interior/"
+    tileset TEXT, -- Chemin vers le dossier des images, exemple: "assets/tileset/interior/"
+    collisions BOOLEAN,
     PRIMARY KEY (world, layer_index)
 );
 ```
 
-Puis une autre table stocke les blocs, eux-mêmes contenant des tiles, des NPC ou des ennemis :
+Puis une autre table qui stocke des `blocks`, regroupement de `tiles`, `NPCs` et `ennemies` pour un affichage moins lourd et plus progressif.
 
 ```SQL
 CREATE TABLE blocks (
@@ -33,13 +34,17 @@ CREATE TABLE blocks (
     layer_index INT,
     FOREIGN KEY (world, layer_index) REFERENCES layers(world, layer_index)
 );
+```
 
+Puis les autres tables: 
+
+```SQL
 CREATE TABLE tiles (
     tile_id INTEGER PRIMARY KEY AUTOINCREMENT,
     block_id INT,
     x INT,
     y INT,
-    image_name TEXT, -- Par exemple: "interior_001.png", pour récupérer le fichier image: layer.tilesheet + image_name
+    image_name TEXT, -- Par exemple: "interior_001.png", pour récupérer le fichier image: layer.tileset + image_name
     FOREIGN KEY (block_id) REFERENCES blocks(block_id)
 );
 
