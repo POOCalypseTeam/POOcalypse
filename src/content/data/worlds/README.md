@@ -7,8 +7,6 @@ Une première table `worlds` stocke les différents mondes:
 ```SQL
 CREATE TABLE worlds (
     name VARCHAR PRIMARY KEY,
-    layer_count INT,
-
 );
 ```
 
@@ -17,7 +15,7 @@ On crée aussi une table `layers` qui contient les couches de chaque monde :
 CREATE TABLE layers (
     world VARCHAR,
     layer_index INT,
-    tileset TEXT, -- Chemin vers le dossier des images, exemple: "assets/tileset/interior/"
+    tileset TEXT, -- Chemin vers le dossier des images, exemple: "exterior", pour "/content/assets/tileset/exterior/"
     collisions BOOLEAN,
     PRIMARY KEY (world, layer_index)
 );
