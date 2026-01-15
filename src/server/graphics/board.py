@@ -7,7 +7,7 @@ BOARD_PATH = "content/data/worlds/worlds.db"
 TILESET_PATH = "assets/tilesets/%SET%/%IMG%.png"
 
 class Board:
-    def __init__(self, helper: web_helper.Helper, world: str, block_size: int = 16, tile_size: int = 32):
+    def __init__(self, helper: web_helper.Helper, world: str, block_size: int = 16, tile_size: int = 16):
         """
         Parametres:
             - helper: L'instance Helper de la librairie web_helper
@@ -52,8 +52,12 @@ class Board:
         block_pixel_size = self.block_size * self.tile_size
         block_w,block_h = (ceil(w / (block_pixel_size)), ceil(h / block_pixel_size))
         # Pour chaque bloc, on récupère toutes les tiles correspondantes et on en fait le rendu
-        for block_x in range(0, block_w):     # Pour l'instant on commence a 0
-            for block_y in range(0, block_h): # mais ca depend d'ou etait le joueur avant
+        block_w_offset = block_w // 2
+        block_h_offset = block_h // 2
+        for block_x in range(-block_w_offset, block_w_offset + 1):     # Pour l'instant on commence a 0
+            for block_y in range(-block_h_offset, block_h_offset + 1): # mais ca depend d'ou etait le joueur avant
+                # TODO: Afficher au centre
+                # TODO: Afficher les joueurs, ennemis et NPC
                 block_offset = (block_x * block_pixel_size, block_y * block_pixel_size)
 
                 # On recupere l'id du block
@@ -68,6 +72,3 @@ class Board:
                     img_path = TILESET_PATH.replace("%SET%", tileset).replace("%IMG%", tile[2])
                     position = (block_offset[0] + tile[0] * self.tile_size, block_offset[1] + tile[1] * self.tile_size)
                     self.helper.add_image(img_path, position, (self.tile_size,self.tile_size), parent="layer_" + str(layer))
-                
-        #for t in board:
-        #    img_id = self.helper.add_image(IMG_PATH+t["tile"]+".png",(t["x"]*IMG_SIZE,t["y"]*IMG_SIZE),(IMG_SIZE,IMG_SIZE), None, "div_board"+str(self.layer))
