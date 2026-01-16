@@ -56,9 +56,9 @@ class Board:
         block_h_offset = block_h // 2
         for block_x in range(-block_w_offset, block_w_offset + 1):     # Pour l'instant on commence a 0
             for block_y in range(-block_h_offset, block_h_offset + 1): # mais ca depend d'ou etait le joueur avant
-                # TODO: Afficher au centre
                 # TODO: Afficher les joueurs, ennemis et NPC
-                block_offset = (block_x * block_pixel_size, block_y * block_pixel_size)
+                # TODO: Actualiser quand la taille de la page change
+                block_offset = ((block_w_offset + block_x) * block_pixel_size, (block_h_offset + block_y) * block_pixel_size)
 
                 # On recupere l'id du block
                 base.execute("SELECT block_id FROM blocks WHERE block_x=? AND block_y=? AND world=? AND layer_index=? LIMIT 1;", (block_x, block_y, self.world, layer))
