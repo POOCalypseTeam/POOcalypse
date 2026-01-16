@@ -4,17 +4,37 @@ from time import sleep
 
 IMG_PATH = 'assets/spritesheets/blonde_man/blonde_man_001.png'
 PNG_PATH = 'assets/spritesheets/blonde_man/blonde_man_000.png'
-IMG_LEFT = 'assets/spritesheets/blonde_man/blonde_man_005.png'
+
+IMG_LEFT1 = 'assets/spritesheets/blonde_man/blonde_man_005.png'
 IMG_LEFT2 = 'assets/spritesheets/blonde_man/blonde_man_006.png'
 IMG_LEFT3 = 'assets/spritesheets/blonde_man/blonde_man_007.png'
 IMG_LEFT4 = 'assets/spritesheets/blonde_man/blonde_man_008.png'
-IMG_RIGHT = 'assets/spritesheets/blonde_man/blonde_man_009.png'
-IMG_TOP = 'assets/spritesheets/blonde_man/blonde_man_013.png'
-IMG_BOTTOM = 'assets/spritesheets/blonde_man/blonde_man_017.png'
+LEFT = [IMG_LEFT1, IMG_LEFT2, IMG_LEFT3, IMG_LEFT4]
+
+IMG_RIGHT1 = 'assets/spritesheets/blonde_man/blonde_man_009.png'
+IMG_RIGHT2 = 'assets/spritesheets/blonde_man/blonde_man_010.png'
+IMG_RIGHT3 = 'assets/spritesheets/blonde_man/blonde_man_011.png'
+IMG_RIGHT4 = 'assets/spritesheets/blonde_man/blonde_man_012.png'
+RIGHT = [IMG_RIGHT1, IMG_RIGHT2, IMG_RIGHT3, IMG_RIGHT4]
+
+IMG_TOP1 = 'assets/spritesheets/blonde_man/blonde_man_013.png'
+IMG_TOP2 = 'assets/spritesheets/blonde_man/blonde_man_014.png'
+IMG_TOP3 = 'assets/spritesheets/blonde_man/blonde_man_015.png'
+IMG_TOP4 = 'assets/spritesheets/blonde_man/blonde_man_016.png'
+TOP = [IMG_TOP1, IMG_TOP2, IMG_TOP3, IMG_TOP4]
+
+IMG_BOTTOM1 = 'assets/spritesheets/blonde_man/blonde_man_017.png'
+IMG_BOTTOM2 = 'assets/spritesheets/blonde_man/blonde_man_018.png'
+IMG_BOTTOM3 = 'assets/spritesheets/blonde_man/blonde_man_019.png'
+IMG_BOTTOM4 = 'assets/spritesheets/blonde_man/blonde_man_020.png'
+BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
+
+IMG = [LEFT, RIGHT, TOP, BOTTOM]
 IMG_SIZE = 32
 MOVE_AMOUNT = 10
 MIN_X = 0
 MIN_Y = 0
+ANIMATION_UPDATE_FREQUENCY = 32
 
 # Contient le joueur
 class Player:
@@ -26,20 +46,14 @@ class Player:
         self.height = IMG_SIZE
         self.id = add_image(IMG_PATH, (self.x, self.y))
         self.id2 = add_image(PNG_PATH, (0,0))
-        change_image(self.id2, IMG_TOP)
-        sleep(0.1)
-        change_image(self.id2, IMG_LEFT)
-        sleep(0.1)
-        change_image(self.id2, IMG_LEFT2)
-        sleep(0.1)
-        change_image(self.id2, IMG_LEFT3)
-        sleep(0.1)
-        change_image(self.id2, IMG_LEFT4)
-        sleep(0.1)
-        change_image(self.id2, IMG_RIGHT)
-        sleep(0.1)
-        change_image(self.id2, IMG_BOTTOM)
-        sleep(0.1)
+        self.r = 0
+        self.l = 0
+        self.b = 0
+        self.t = 0
+        for i in range(4):
+            for j in range(4):
+                change_image(self.id2, IMG[i][j])
+                sleep(0.1)
         change_image(self.id2, PNG_PATH)
         
         self.movement_vector = [0, 0]
@@ -75,19 +89,24 @@ class Player:
             movement[1] *= delta_time
             self.move_range(movement)        
             if movement[0] > 0:
+                self.r += 1
+                self.r %= ANIMATION_UPDATE_FREQUENCY
+                IMG_RIGHT = RIGHT[self.r // 8]
                 change_image(self.id, IMG_RIGHT)
             elif movement[0] < 0:
+                self.l += 1
+                self.l %= ANIMATION_UPDATE_FREQUENCY
+                IMG_LEFT = LEFT[self.l // 8]
                 change_image(self.id, IMG_LEFT)
-                sleep(0.2)
-                change_image(self.id, IMG_LEFT2)
-                sleep(0.2)
-                change_image(self.id, IMG_LEFT3)
-                sleep(0.2)
-                change_image(self.id, IMG_LEFT4)
-                sleep(0.2)
             elif movement[1] > 0 :
+                self.b += 1
+                self.b %= ANIMATION_UPDATE_FREQUENCY
+                IMG_BOTTOM = BOTTOM[self.b // 8]
                 change_image(self.id, IMG_BOTTOM)
             elif movement[1] < 0:
+                self.t += 1
+                self.t %= ANIMATION_UPDATE_FREQUENCY
+                IMG_TOP = TOP[self.t // 8]
                 change_image(self.id, IMG_TOP)
         else:
             change_image(self.id, IMG_PATH)
