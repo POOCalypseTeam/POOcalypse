@@ -1,0 +1,20 @@
+body {
+    background-color: rgb(200, 255, 0);
+    height: 100%;
+}
+
+button {
+    padding: 1rem;
+    background-color: red;
+    border-radius: 5px;
+    width: 10rem;
+    display: block;
+    margin: auto;
+    margin-top: 25%;
+}
+
+* {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
