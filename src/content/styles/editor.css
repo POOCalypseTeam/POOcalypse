@@ -1,0 +1,82 @@
+body {
+    height: 100vh;
+    margin: 0;
+}
+
+div > * {
+    color: lightgray;
+}
+
+select, input {
+    color:#272729;
+}
+
+#index {
+    width: 30%;
+}
+
+h1 {
+    text-align: center;
+}
+
+#world-info {
+    position: absolute;
+    right: 0;
+    width: 20%;
+    height: 100vh;
+    padding-left: 5px;
+
+    background-color: #272729;
+}
+
+#layers {
+    margin: 0 5px;
+    height: 20%;
+    background-color:#58585a;
+    overflow: scroll;
+}
+
+.layer {
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
+    border: 1px solid #707070;
+}
+
+.layer > * {
+    margin: 2px;
+    text-align:center;
+}
+
+.selected {
+    background-color: #707070;
+}
+
+#layer-options > * {
+    margin-top: 10px;
+}
+
+#tileset {
+    position: absolute;
+    bottom: 0;
+    width: 80vw;
+    height: 15%;
+    padding: 3px;
+
+    background-color: #272729;
+
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 16px;
+    grid-template-rows: repeat(auto-fill, minmax(16px, 1fr));
+    gap: 2px;
+    overflow: scroll;
+}
+
+#tileset > img {
+    display: block;
+}
+
+.brush {
+    outline: 2px solid white;
+    outline-offset: -1px;
+}
