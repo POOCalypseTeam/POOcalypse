@@ -1,6 +1,8 @@
 from math import sqrt, atan2, sin, cos
-
 import web_helper
+
+from .weapon import Weapon
+from .enemy import Enemy
 
 IMG_PATH = "assets/spritesheets/blonde_man/blonde_man_001.png"
 IMG_SIZE = 32
@@ -11,13 +13,21 @@ MIN_Y = 0
 # Contient le joueur
 class Player:
     def __init__(self, helper: web_helper.Helper, position: tuple):
+        self.helper = helper
+        
         self.x = position[0]
         self.y = position[1]
         # TODO: Resize hitbox to fit character best
         self.width = IMG_SIZE
         self.height = IMG_SIZE
-        self.helper = helper
-        self.id = self.helper.add_image(IMG_PATH, (self.x, self.y))
+        self.id = "player"
+        self.render()
+        
+        self.health = 100
+        self.max_health = 100
+        self.dead = False
+
+        self.weapon = Weapon(10, 40, 0.3)
         
         self.movement_vector = [0, 0]
         # Changés par le sol / environnement
@@ -41,8 +51,13 @@ class Player:
         # On calcule les nouveaux x et y
         self.movement_vector[0] = cos(a)
         self.movement_vector[1] = sin(a)
-            
-    def update(self, delta_time: float, keys: list):
+    
+    def update(self, delta_time: float, keys: list, enemies: list[Enemy]):
+        self.update_movement(delta_time, keys)
+        if 'KeyR' in keys:
+            self.attack(enemies)
+    
+    def update_movement(self, delta_time: float, keys: list):
         """
         delta_time est le temps en secondes depuis la derniere update, il sert de coefficient sur la vitesse de deplacement notamment
         """
@@ -52,7 +67,7 @@ class Player:
         coef = delta_time * self.friction_coef
         self.movement_vector[0] *= coef
         self.movement_vector[1] *= coef
-        movement = self._process_keys(keys)
+        movement = self._process_move_keys(keys)
         if movement != [0, 0]:
             self.move_range(movement)
         
@@ -60,7 +75,7 @@ class Player:
             self.move(self.movement_vector)
             self.render()
         
-    def _process_keys(self, keys: dict) -> list:
+    def _process_move_keys(self, keys: dict) -> list:
         """
         keys -- liste de touches appuyees, identifiees par leur code
         
@@ -76,15 +91,13 @@ class Player:
         if "KeyD" in keys:
             move[0] += MOVE_AMOUNT
         return move
-
-        
+    
     def move(self, movement: tuple):
         """
-        Mouvement sur la position du joueur
+        Effectue le mouvement indique sur le joueur tout en veillant a ce qu'il reste dans les bornes de la fenetre
         
         Parametres:
-        
-            - movement : tuple de la forme (x, y) indiquant la quantite de mouvement dans chacune des directions
+            - movement: tuple de la forme (x,y) indiquant la quantite de mouvement dans chacune des directions
         """
         window_size = self.helper.ws.get_window_size()
         
@@ -97,7 +110,48 @@ class Player:
         self.y = max(MIN_Y, self.y)
         
     def get_position(self):
+        """
+        Renvoie la position du joueur (x,y) sur la page par rapport a son coin superieur gauche
+        """
         return (self.x, self.y)
+    
+    def get_center_pos(self):
+        """
+        Renvoie la position du joueur (x,y) sur la page centree sur le joueur
+        """
+        x = int(self.x + self.width / 2)
+        y = int(self.y + self.height / 2)
+        return (x,y)
         
     def render(self):
+        """
+        Actualise la position du joueur sur la page
+        """
         self.helper.change_dimensions(self.id, (self.x, self.y))
+        
+    def hit(self, damage: float):
+        """
+        Fait des degats au joueur
+        
+        Parametres:
+            - damage: un flottant donnant le nombre de PV que l'attaque doit infliger
+        
+        Renvoie True si le joueur est mort, False sinon
+        """
+        self.health = max(0, self.health - damage)
+        health_width = self.health * 60 / self.max_health
+        self.helper.ws.attributs("health", style={"width": f"{health_width}px"})
+        if self.health == 0:
+            self.dead = True
+            # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement
+        return self.dead
+    
+    def attack(self, enemies: list[Enemy]):
+        self.weapon.attack(enemies)
+        
+    def is_dead(self):
+        """
+        Renvoie True si le joueur est mort, False sinon
+        """
+        return self.dead
+    
