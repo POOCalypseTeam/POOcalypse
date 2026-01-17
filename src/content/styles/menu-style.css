@@ -4,6 +4,14 @@ body {
     padding: 0;
 }
 
+@font-face {
+    font-family: 'pixel';
+    src: url(../assets/gui/fonts/minecraft-police.ttf)
+    format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 * {
     -webkit-user-select: none;
     -ms-user-select: none;
@@ -53,7 +61,9 @@ button {
     width: 10rem;
     border: 2px solid rgba(221, 221, 221, 0.5);
     margin-bottom: 1em;
-    letter-spacing: 0.1em;
+    text-align: center;
+    letter-spacing: 0.2em;
+    font-family: 'pixel', Arial, sans-serif;
 }
 
 p {
@@ -64,4 +74,8 @@ p {
 ul {
     position: absolute;
     margin: 0;
+}
+
+img {
+    display: none;
 }

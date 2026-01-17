@@ -49,6 +49,10 @@ img {
     image-rendering: pixelated;
 }
 
+.background {
+    display: none;
+}
+
 #img0 {
     transition: top 50ms, left 50ms;
 }
