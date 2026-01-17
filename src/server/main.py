@@ -1,5 +1,5 @@
 import os # remove
-import time # time, sleep
+import time # time
 import threading # Threading
 
 import wsinter
@@ -24,7 +24,7 @@ def main():
         exit(0)
         return
     
-    game = Game(start_page = "index.html")
+    game = Game("index.html")
     
 def stop():
     global game
