@@ -33,6 +33,17 @@ body {
     inset: 0;
     filter: blur(5px);
     z-index: -1;
+    scale: 1.1;
+    animation: bg-circle 15s linear infinite;
+}
+
+@keyframes bg-circle {
+    from {
+        transform: rotate(0deg) translateX(10px) rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg) translateX(10px) rotate(-360deg);
+    }
 }
 
 .content {
