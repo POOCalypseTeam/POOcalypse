@@ -35,7 +35,7 @@ function addLayer(layer) {
     // Sinon il n'y a pas de `this` et event.target se réfère à l'élément clické
     // Donc pas forcément parent, mais peut-être le texte enfant
     parent.addEventListener("click", function(_) {
-        transmettre("layer_change", this.children[0].innerText);
+        transmettre("layer_changed", this.children[0].innerText);
     });
     layerContainer.appendChild(parent);
 }
