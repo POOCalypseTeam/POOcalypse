@@ -15,10 +15,6 @@ select, input {
     width: 30%;
 }
 
-h1 {
-    text-align: center;
-}
-
 #world-info {
     position: absolute;
     right: 0;
@@ -27,6 +23,17 @@ h1 {
     padding-left: 5px;
 
     background-color: #272729;
+}
+
+#world {
+    font-size: 28px;
+    text-align: center;
+    font-weight: bold;
+    width: 90%;
+    margin: 5px 0 0 5%;
+    background-color: transparent;
+    color:lightgray;
+    border: none;
 }
 
 #layers {

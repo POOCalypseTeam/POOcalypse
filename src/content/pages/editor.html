@@ -4,35 +4,17 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="../styles/editor.css">
+        
         <title>Editor</title>
     </head>
     <body>
         <div id="world-info">
-            <h1>MONDE</h1>
+            <select name="world-choice" id="world">
+            </select>
 
             <h2>Couches</h2>
 
             <div id="layers">
-                <div class="layer selected">
-                    <p>0</p>
-                    <p>exterior</p>
-                    <input type="checkbox" name="enabled" id="enabled-0">
-                </div>
-                <div class="layer">
-                    <p>1</p>
-                    <p>interior</p>
-                    <input type="checkbox" name="enabled" id="enabled-1">
-                </div>
-                <div class="layer">
-                    <p>1</p>
-                    <p>interior</p>
-                    <input type="checkbox" name="enabled" id="enabled-1">
-                </div>
-                <div class="layer">
-                    <p>1</p>
-                    <p>interior</p>
-                    <input type="checkbox" name="enabled" id="enabled-1">
-                </div>
             </div>
 
             <div id="layer-options">
@@ -119,5 +101,7 @@
             <img src="../assets/tilesets/exterior/exterior_049.png">
             <img src="../assets/tilesets/exterior/exterior_050.png">
         </div>
+
+        <script src="../scripts/editor.js"></script>
     </body>
 </html>
