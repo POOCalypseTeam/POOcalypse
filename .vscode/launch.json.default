@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Game,
+            "name": "Launch Game",
             "type": "node-terminal",
             "request": "launch",
             "command": "python3 -i ${workspaceFolder}/src/server/main.py",

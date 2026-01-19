@@ -79,11 +79,7 @@ class Editor:
         
     def layer_changed(self, _, o: int):
         self.layer = o
-        # TODO: Le format de o n'est pas le bon
-        # Le format de world_changed.o non plus, ça marche parce qu'il y a qu'une seule couche donc la fonction est appelee directement avec les bons arguments
-        print(o)
         print(self.layer)
-        print(type(self.layer))
     
     def loop(self):
         self.do_loop = True
