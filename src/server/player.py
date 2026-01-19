@@ -2,7 +2,12 @@ from web.main_web import add_image, change_dimensions, get_window_size, change_i
 from random import randint
 from time import sleep
 
-IMG_PATH = 'assets/spritesheets/blonde_man/blonde_man_001.png'
+IMG_STOP1 = 'assets/spritesheets/blonde_man/blonde_man_001.png'
+IMG_STOP2 = 'assets/spritesheets/blonde_man/blonde_man_002.png'
+IMG_STOP3 = 'assets/spritesheets/blonde_man/blonde_man_003.png'
+IMG_STOP4 = 'assets/spritesheets/blonde_man/blonde_man_004.png'
+STOP = [IMG_STOP1, IMG_STOP2, IMG_STOP3, IMG_STOP4]
+
 PNG_PATH = 'assets/spritesheets/blonde_man/blonde_man_000.png'
 
 IMG_LEFT1 = 'assets/spritesheets/blonde_man/blonde_man_005.png'
@@ -29,7 +34,7 @@ IMG_BOTTOM3 = 'assets/spritesheets/blonde_man/blonde_man_019.png'
 IMG_BOTTOM4 = 'assets/spritesheets/blonde_man/blonde_man_020.png'
 BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
 
-IMG = [LEFT, RIGHT, TOP, BOTTOM]
+IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 32
 MOVE_AMOUNT = 10
 MIN_X = 0
@@ -44,13 +49,14 @@ class Player:
         # TODO: Resize hitbox to fit character best
         self.width = IMG_SIZE
         self.height = IMG_SIZE
-        self.id = add_image(IMG_PATH, (self.x, self.y))
+        self.id = add_image(IMG_STOP1, (self.x, self.y))
         self.id2 = add_image(PNG_PATH, (0,0))
         self.r = 0
         self.l = 0
         self.b = 0
         self.t = 0
-        for i in range(4):
+        self.s = 0
+        for i in range(5):
             for j in range(4):
                 change_image(self.id2, IMG[i][j])
                 sleep(0.1)
@@ -109,7 +115,10 @@ class Player:
                 IMG_TOP = TOP[self.t // 8]
                 change_image(self.id, IMG_TOP)
         else:
-            change_image(self.id, IMG_PATH)
+            self.s += 1
+            self.s %= ANIMATION_UPDATE_FREQUENCY
+            IMG_STOP = STOP[self.s // 8]
+            change_image(self.id, IMG_STOP)
         self.move(self.movement_vector)
         self.render()
         
