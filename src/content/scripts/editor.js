@@ -1,5 +1,11 @@
 worldSelect = document.getElementById("world");
 layerContainer = document.getElementById("layers");
+selected = null;
+tilesetSelect = document.getElementById("tileset-choice");
+indexInput = document.getElementById("index");
+collisionsCheck = document.getElementById("collisions");
+createLayerButton = document.getElementById("add");
+board = document.getElementById("board");
 
 worldSelect.addEventListener("change", (event) => {
     transmettre("world_changed", event.target.value);
@@ -9,13 +15,13 @@ function addLayers(layers) {
     layers.forEach(element => {
         addLayer(element);
     });
-    layerContainer.children[0].classList.add("selected");
 }
 
 function addLayer(layer) {
     // layer: [index: int, tileset: str, collisions: boolean]
     parent = document.createElement("div");
     parent.classList.add("layer");
+    parent.id = "layer_option_" + String(layer[0])
     
     layerText = document.createElement("p");
     layerText.innerText = layer[0];
@@ -35,7 +41,46 @@ function addLayer(layer) {
     // Sinon il n'y a pas de `this` et event.target se réfère à l'élément clické
     // Donc pas forcément parent, mais peut-être le texte enfant
     parent.addEventListener("click", function(_) {
+        if (selected != null && selected != undefined)
+        {
+            selected.classList.remove("selected");
+        }
+        this.classList.add("selected");
+        selected = this;
         transmettre("layer_changed", this.children[0].innerText);
     });
     layerContainer.appendChild(parent);
 }
+
+add.addEventListener("click", (_) => {
+    let index = indexInput.value;
+    // On verifie qu'il n'y ait pas d'autres couche avec le meme indice
+    let children = layerContainer.children;
+    for (let i = 0; i < children.length; i++)
+    {
+        if (children[i].children[0].innerText == index)
+        {
+            return;
+        }
+    }
+    let tileset = tilesetSelect.value;
+    let collisions = collisionsCheck.value;
+    addLayer([index, tileset, collisions]);
+
+    // On les ajoute au div#board
+    /*layer = document.createElement("div");
+    layer.id = "layer_" + String(index);
+    // On multiplie par 2 pour laisser de la place au joueur si besoin
+    layer.style["z-index"] = index * 2;
+    board.appendChild(layer);*/
+
+    transmettre("create_layer", [index, tileset, collisions])
+});
+
+window.addEventListener("keyup", (event) => {
+    if (event.key == "Backspace" || event.key == "Delete") {
+        if (confirm("Voulez-vous vraiment supprimer cette couche ?\nCette action sera définitive!")) {
+            transmettre("delete_layer", selected.children[0].innerText);
+        }
+    }
+})

@@ -1,4 +1,4 @@
-import os # remove
+import os # remove, listdir, path.isfile
 import time # time
 import threading # Threading
 import sqlite3
@@ -39,12 +39,10 @@ class Editor:
         
         self.web_helper = web_helper.Helper(self.web_manager)
         
-        #self.board = graphics.board.Board(self.web_helper, "test_world")
-        #self.board.load(0)
-        
         self.link = sqlite3.connect("content/data/worlds/worlds.db")
         self.base = self.link.cursor()
         
+        self.layers = {}
         self.add_elements()
         
         self.keyboard_manager = Keyboard(self.web_manager)
@@ -62,14 +60,25 @@ class Editor:
         for world in worlds:
             self.web_manager.insere(world[0], "option", attr={"value":world[0]}, parent="world")
             self.web_manager.inner_text(world[0], world[0])
+            
+        # On ajoute toutes les tilesets possibles
+        for file in os.listdir("content/assets/tilesets"):
+            if os.path.isfile("content/assets/tilesets" + file):
+                continue
+            self.web_manager.insere(file, "option", attr={"value":file}, parent="tileset-choice")
+            self.web_manager.inner_text(file, file)                
         
-        # On crée un gestionnaire pour le changement de monde
+        # On crée des gestionnaires pour les divers evenements
         self.web_manager.gestionnaire("world_changed", self.world_changed)
         self.web_manager.gestionnaire("layer_changed", self.layer_changed)
+        self.web_manager.gestionnaire("create_layer", self.create_layer)
+        self.web_manager.gestionnaire("delete_layer", self.delete_layer)
     
     def world_changed(self, _, o: str):
         self.world = o
-        print(o)
+        
+        # On charge le plateau
+        self.board = graphics.board.Board(self.web_helper, self.world)
         
         # Ajoute les elements pour ce monde precis
         self.base.execute("SELECT layer_index,tileset,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
@@ -77,10 +86,38 @@ class Editor:
         layers = [list(layer) for layer in layers]
         self.web_manager.injecte("addLayers(" + str(layers) + ")")
         
+        for layer in layers:
+            # On map les couches avec leur tileset
+            self.layers[layer[0]] = layer[1]
+            self.board.load(layer[0])
+        
     def layer_changed(self, _, o: int):
-        self.layer = o
-        print(self.layer)
-    
+        self.layer = int(o)
+        
+        # On supprime tout d'abord
+        self.web_manager.remove_children("tileset")
+        
+        tileset_path = "/assets/tilesets/" + self.layers[self.layer] + "/"
+        # Charge les images
+        i = 0
+        for file in os.listdir("content" + tileset_path):
+            self.web_manager.insere("palette_" + str(i), "img", attr={'src':'../' + tileset_path + file}, parent="tileset")
+            i += 1
+        self.web_manager.add_class("palette_0", "brush")
+        
+    def create_layer(self, _, o: list[str, str, str]):
+        self.layers[int(o[0])] = o[1]
+        self.board.create_layer([int(o[0]), o[1], bool(o[2])])
+        
+    def delete_layer(self, _, o):
+        if self.layer != int(o):
+            raise ValueError("Il y a un probleme de synchronisation entre le client et le serveur, relancez.")
+        
+        self.web_manager.remove("layer_option_" + str(self.layer))
+        self.web_manager.remove("layer_" + str(self.layer))
+        del self.layers[self.layer]
+        self.board.remove_layer(self.layer)
+            
     def loop(self):
         self.do_loop = True
         last_loop_time = 0

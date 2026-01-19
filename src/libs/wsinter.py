@@ -113,6 +113,14 @@ function faire(o){
         {
             elem.innerText = data;
         }
+        else if (type == "class-a" && elem != null)
+        {
+            elem.classList.add(data);
+        }
+        else if (type == "class-r" && elem != null)
+        {
+            elem.classList.remove(data);
+        }
         else if (type == "attributes" && elem != null)
         {
             for (attr in data)
@@ -893,6 +901,12 @@ const ueh = (event) => {
             self._envoi(data)
         else:
             self.pending.append(data)
+            
+    def add_class(self,id_objet:str,classe:str):
+        self._push([{"id":id_objet,"type":"class-a","data":classe}])
+        
+    def remove_class(self,id_objet:str,classe:str):
+        self._push([{"id":id_objet,"type":"class-r","data":classe}])
 
     def attributs(self,id_objet,attr={},style={}):
         """

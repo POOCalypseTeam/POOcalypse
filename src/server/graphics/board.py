@@ -34,6 +34,27 @@ class Board:
         for layer in layers:
             self.helper.ws.insere("layer_" + str(layer[0]), "div", style={"z-index": layer[0] * 2}, parent="board")
         
+        link.close()
+        
+    def create_layer(self, o: list[int, str, bool]):
+        link = sqlite3.connect(BOARD_PATH)
+        base = link.cursor()
+        
+        base.execute("INSERT INTO layers VALUES (?,?,?,?);", (self.world, o[0], o[1], o[2]))
+        link.commit()
+        
+        self.helper.ws.insere("layer_" + str(o[0]), "div", style={"z-index": o[0] * 2}, parent="board")
+        link.close()
+    
+    def remove_layer(self, layer):
+        link = sqlite3.connect(BOARD_PATH)
+        base = link.cursor()
+        
+        base.execute("DELETE FROM layers WHERE world=? AND layer_index=?;", (self.world, layer))
+        link.commit()
+        
+        link.close()
+    
     def load(self, layer: int):
         # On suppose que la position de base est 0;0, dont on fait le rendu en haut a gauche
         link = sqlite3.connect(BOARD_PATH)
@@ -72,3 +93,5 @@ class Board:
                     img_path = TILESET_PATH.replace("%SET%", tileset).replace("%IMG%", tile[2])
                     position = (block_offset[0] + tile[0] * self.tile_size, block_offset[1] + tile[1] * self.tile_size)
                     self.helper.add_image(img_path, position, (self.tile_size,self.tile_size), parent="layer_" + str(layer))
+                    
+        link.close()
