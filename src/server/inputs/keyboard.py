@@ -88,7 +88,6 @@ class Keyboard:
         elif key[5] in self.pressed_keys:
             del self.pressed_keys[key[5]]
             
-        # TODO: Créer un dictionnaire pour rendre l'accès aux touches plus rapide, même si pas flagrant
         for event in self.events:
             event.match(state, key)
             

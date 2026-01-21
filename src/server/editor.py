@@ -73,6 +73,7 @@ class Editor:
         self.web_manager.gestionnaire("layer_changed", self.layer_changed)
         self.web_manager.gestionnaire("create_layer", self.create_layer)
         self.web_manager.gestionnaire("delete_layer", self.delete_layer)
+        self.web_manager.gestionnaire("tile_changed", self.tile_changed)
     
     def world_changed(self, _, o: str):
         self.world = o
@@ -103,7 +104,11 @@ class Editor:
         for file in os.listdir("content" + tileset_path):
             self.web_manager.insere("palette_" + str(i), "img", attr={'src':'../' + tileset_path + file}, parent="tileset")
             i += 1
-        self.web_manager.add_class("palette_0", "brush")
+            
+        self.web_manager.injecte("addTilesEvent();")
+        
+    def tile_changed(self, _, o):
+        print(o)
         
     def create_layer(self, _, o: list[str, str, str]):
         self.layers[int(o[0])] = o[1]

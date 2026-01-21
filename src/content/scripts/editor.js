@@ -1,11 +1,15 @@
+board = document.getElementById("board");
+
 worldSelect = document.getElementById("world");
 layerContainer = document.getElementById("layers");
 selected = null;
-tilesetSelect = document.getElementById("tileset-choice");
 indexInput = document.getElementById("index");
 collisionsCheck = document.getElementById("collisions");
 createLayerButton = document.getElementById("add");
-board = document.getElementById("board");
+
+tileset = document.getElementById("tileset");
+tilesetSelect = document.getElementById("tileset-choice");
+brush = null;
 
 worldSelect.addEventListener("change", (event) => {
     transmettre("world_changed", event.target.value);
@@ -83,4 +87,18 @@ window.addEventListener("keyup", (event) => {
             transmettre("delete_layer", selected.children[0].innerText);
         }
     }
-})
+});
+
+function addTilesEvent() {
+    children = tileset.children;
+    for (let i = 0; i < children.length; i++) {
+        children[i].addEventListener("click", (e) => {
+            if (brush != null && brush != undefined) {
+                brush.classList.remove("brush");
+            }
+            e.target.classList.add("brush");
+            brush = e.target;
+            transmettre("tile_changed", e.target.id);
+        });
+    }
+}

@@ -82,10 +82,11 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }
 });
 
-window.addEventListener("resize", (e) => {
+function sendWindowResize() {
     transmettre("get_window_size", [window.innerWidth, window.innerHeight]);
-});
+}
 
+window.addEventListener("resize", sendWindowResize());
 
 function faire(o){
     for (dico of o)
@@ -462,7 +463,7 @@ const ueh = (event) => {
 
         Utilise seulement par le gestionnaire d'evenement lors d'un appel par le client
         """
-        self.window_width= size[0]
+        self.window_width = size[0]
         self.window_height = size[1]
 
     def get_window_size(self):

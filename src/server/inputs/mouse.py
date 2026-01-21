@@ -12,7 +12,8 @@ class MEvent:
             self.handler(button)
             return True
         return False
-    
+
+# TODO: Utiliser le meme principe que inputs.Keyboard, mais pour la souris
 events = []
 
 def add_event(handler: callable, state: str, ids: list):
