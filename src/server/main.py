@@ -9,7 +9,7 @@ import graphics.board
 from characters.player import Player
 from characters.npc import Interactable, Npc
 from inputs.keyboard import Keyboard
-import inputs.mouse
+from inputs.mouse import Mouse
 
 game = None
 
@@ -45,7 +45,7 @@ class Game:
         
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
-        self.web_manager.gestionnaire_souris(inputs.mouse.handle_input)
+        self.mouse_manager = Mouse(self.web_manager)
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         self.player = Player(self.web_helper, (50, 50))

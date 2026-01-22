@@ -8,9 +8,11 @@ import web_helper
 
 import graphics.board
 from inputs.keyboard import Keyboard
-import inputs.mouse
+from inputs.mouse import Mouse
 
 editor = None
+
+TILESET_PATH = "assets/tilesets/%SET%/%IMG%.png"
 
 def main():
     global editor
@@ -42,11 +44,15 @@ class Editor:
         self.link = sqlite3.connect("content/data/worlds/worlds.db")
         self.base = self.link.cursor()
         
-        self.layers = {}
+        # Dictionnaire du numero de couche vers la tileset qui lui correspond
+        self.layers: dict[int, str] = {}
         self.add_elements()
         
+        self.layer: int = 0
+        self.tile: str = ""
+        
         self.keyboard_manager = Keyboard(self.web_manager)
-        self.web_manager.gestionnaire_souris(inputs.mouse.handle_input)
+        self.mouse_manager = Mouse(self.web_manager)
         
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()
@@ -79,7 +85,7 @@ class Editor:
         self.world = o
         
         # On charge le plateau
-        self.board = graphics.board.Board(self.web_helper, self.world)
+        self.board = graphics.board.Board(self.web_helper, self.world, 16, 16)
         
         # Ajoute les elements pour ce monde precis
         self.base.execute("SELECT layer_index,tileset,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
@@ -108,7 +114,7 @@ class Editor:
         self.web_manager.injecte("addTilesEvent();")
         
     def tile_changed(self, _, o):
-        print(o)
+        self.tile = o
         
     def create_layer(self, _, o: list[str, str, str]):
         self.layers[int(o[0])] = o[1]
@@ -133,6 +139,22 @@ class Editor:
                 continue
             
             keys = self.keyboard_manager.get_keys()
+            buttons = self.mouse_manager.get_buttons()
+            
+            # Si le bouton gauche est appuye
+            if buttons[0]["L"] and self.tile != "":
+                # On map ces positions vers un bloc, puis vers une tile dans ce bloc
+                # Pour ce faire, on considere pour l'instant que le 0,0 est en haut à gauche
+                x,y = buttons[1]
+                # On calcule la taille en pixels d'un bloc
+                block_pixel_size = 16 * 16
+                # On effectue la division euclidienne des coos par le nombre de pixels d'un bloc
+                block_x, block_y = x // block_pixel_size, y // block_pixel_size
+                # Puis on effectue la division euclidienne du reste des coos par le nombre de pixels d'un bloc, par le nombre de pixels d'une tile
+                tile_x, tile_y = (x - block_x * block_pixel_size) // 16, (y - block_y * block_pixel_size) // 16
+            
+                img_id = "_".join(map(str, [self.layer, block_x * 16 + tile_x, block_y * 16 + tile_y]))
+                self.web_manager.attributs(img_id, attr={'src': "../" + TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])})
             
             last_loop_time = time.time()
             

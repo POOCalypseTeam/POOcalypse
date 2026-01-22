@@ -98,7 +98,9 @@ function addTilesEvent() {
             }
             e.target.classList.add("brush");
             brush = e.target;
-            transmettre("tile_changed", e.target.id);
+            src = e.target.src;
+            // On ne recupere que le fichier image
+            transmettre("tile_changed", src.substring(src.lastIndexOf("/") + 1));
         });
     }
 }

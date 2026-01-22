@@ -22,8 +22,7 @@ class _KEvent:
 from wsinter import Inter
 class Keyboard:
     def __init__(self, web_manager: Inter):
-        self.web_manager = web_manager
-        self.web_manager.gestionnaire_clavier(self.handle_input)
+        web_manager.gestionnaire_clavier(self.handle_input)
         
         self.pressed_keys = {}
         self.events = []
@@ -85,7 +84,7 @@ class Keyboard:
             # Si la touche n'est pas répétée, pour ne pas l'ajouter plusieurs fois
             if not key[6]:
                 self.pressed_keys[key[5]] = None
-        elif key[5] in self.pressed_keys:
+        elif key[5] in self.pressed_keys.keys():
             del self.pressed_keys[key[5]]
             
         for event in self.events:

@@ -1,24 +1,31 @@
 body {
     height: 100vh;
     margin: 0;
+
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+}
+
+* {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+body > div {
+    z-index: 1000;
 }
 
 div > * {
     color: lightgray;
 }
 
-select, input {
-    color:#272729;
-}
-
-#index {
-    width: 30%;
+#board {
+    /* -6px pour le padding de #tileset */
+    height: calc(85% - 6px);
 }
 
 #world-info {
-    position: absolute;
-    right: 0;
-    width: 20%;
     height: 100vh;
     padding-left: 5px;
 
@@ -62,6 +69,14 @@ select, input {
     margin-top: 15px;
 }
 
+select, input {
+    color:#272729;
+}
+
+#index {
+    width: 30%;
+}
+
 #add {
     color:#272729;
     width: 98%;
@@ -74,9 +89,10 @@ select, input {
 #tileset {
     position: absolute;
     bottom: 0;
-    width: 80vw;
     height: 15%;
     padding: 3px;
+    /* Pour compenser le padding */
+    width: calc(100vw - 6px);
 
     background-color: #272729;
 

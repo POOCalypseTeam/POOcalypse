@@ -16,7 +16,7 @@ class Board:
             
             - block_size: La taille en nombre de tiles de chaque bloc, defaut=16
             
-            - tile_size: La taille en pixels de chaque tile sur la page, defaut=32
+            - tile_size: La taille en pixels de chaque tile sur la page, defaut=16
         """
         self.helper = helper
         self.world = world
@@ -75,11 +75,11 @@ class Board:
         # Pour chaque bloc, on récupère toutes les tiles correspondantes et on en fait le rendu
         block_w_offset = block_w // 2
         block_h_offset = block_h // 2
-        for block_x in range(-block_w_offset, block_w_offset + 1):     # Pour l'instant on commence a 0
-            for block_y in range(-block_h_offset, block_h_offset + 1): # mais ca depend d'ou etait le joueur avant
+        for block_x in range(0, block_w):     # Pour l'instant on commence a 0
+            for block_y in range(0, block_h): # mais ca depend d'ou etait le joueur avant
                 # TODO: Afficher les joueurs, ennemis et NPC
                 # TODO: Actualiser quand la taille de la page change
-                block_offset = ((block_w_offset + block_x) * block_pixel_size, (block_h_offset + block_y) * block_pixel_size)
+                block_offset = ((block_x) * block_pixel_size, (block_y) * block_pixel_size)
 
                 # On recupere l'id du block
                 base.execute("SELECT block_id FROM blocks WHERE block_x=? AND block_y=? AND world=? AND layer_index=? LIMIT 1;", (block_x, block_y, self.world, layer))
@@ -90,8 +90,9 @@ class Board:
                 base.execute("SELECT x,y,image_name FROM tiles WHERE block_id=?;", (block_id[0],))
                 tiles = base.fetchall()
                 for tile in tiles:
+                    img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
                     img_path = TILESET_PATH.replace("%SET%", tileset).replace("%IMG%", tile[2])
                     position = (block_offset[0] + tile[0] * self.tile_size, block_offset[1] + tile[1] * self.tile_size)
-                    self.helper.add_image(img_path, position, (self.tile_size,self.tile_size), parent="layer_" + str(layer))
+                    self.helper.add_image_id(img_id, img_path, position, (self.tile_size,self.tile_size), parent="layer_" + str(layer))
                     
-        link.close()
+        link.close()    
