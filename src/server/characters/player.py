@@ -1,23 +1,69 @@
+from random import randint
+from time import sleep
 from math import sqrt, atan2, sin, cos
 
 import web_helper
 
-IMG_PATH = "assets/spritesheets/blonde_man/blonde_man_001.png"
+IMG_STOP1 = 'assets/spritesheets/blonde_man/blonde_man_001.png'
+IMG_STOP2 = 'assets/spritesheets/blonde_man/blonde_man_002.png'
+IMG_STOP3 = 'assets/spritesheets/blonde_man/blonde_man_003.png'
+IMG_STOP4 = 'assets/spritesheets/blonde_man/blonde_man_004.png'
+STOP = [IMG_STOP1, IMG_STOP2, IMG_STOP3, IMG_STOP4]
+
+PNG_PATH = 'assets/spritesheets/blonde_man/blonde_man_000.png'
+
+IMG_LEFT1 = 'assets/spritesheets/blonde_man/blonde_man_005.png'
+IMG_LEFT2 = 'assets/spritesheets/blonde_man/blonde_man_006.png'
+IMG_LEFT3 = 'assets/spritesheets/blonde_man/blonde_man_007.png'
+IMG_LEFT4 = 'assets/spritesheets/blonde_man/blonde_man_008.png'
+LEFT = [IMG_LEFT1, IMG_LEFT2, IMG_LEFT3, IMG_LEFT4]
+
+IMG_RIGHT1 = 'assets/spritesheets/blonde_man/blonde_man_009.png'
+IMG_RIGHT2 = 'assets/spritesheets/blonde_man/blonde_man_010.png'
+IMG_RIGHT3 = 'assets/spritesheets/blonde_man/blonde_man_011.png'
+IMG_RIGHT4 = 'assets/spritesheets/blonde_man/blonde_man_012.png'
+RIGHT = [IMG_RIGHT1, IMG_RIGHT2, IMG_RIGHT3, IMG_RIGHT4]
+
+IMG_TOP1 = 'assets/spritesheets/blonde_man/blonde_man_013.png'
+IMG_TOP2 = 'assets/spritesheets/blonde_man/blonde_man_014.png'
+IMG_TOP3 = 'assets/spritesheets/blonde_man/blonde_man_015.png'
+IMG_TOP4 = 'assets/spritesheets/blonde_man/blonde_man_016.png'
+TOP = [IMG_TOP1, IMG_TOP2, IMG_TOP3, IMG_TOP4]
+
+IMG_BOTTOM1 = 'assets/spritesheets/blonde_man/blonde_man_017.png'
+IMG_BOTTOM2 = 'assets/spritesheets/blonde_man/blonde_man_018.png'
+IMG_BOTTOM3 = 'assets/spritesheets/blonde_man/blonde_man_019.png'
+IMG_BOTTOM4 = 'assets/spritesheets/blonde_man/blonde_man_020.png'
+BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
+
+IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 32
 MOVE_AMOUNT = 10
 MIN_X = 0
 MIN_Y = 0
+ANIMATION_UPDATE_FREQUENCY = 32
 
 # Contient le joueur
 class Player:
     def __init__(self, helper: web_helper.Helper, position: tuple):
+        self.helper = helper
         self.x = position[0]
         self.y = position[1]
         # TODO: Resize hitbox to fit character best
         self.width = IMG_SIZE
         self.height = IMG_SIZE
-        self.helper = helper
-        self.id = self.helper.add_image(IMG_PATH, (self.x, self.y))
+        self.id = self.helper.add_image(IMG_STOP1, (self.x, self.y))
+        self.id2 = self.helper.add_image(PNG_PATH, (0,0))
+        self.r = 0
+        self.l = 0
+        self.b = 0
+        self.t = 0
+        self.s = 0
+        for i in range(5):
+            for j in range(4):
+                self.helper.change_image(self.id2, IMG[i][j])
+                sleep(0.1)
+        self.helper.change_image(self.id2, PNG_PATH)
         
         self.movement_vector = [0, 0]
         # Changés par le sol / environnement
@@ -54,11 +100,34 @@ class Player:
         self.movement_vector[1] *= coef
         movement = self._process_keys(keys)
         if movement != [0, 0]:
-            self.move_range(movement)
-        
-        if self.movement_vector != [0, 0]:    
-            self.move(self.movement_vector)
-            self.render()
+            self.move_range(movement)        
+            if movement[0] > 0:
+                self.r += 1
+                self.r %= ANIMATION_UPDATE_FREQUENCY
+                IMG_RIGHT = RIGHT[self.r // 8]
+                self.helper.change_image(self.id, IMG_RIGHT)
+            elif movement[0] < 0:
+                self.l += 1
+                self.l %= ANIMATION_UPDATE_FREQUENCY
+                IMG_LEFT = LEFT[self.l // 8]
+                self.helper.change_image(self.id, IMG_LEFT)
+            elif movement[1] > 0 :
+                self.b += 1
+                self.b %= ANIMATION_UPDATE_FREQUENCY
+                IMG_BOTTOM = BOTTOM[self.b // 8]
+                self.helper.change_image(self.id, IMG_BOTTOM)
+            elif movement[1] < 0:
+                self.t += 1
+                self.t %= ANIMATION_UPDATE_FREQUENCY
+                IMG_TOP = TOP[self.t // 8]
+                self.helper.change_image(self.id, IMG_TOP)
+        else:
+            self.s += 1
+            self.s %= ANIMATION_UPDATE_FREQUENCY
+            IMG_STOP = STOP[self.s // 8]
+            self.helper.change_image(self.id, IMG_STOP)
+        self.move(self.movement_vector)
+        self.render()
         
     def _process_keys(self, keys: dict) -> list:
         """
@@ -76,7 +145,6 @@ class Player:
         if "KeyD" in keys:
             move[0] += MOVE_AMOUNT
         return move
-
         
     def move(self, movement: tuple):
         """
