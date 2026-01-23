@@ -100,8 +100,6 @@ class Player:
         self.movement_vector[1] *= coef
         movement = self._process_keys(keys)
         if movement != [0, 0]:
-            movement[0] *= delta_time
-            movement[1] *= delta_time
             self.move_range(movement)        
             if movement[0] > 0:
                 self.r += 1
