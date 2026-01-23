@@ -2,10 +2,14 @@ import os # remove
 import time # time, sleep
 import threading # Threading
 
-from player import Player
-import web.main_web # start
-from web.inputs.keyboard import Keyboard
-import web.inputs.mouse
+import wsinter
+import web_helper
+
+import graphics.board
+from characters.player import Player
+from characters.npc import Interactable, Npc
+from inputs.keyboard import Keyboard
+import inputs.mouse
 
 game = None
 
@@ -20,7 +24,7 @@ def main():
         exit(0)
         return
     
-    game = Game()
+    game = Game(start_page = "index.html")
     
 def stop():
     global game
@@ -30,21 +34,52 @@ def stop():
     exit(0)
 
 class Game:
-    def __init__(self):
+    def __init__(self, start_page: str = "index.html"):
         """
         Point d'entree du programme quand on lance le serveur
         """        
-        self.web_manager = web.main_web.start()
+        self.web_manager = wsinter.Inter("content/pages/" + start_page)
+        self.web_manager.demarre(clavier=True)
+
+        self.web_helper = web_helper.Helper(self.web_manager)
         
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
-        self.web_manager.gestionnaire_souris(web.inputs.mouse.handle_input)
-            
-        self.player = Player((50, 50))
+        self.web_manager.gestionnaire_souris(inputs.mouse.handle_input)
+        
+        # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
+        self.player = Player(self.web_helper, (50, 50))
+        self.web_manager.attributs(self.player.id, style={"z-index": 10})
+
+        self.board = graphics.board.Board(self.web_helper, "test_world")
+        self.board.load(0)
+        
+        # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
+        # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
+        self.npc: list[Npc] = []
+        base_npc_1 = Npc(self.web_helper, (200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
+        base_npc_2 = Npc(self.web_helper, (150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
+        self.npc.append(base_npc_1)
+        self.npc.append(base_npc_2)
+        
+        self.interactable: Interactable = None
+        
+        self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Enter'])
         
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()
+        
+    def interact_key_handler(self, key):
+        if self.interactable == None or not issubclass(type(self.interactable), Interactable):
+            return
+        match key:
+            case 'KeyE':
+                if not self.interactable.is_opened():
+                    self.interactable.interact()
+            case 'ArrowUp' | 'ArrowLeft' | 'ArrowDown' | 'ArrowRight' | 'Enter':
+                if self.interactable.is_opened():
+                    self.interactable.key(key)
 
     def loop(self):
         """
@@ -57,17 +92,29 @@ class Game:
         Ainsi on conditionne le temps
         """
         self.do_loop = True
-        last_loop_time = time.time()
+        last_loop_time = 0
         
         while self.do_loop:
             delta_time = time.time() - last_loop_time
-            # 1 / 60 ~= 0.017, on s'embete pas à faire le calcul tout le temps, on pourrait limite stocker dans une variable mais pas tres utile non plus
+            # 1 / 60 ~= 0.017, on s'embete pas à faire le calcul tout le temps, on pourrait limite stocker la duree dans une variable mais pas tres utile non plus
             if delta_time < 0.017:
                 continue
             
             keys = self.keyboard_manager.get_keys()
-            self.player.update(delta_time, keys)
             
+            # On ne bouge pas si une interaction est en cours
+            if self.interactable is None or not self.interactable.is_opened():
+                self.player.update(delta_time, keys)
+            
+            self.interactable = None
+            for npc in self.npc:
+                if npc.within_distance(self.player.get_position()):
+                    self.interactable = npc
+                    self.web_manager.inner_text("action-bar", "Appuyez sur E pour interagir")
+                    
+            if self.interactable == None:
+                self.web_manager.inner_text("action-bar", "")
+                
             last_loop_time = time.time()
 
     def stop(self):
@@ -76,7 +123,7 @@ class Game:
         """
         self.do_loop = False
         self.loop_thread.join()
-        self.web_manager.stop(fermer=False)
+        self.web_manager.stop()
     
 # On verifie que le programme n'est pas importe mais bien lance
 if __name__ == "__main__":
