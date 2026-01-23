@@ -611,7 +611,8 @@ const ueh = (event) => {
                 'jpg':b'image/jpeg',
                 'jpeg':b'image/jpeg',
                 'gif':b'image/gif',
-                'ico':b'image/x-icon'
+                'ico':b'image/x-icon',
+                'mp3':b'audio/mpeg'
             }
             mime_t = { # contenus textuels
                 'htm': b'text/html',
