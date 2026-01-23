@@ -37,7 +37,8 @@ def stop():
 class Editor:
     def __init__(self, start_page: str):
         self.web_manager = wsinter.Inter("content/pages/" + start_page)
-        self.web_manager.demarre(clavier=True)
+        # On utilise notre propre initialisation pour la souris
+        self.web_manager.demarre(clavier=True, souris=False)
         
         self.web_helper = web_helper.Helper(self.web_manager)
         
