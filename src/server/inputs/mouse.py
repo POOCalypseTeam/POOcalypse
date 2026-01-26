@@ -19,10 +19,10 @@ class Mouse:
         # On remplace init_souris pour avoir la position sur la page et pas dans l'element clicke
         web_manager.injecte("""
   window.addEventListener("mousedown", (e) => { 
-    transmettre('**MD**',[e.target.id,e.buttons,e.centerX,e.centerY]);
+    transmettre('**MD**',[e.target.id,e.buttons,e.clientX,e.clientY]);
   });
   window.addEventListener("mouseup", (e) => {
-    transmettre('**MU**',[e.target.id,e.buttons,e.centerX,e.centerY]);    
+    transmettre('**MU**',[e.target.id,e.buttons,e.clientX,e.clientY]);    
   });
         """)
         web_manager.gestionnaire_souris(self.handle_input)
