@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="../styles/editor.css">
+        
+        <title>Editor</title>
+    </head>
+    <body>
+        <div id="board">
+            
+        </div>
+
+        <div id="world-info">
+            <select name="world-choice" id="world">
+            </select>
+
+            <h2>Couches</h2>
+
+            <div id="layers">
+            </div>
+
+            <div id="layer-options">
+
+                <label for="tileset-choice">Tileset: </label>
+                <select name="tileset-choice" id="tileset-choice">
+                </select>
+    
+                <br>
+    
+                <label for="index">Index: </label>
+                <input type="number" name="index" id="index" value="0">
+    
+                <br>
+    
+                <label for="collisions">Collisions: </label>
+                <input type="checkbox" name="collisions" id="collisions">
+
+                <br>
+
+                <button id="add">Ajouter</button>
+                
+            </div>
+
+        </div>
+
+        <div id="tileset">
+        </div>
+
+        <script src="../scripts/editor.js"></script>
+    </body>
+</html>
