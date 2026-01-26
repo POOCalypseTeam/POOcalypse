@@ -30,12 +30,17 @@ class Inter:
     _chemin_js = "/js"
     _js = """let socket = new WebSocket("ws://127.0.0.1:_ws_port");
 let readySent = true;
+let waiting = [];
 
 socket.onopen = function(e) {
   console.log("[open] Connection established");
   if (readySent == false)
   {
       transmettre("ready", "");
+  }
+  for (let i = 0; i < waiting.length; i++)
+  {
+      transmettre(waiting[i][0], waiting[0][1]);
   }
 };
 
@@ -67,6 +72,11 @@ function envoi(obj) {
 
 function transmettre(act,obj) {
     if (obj==undefined) obj="";
+    if (socket.readyState != 1)
+    {
+        waiting.push([act,obj]);
+        return;
+    }
     socket.send(JSON.stringify([act,obj]));
 };
 
@@ -86,7 +96,7 @@ function sendWindowResize() {
     transmettre("get_window_size", [window.innerWidth, window.innerHeight]);
 }
 
-window.addEventListener("resize", sendWindowResize());
+window.addEventListener("resize", sendWindowResize);
 
 function faire(o){
     for (dico of o)
