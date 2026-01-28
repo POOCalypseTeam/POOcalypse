@@ -39,6 +39,9 @@ class Helper:
         self.ws.insere(img_id, "img", attr={'src':f'../{path}'}, style=style, parent=parent)
         return img_id
     
+    def change_image(self, id, img):
+        self.ws.attributs(id, attr = {'src' : f'../{img}'})
+    
     def change_dimensions(self, id: str, position: tuple = None, size: tuple = None):
         """
         Change la position et ou la taille de l'element dans la page

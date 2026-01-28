@@ -53,11 +53,8 @@ class Game:
         self.player = Player(self.web_helper, (50, 50))
         self.web_manager.attributs(self.player.id, style={"z-index": 10})
 
-        self.board = graphics.board.Board(self.web_helper, 0)
-        self.board.load()
-
-        self.web_manager.insere("div_board_0", "div",style={"z-index":0,"position":"absolute","top":"0px","left":"0px"})
-        self.web_manager.insere("div_board_1", "div",style={"z-index":15,"position":"absolute","top":"0px","left":"0px"})
+        self.board = graphics.board.Board(self.web_helper, "test_world")
+        self.board.load(0)
         
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
