@@ -7,9 +7,9 @@ class Helper:
         """
         self.ws = ws
 
-        self.last_img_id: int = 0
+        self.last_img_id: int = 1
 
-    def add_image(self, path: str, position: tuple, size: tuple = None, zindex: int = 0, parent: str = "body"):
+    def add_image(self, path: str, position: tuple, size: tuple = None, zindex: int = 0, parent: str = "body", img_id: str = None):
         """
         Ajoute l'image pointee par path sur la page
         
@@ -24,6 +24,8 @@ class Helper:
 
             - parent: L'id de l'element parent sur la page Web, body par defaut
             
+            - id: L'id de l'image, si aucun l'id est "img_" + NOMBRE D'IMAGES
+            
         Renvoie l'id de l'image
         """        
         style = {"position": "absolute", "left": str(position[0]) + "px", "top": str(position[1]) + "px"}
@@ -31,9 +33,10 @@ class Helper:
             style["width"] = str(size[0]) + "px"
             style["height"] = str(size[1]) + "px"
         style["z-index"] = str(zindex)
-        img_id = "img" + str(self.last_img_id)
+        if img_id == None:
+            img_id = "img" + str(self.last_img_id)
+            self.last_img_id += 1
         self.ws.insere(img_id, "img", attr={'src':f'../{path}'}, style=style, parent=parent)
-        self.last_img_id += 1
         return img_id
     
     def change_image(self, id, img):
