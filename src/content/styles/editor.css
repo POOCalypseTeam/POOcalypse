@@ -26,10 +26,12 @@ div > * {
 }
 
 #tools {
+    position: relative;
     float: right;
     margin-right: 5px;
     list-style-type: none;
     color:#e4e4e4;
+    z-index: 1000;
 }
 
 #tools > * {

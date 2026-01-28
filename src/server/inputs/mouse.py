@@ -18,10 +18,10 @@ class Mouse:
     def __init__(self, web_manager: Inter):
         # On remplace init_souris pour avoir la position sur la page et pas dans l'element clicke
         web_manager.injecte("""
-  window.addEventListener("mousedown", (e) => { 
+  board.addEventListener("mousedown", (e) => { 
     transmettre('**MD**',[e.target.id,e.buttons,e.clientX,e.clientY]);
   });
-  window.addEventListener("mouseup", (e) => {
+  board.addEventListener("mouseup", (e) => {
     transmettre('**MU**',[e.target.id,e.buttons,e.clientX,e.clientY]);    
   });
         """)

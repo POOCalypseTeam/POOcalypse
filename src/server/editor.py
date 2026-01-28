@@ -12,8 +12,6 @@ from inputs.mouse import Mouse
 
 editor = None
 
-TILESET_PATH = "assets/tilesets/%SET%/%IMG%.png"
-
 def main():
     global editor
     
@@ -83,10 +81,13 @@ class Editor:
         self.web_manager.gestionnaire("create_layer", self.board.create_layer)
         self.web_manager.gestionnaire("delete_layer", self.board.delete_layer)
         self.web_manager.gestionnaire("tile_changed", self.board.tile_changed)
+        self.web_manager.gestionnaire("tool_changed", self.board.tool_changed)
             
     def loop(self):
         self.do_loop = True
         last_loop_time = 0
+        
+        self.board.init_sql()
         
         while self.do_loop:
             delta_time = time.time() - last_loop_time
@@ -94,12 +95,13 @@ class Editor:
                 continue
             
             keys = self.keyboard_manager.get_keys()
+            # Si on reste appuye, un seul evenement est envoye, donc la position restere celle de depart, il faut attendre que la souris soit relevee pour dessiner, dans une ligne droite seulement
+            # Ou alors trouver une solution qui agisse sur le client directement, ex: une fois que le bouton est appuye, on va check toutes les 5ms et envoyer au serveur la position.
             buttons = self.mouse_manager.get_buttons()
             
             # Si le bouton gauche est appuye
-            if self.board.tile != "" and buttons[0]['L']:
-                print("bonjour\n====")
-                self.board.add_tile(buttons[1])
+            if buttons[0]['L']:
+                self.board.action(buttons[1])
             
             last_loop_time = time.time()
             

@@ -1,6 +1,7 @@
 import sqlite3
 import os # listdir
 from math import ceil
+import time
 
 import web_helper
 
@@ -30,6 +31,7 @@ class Board:
         self.layers: dict[int, str] = {}
         self.layer: int = 0
         self.tile: str = ""
+        self.tool: str = "draw"
         
         # Utilises pour add_tile, qui devrait sinon en initialiser beaucoup trop
         self.link = None
@@ -159,12 +161,72 @@ class Board:
         
         link.close()
         
-    def add_tile(self, click_pos):
-        x,y = click_pos
+    def tool_changed(self, _m, o):
+        self.tool = o
         
-        self.update_board_size()
-        if x > self.board_size[0] or y > self.board_size[1]:
+    def init_sql(self):
+        self.link = sqlite3.connect(BOARD_PATH)
+        self.link.autocommit = True
+        self.base = self.link.cursor()
+        
+    def add_tile(self, block_pos, block_offsets, tile_pos):        
+        # On regarde s'il existe deja une tile
+        # Sinon on la cree et on l'ajoute sur la page
+        # Si oui, on la modifie dans la BD et sur la page
+        # Tout en creant les blocks necessaires si besoin
+        self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_pos[0], block_pos[1]))
+        res = self.base.fetchall()
+        block_id = ""
+        if len(res) > 1:
+            raise ValueError("Pas normal du tout")
+        elif len(res) == 0:
+            # On cree un nouveau block
+            self.base.execute("INSERT INTO blocks(world,layer_index,block_x,block_y) VALUES (?,?,?,?);", (self.world, self.layer, block_pos[0], block_pos[1]))
+            self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_pos[0], block_pos[1]))
+            block_id = self.base.fetchone()[0]
+        else:
+            block_id = res[0][0]
+        
+        self.base.execute("SELECT COUNT(image_name) FROM tiles WHERE block_id=? AND x=? AND y=?;", (block_id, tile_pos[0], tile_pos[1]))
+        res = self.base.fetchall()[0][0]
+        img_id = "_".join(map(str, [self.layer, block_pos[0] * self.block_size + tile_pos[0], block_pos[1] * self.block_size + tile_pos[1]]))
+        if res > 1:
+            raise ValueError("Pas normal du tout")
+        elif res == 0:
+            # On cree une nouvelle tile
+            self.base.execute("INSERT INTO tiles VALUES (?,?,?,?);", (block_id, tile_pos[0], tile_pos[1], self.tile[:-4]))
+            position = (self.origin[0] + tile_pos[0] * self.tile_pixel_size + block_offsets[0], self.origin[1] + tile_pos[1] * self.tile_pixel_size + block_offsets[1])
+            self.helper.add_image_id(img_id, TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4]), position, (self.tile_pixel_size,self.tile_pixel_size), parent="layer_" + str(self.layer))
+        else:
+            # On modifie la tile d'avant
+            self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_pos[0], tile_pos[1]))
+            self.helper.ws.attributs(img_id, attr={'src': "../" + TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])})
+        
+    def remove_tile(self, block_pos, block_offsets, tile_pos):        
+        self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_pos[0], block_pos[1]))
+        res = self.base.fetchall()
+        block_id = ""
+        if len(res) > 1:
+            raise ValueError("Pas normal du tout")
+        elif len(res) == 0:
             return
+        
+        block_id = res[0][0]
+        
+        self.base.execute("SELECT COUNT(image_name) FROM tiles WHERE block_id=? AND x=? AND y=?;", (block_id, tile_pos[0], tile_pos[1]))
+        res = self.base.fetchall()[0][0]
+        img_id = "_".join(map(str, [self.layer, block_pos[0] * self.block_size + tile_pos[0], block_pos[1] * self.block_size + tile_pos[1]]))
+        if res > 1:
+            raise ValueError("Pas normal du tout")
+        elif res == 0:
+            return
+    
+        # On modifie la tile d'avant
+        self.base.execute("DELETE FROM tiles WHERE block_id=? AND x=? AND y=?;", (block_id, tile_pos[0], tile_pos[1]))
+        self.helper.ws.remove(img_id)
+
+    def action(self, click_pos):
+        x,y = click_pos
         
         block_x = (x - self.origin[0]) // self.block_pixel_size
         block_y = (y - self.origin[1]) // self.block_pixel_size
@@ -175,40 +237,14 @@ class Board:
         tile_x = (x - block_offset_x) // self.tile_pixel_size
         tile_y = (y - block_offset_y) // self.tile_pixel_size
         
-        # On regarde s'il existe deja une tile
-        # Sinon on la cree et on l'ajoute sur la page
-        # Si oui, on la modifie dans la BD et sur la page
-        # Tout en creant les blocks necessaires si besoin
-        if self.link == None:
-            self.link = sqlite3.connect(BOARD_PATH)
-            self.link.autocommit = True
-            self.base = self.link.cursor()
-        
-        self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_x, block_y))
-        res = self.base.fetchall()
-        block_id = ""
-        if len(res) > 1:
-            raise ValueError("Pas normal du tout")
-        elif len(res) == 0:
-            # On cree un nouveau block
-            self.base.execute("INSERT INTO blocks(world,layer_index,block_x,block_y) VALUES (?,?,?,?);", (self.world, self.layer, block_x, block_y))
-            self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_x, block_y))
-            block_id = self.base.fetchone()[0]
-        else:
-            block_id = res[0][0]
-        
-        self.base.execute("SELECT tile_id FROM tiles WHERE block_id=? AND x=? AND y=?;", (block_id, tile_x, tile_y))
-        res = self.base.fetchall()
-        img_id = "_".join(map(str, [self.layer, block_x * self.block_size + tile_x, block_y * self.block_size + tile_y]))
-        if len(res) > 1:
-            raise ValueError("Pas normal du tout")
-        elif len(res) == 0:
-            # On cree une nouvelle tile
-            self.base.execute("INSERT INTO tiles(block_id,x,y,image_name) VALUES (?,?,?,?);", (block_id, tile_x, tile_y, self.tile[:-4]))
-            position = (self.origin[0] + tile_x * self.tile_pixel_size + block_offset_x, self.origin[1] + tile_y * self.tile_pixel_size + block_offset_y)
-            self.helper.add_image_id(img_id, TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4]), position, (self.tile_pixel_size,self.tile_pixel_size), parent="layer_" + str(self.layer))
-        else:
-            # On modifie la tile d'avant
-            self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_x, tile_y))
-            self.helper.ws.attributs(img_id, attr={'src': "../" + TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])})
-        
+        match self.tool:
+            case 'draw':
+                if self.tile != "":
+                    self.add_tile((block_x, block_y), (block_offset_x, block_offset_y), (tile_x, tile_y))
+            case 'erase':
+                self.remove_tile((block_x, block_y), (block_offset_x, block_offset_y), (tile_x, tile_y))
+            case 'select':
+                # Il faudrait implementer une variable qui contienne la premiere position, quand on a la deuxieme on decide de quoi faire
+                print("Ne fait rien pour l'instant")
+            case _:
+                raise TypeError("Il n'existe pas d'outil de ce type")

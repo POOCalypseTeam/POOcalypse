@@ -10,9 +10,9 @@
     <body>
         <div id="board">
             <ul id="tools">
-                <li>✏</li>
-                <li>🧼</li>
-                <li>□</li>
+                <li onclick="transmettre('tool_changed', 'draw');">✏</li>
+                <li onclick="transmettre('tool_changed', 'erase');">🧼</li>
+                <li onclick="transmettre('tool_changed', 'select');">□</li>
             </ul>
         </div>
 
