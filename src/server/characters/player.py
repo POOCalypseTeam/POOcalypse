@@ -23,8 +23,8 @@ class Player:
         self.id = "player"
         self.render()
         
-        self.health = 100
-        self.max_health = 100
+        self.health = 5
+        self.max_health = 5
         self.dead = False
 
         self.weapon = Weapon(10, 40, 0.3)

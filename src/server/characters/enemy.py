@@ -17,7 +17,8 @@ class Enemy:
         self.dead = False
         self.range = 40
         self.last_attack = time.time()
-        self.cooldown = 0.5
+        self.cooldown = 0.7
+        self.attack_amount = 1
         
         self.movement_coef = 15
         self.movement = (0, 0)
@@ -43,7 +44,7 @@ class Enemy:
         
     def attack(self, player):
         if time.time() - self.last_attack >= self.cooldown:
-            player.hit(10)
+            player.hit(self.attack_amount)
             self.last_attack = time.time()
             
     def hit(self, damage: int):
