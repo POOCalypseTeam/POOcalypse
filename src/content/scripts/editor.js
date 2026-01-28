@@ -33,18 +33,42 @@ function addLayer(layer) {
     tilesetText = document.createElement("p");
     tilesetText.innerText = layer[1];
     
-    enabledInput = document.createElement("input");
-    enabledInput["type"] = "checkbox";
-    enabledInput["name"] = "enabled";
-    enabledInput["id"] = "enabled-" + layer[0];
+    enabledInput = document.createElement("span");
+    enabledInput.innerText = "🕶";
+    enabledInput["layer"] = layer[0]
+    enabledInput.addEventListener("click", (e) => {
+        layer = document.getElementById("layer_" + e.target.layer);
+        if (e.target.innerText === "🕶") {
+            e.target.innerText = "👁";
+            layer.style["display"] = "none";
+        }
+        else {
+            e.target.innerText = "🕶";
+            layer.style["display"] = "block";
+        }
+    });
+
+    deleteInput = document.createElement("span");
+    deleteInput.innerText = "🗑";
+    deleteInput.addEventListener("click", (e) => {
+        if (confirm("Voulez-vous vraiment supprimer cette couche ?\nCette action sera définitive!")) {
+            transmettre("delete_layer", selected.children[0].innerText);
+        }
+    });
     
     parent.appendChild(layerText);
     parent.appendChild(tilesetText);
     parent.appendChild(enabledInput);
+    parent.appendChild(deleteInput);
+
     // On utilise function(event) et pas (event) =>
     // Sinon il n'y a pas de `this` et event.target se réfère à l'élément clické
-    // Donc pas forcément parent, mais peut-être le texte enfant
+    // Donc pas forcément parent car peut être le texte enfant
     parent.addEventListener("click", function(_) {
+        if (selected === this)
+        {
+            return;
+        }
         if (selected != null && selected != undefined)
         {
             selected.classList.remove("selected");
@@ -79,14 +103,6 @@ add.addEventListener("click", (_) => {
     board.appendChild(layer);*/
 
     transmettre("create_layer", [index, tileset, collisions])
-});
-
-window.addEventListener("keyup", (event) => {
-    if (event.key == "Backspace" || event.key == "Delete") {
-        if (confirm("Voulez-vous vraiment supprimer cette couche ?\nCette action sera définitive!")) {
-            transmettre("delete_layer", selected.children[0].innerText);
-        }
-    }
 });
 
 function addTilesEvent() {

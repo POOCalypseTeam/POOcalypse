@@ -69,31 +69,6 @@ class Board:
         self.board_size = (w, h)
         return self.board_size
         
-    def create_layer(self, o: list[int, str, bool]):
-        """
-        Ajoute une nouvelle couche a la BD
-        """
-        link = sqlite3.connect(BOARD_PATH)
-        base = link.cursor()
-        
-        base.execute("INSERT INTO layers VALUES (?,?,?,?);", (self.world, o[0], o[1], o[2]))
-        link.commit()
-        
-        self.helper.ws.insere("layer_" + str(o[0]), "div", style={"z-index": o[0] * 2}, parent="board")
-        link.close()
-    
-    def remove_layer(self, layer):
-        """
-        Supprime une couche de la BD
-        """
-        link = sqlite3.connect(BOARD_PATH)
-        base = link.cursor()
-        
-        base.execute("DELETE FROM layers WHERE world=? AND layer_index=?;", (self.world, layer))
-        link.commit()
-        
-        link.close()
-    
     def load(self, layer: int):
         """
         Charge (ou recharge) sur la page la carte
@@ -158,7 +133,15 @@ class Board:
         
     def create_layer(self, _, o: list[str, str, str]):
         self.layers[int(o[0])] = o[1]
-        self.create_layer([int(o[0]), o[1], bool(o[2])])
+        
+        link = sqlite3.connect(BOARD_PATH)
+        base = link.cursor()
+        
+        base.execute("INSERT INTO layers VALUES (?,?,?,?);", (self.world, int(o[0]), o[1], bool(o[2])))
+        link.commit()
+        
+        self.helper.ws.insere("layer_" + o[0], "div", style={"z-index": int(o[0]) * 2}, parent="board")
+        link.close()
         
     def delete_layer(self, _, o):
         if self.layer != int(o):
@@ -167,13 +150,16 @@ class Board:
         self.helper.ws.remove("layer_option_" + str(self.layer))
         self.helper.ws.remove("layer_" + str(self.layer))
         del self.layers[self.layer]
-        self.remove_layer(self.layer)
+        
+        link = sqlite3.connect(BOARD_PATH)
+        base = link.cursor()
+        
+        base.execute("DELETE FROM layers WHERE world=? AND layer_index=?;", (self.world, self.layer))
+        link.commit()
+        
+        link.close()
         
     def add_tile(self, click_pos):
-        # On peut pas ne rien dessiner...
-        if self.tile == "":
-            return
-        
         x,y = click_pos
         
         self.update_board_size()

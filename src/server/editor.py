@@ -97,7 +97,7 @@ class Editor:
             buttons = self.mouse_manager.get_buttons()
             
             # Si le bouton gauche est appuye
-            if buttons[0]['L']:
+            if self.board.tile != "" and buttons[0]['L']:
                 print("bonjour\n====")
                 self.board.add_tile(buttons[1])
             
