@@ -7,13 +7,14 @@
         
         <title>Editor</title>
     </head>
-    <body>
+    <body ondragstart="return false;" ondrop="return false;">
         <div id="board">
             <ul id="tools">
                 <li onclick="transmettre('tool_changed', 'draw');">✏</li>
                 <li onclick="transmettre('tool_changed', 'erase');">🧼</li>
                 <li onclick="transmettre('tool_changed', 'select');">□</li>
             </ul>
+            <div id="tiles"></div>
         </div>
 
         <div id="world-info">
@@ -39,8 +40,8 @@
     
                 <br>
     
-                <label for="tile_size">Index: </label>
-                <input type="number" name="tile_size" id="tile_size" value="16">
+                <label for="tile_size">Tiles size: </label>
+                <input type="number" name="tile_size" id="tile_size" value="16" step="16" min="1">
 
                 <br>
     

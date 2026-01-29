@@ -1,7 +1,6 @@
 import sqlite3
 import os # listdir
 from math import ceil
-import time
 
 import web_helper
 
@@ -25,21 +24,15 @@ class Board:
         self.helper = helper
         self.world = world
         
-        # Ca depend des layers
         self.block_size = BLOCKS_SIZE
+        # Ca depend des layers
         self.tile_pixel_sizes = {}
         self.block_pixel_sizes = {}
-        
-        self.origin = (0, 0)
+        self.collisions = {}
         
         self.layers: dict[int, str] = {}
-        self.layer: int = 0
-        self.tile: str = ""
-        self.tool: str = "draw"
         
-        # Utilises pour add_tile, qui devrait sinon en initialiser beaucoup trop
-        self.link = None
-        self.base = None
+        self.origin = (0, 0)
         
         # On prete attention a la taille de board
         self.board_size = self.update_board_size()
@@ -56,15 +49,15 @@ class Board:
             link.close()
             return
         layers = [list(layer) for layer in layers]
-        self.helper.ws.injecte("addLayers(" + str(layers) + ")")
         
         for layer in layers:
             # On map les couches avec leur tileset
             self.layers[layer[0]] = layer[1]
             self.tile_pixel_sizes[layer[0]] = layer[2]
             self.block_pixel_sizes[layer[0]] = layer[2] * BLOCKS_SIZE
+            self.collisions[layer[0]] = layer[3]
             
-            self.helper.ws.insere("layer_" + str(layer[0]), "div", style={"z-index": layer[0] * 2}, parent="board")
+            self.helper.ws.insere("layer_" + str(layer[0]), "div", style={"z-index": layer[0] * 2}, parent="tiles")
             self.load(layer[0])
         
         link.close()
@@ -109,6 +102,8 @@ class Board:
                 block_id = base.fetchone()
                 if block_id == None:
                     continue
+                
+                self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
                                 
                 base.execute("SELECT x,y,image_name FROM tiles WHERE block_id=?;", (block_id[0],))
                 tiles = base.fetchall()
@@ -116,9 +111,26 @@ class Board:
                     img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
                     img_path = TILESET_PATH.replace("%SET%", tileset).replace("%IMG%", tile[2])
                     position = (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer], block_offset[1] + tile[1] * self.tile_pixel_sizes[layer])
-                    self.helper.add_image_id(img_id, img_path, position, (self.tile_pixel_sizes[layer],self.tile_pixel_sizes[layer]), parent="layer_" + str(layer))
+                    self.helper.add_image_id(img_id, img_path, position, (self.tile_pixel_sizes[layer],self.tile_pixel_sizes[layer]), parent=block_id)
                     
         link.close()    
+        
+    
+class EditorBoard(Board):
+    def __init__(self, helper: web_helper.Helper, world: str):
+        super().__init__(helper, world)
+        layers = []
+        for l in self.layers.keys():
+            layers.append([l, self.layers[l], self.tile_pixel_sizes[l], self.collisions[l]])
+        self.helper.ws.injecte("addLayers(" + str(layers) + ")")
+
+        self.layer: int = 0
+        self.tile: str = ""
+        self.tool: str = "draw"
+
+        # Utilises pour action, qui devrait sinon en initialiser beaucoup trop
+        self.link = None
+        self.base = None
         
     # Methodes pour l'interaction PAGE -> BOARD
     def layer_changed(self, _, o: int):
@@ -150,7 +162,7 @@ class Board:
         base.execute("INSERT INTO layers VALUES (?,?,?,?,?);", (self.world, int(o[0]), o[1], int(o[2]), bool(o[3])))
         link.commit()
         
-        self.helper.ws.insere("layer_" + o[0], "div", style={"z-index": int(o[0]) * 2}, parent="board")
+        self.helper.ws.insere("layer_" + o[0], "div", style={"z-index": int(o[0]) * 2}, parent="tiles")
         link.close()
         
     def delete_layer(self, _, o):
@@ -189,6 +201,7 @@ class Board:
             self.base.execute("INSERT INTO blocks(world,layer_index,block_x,block_y) VALUES (?,?,?,?);", (self.world, self.layer, block_pos[0], block_pos[1]))
             self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_pos[0], block_pos[1]))
             block_id = self.base.fetchone()[0]
+            self.helper.ws.insere(block_id, "div", parent="layer" + str(self.layer))
         else:
             block_id = res[0][0]
         
@@ -201,7 +214,8 @@ class Board:
             # On cree une nouvelle tile
             self.base.execute("INSERT INTO tiles VALUES (?,?,?,?);", (block_id, tile_pos[0], tile_pos[1], self.tile[:-4]))
             position = (self.origin[0] + tile_pos[0] * self.tile_pixel_sizes[self.layer] + block_offsets[0], self.origin[1] + tile_pos[1] * self.tile_pixel_sizes[self.layer] + block_offsets[1])
-            self.helper.add_image_id(img_id, TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4]), position, (self.tile_pixel_sizes[self.layer],self.tile_pixel_sizes[self.layer]), parent="layer_" + str(self.layer))
+            path = TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])
+            self.helper.add_image_id(img_id, path, position, (self.tile_pixel_sizes[self.layer],self.tile_pixel_sizes[self.layer]), parent=block_id)
         else:
             # On modifie la tile d'avant
             self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_pos[0], tile_pos[1]))

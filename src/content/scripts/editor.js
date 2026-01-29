@@ -1,4 +1,5 @@
 board = document.getElementById("board");
+tiles = document.getElementById("tiles");
 
 worldSelect = document.getElementById("world");
 layerContainer = document.getElementById("layers");
@@ -13,17 +14,23 @@ tilesetSelect = document.getElementById("tileset-choice");
 brush = null;
 
 worldSelect.addEventListener("change", (event) => {
+    while (tiles.firstChild) {
+        tiles.removeChild(tiles.lastChild);
+    }
     transmettre("world_changed", event.target.value);
 });
 
 function addLayers(layers) {
+    while (layerContainer.firstChild) {
+        layerContainer.removeChild(layerContainer.lastChild);
+    }
     layers.forEach(element => {
         addLayer(element);
     });
 }
 
 function addLayer(layer) {
-    // layer: [index: int, tileset: str, collisions: boolean]
+    // layer: [index: int, tileset: str, tiles_size: int, collisions: boolean]
     parent = document.createElement("div");
     parent.classList.add("layer");
     parent.id = "layer_option_" + String(layer[0])
@@ -61,7 +68,7 @@ function addLayer(layer) {
     parent.appendChild(tilesetText);
     parent.appendChild(enabledInput);
     parent.appendChild(deleteInput);
-    parent.layer_size = layer[2];
+    parent.tiles_size = layer[2];
 
     // On utilise function(event) et pas (event) =>
     // Sinon il n'y a pas de `this` et event.target se réfère à l'élément clické
@@ -78,8 +85,8 @@ function addLayer(layer) {
         this.classList.add("selected");
         selected = this;
         transmettre("layer_changed", this.children[0].innerText);
-        tileset.style["grid-auto-columns"] = String(this.layer_size) + "px";
-        tileset.style["grid-template-rows"] = "repeat(auto-fill, minmax(" + String(this.layer_size) + "px, 1fr))";
+        tileset.style["grid-auto-columns"] = String(this.tiles_size) + "px";
+        tileset.style["grid-template-rows"] = "repeat(auto-fill, minmax(" + String(this.tiles_size) + "px, 1fr))";
     });
     layerContainer.appendChild(parent);
 }
@@ -92,6 +99,7 @@ add.addEventListener("click", (_) => {
     {
         if (children[i].children[0].innerText == index)
         {
+            alert("Une couche existe deja a ce niveau !");
             return;
         }
     }

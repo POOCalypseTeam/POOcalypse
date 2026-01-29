@@ -40,7 +40,7 @@ class Editor:
         
         self.web_helper = web_helper.Helper(self.web_manager)
         
-        self.board = None
+        self.board: graphics.board.EditorBoard = None
         self.link = sqlite3.connect("content/data/worlds/worlds.db")
         self.base = self.link.cursor()
         
@@ -75,7 +75,7 @@ class Editor:
         self.world = o
         
         # On charge le plateau
-        self.board = graphics.board.Board(self.web_helper, self.world)
+        self.board = graphics.board.EditorBoard(self.web_helper, self.world)
         
         if not self.loop_thread.is_alive():
             self.loop_thread.start()
@@ -99,12 +99,10 @@ class Editor:
                 continue
             
             keys = self.keyboard_manager.get_keys()
-            # Si on reste appuye, un seul evenement est envoye, donc la position restere celle de depart, il faut attendre que la souris soit relevee pour dessiner, dans une ligne droite seulement
-            # Ou alors trouver une solution qui agisse sur le client directement, ex: une fois que le bouton est appuye, on va check toutes les 5ms et envoyer au serveur la position.
             buttons = self.mouse_manager.get_buttons()
             
-            # Si le bouton gauche est appuye
-            if buttons[0]['L']:
+            # Si le bouton gauche ou droite est appuye
+            if buttons[0]['L'] or buttons[0]['R']:
                 self.board.action(buttons[1])
             
             last_loop_time = time.time()

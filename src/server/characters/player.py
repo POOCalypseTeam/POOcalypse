@@ -206,8 +206,6 @@ class Player:
         Renvoie True si le joueur est mort, False sinon
         """
         self.health = max(0, self.health - damage)
-        health_width = self.health * 60 / self.max_health
-        self.helper.ws.attributs("health", style={"width": f"{health_width}px"})
         if self.health == 0:
             self.dead = True
             # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement
