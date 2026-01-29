@@ -7,7 +7,7 @@ class Helper:
         """
         self.ws = ws
 
-        self.last_img_id: int = 0
+        self.last_img_id: int = 1
 
     def add_image_id(self, id: str, path: str, position: tuple, size: tuple = None, zindex: int = None, parent: str = "body") -> str:
         """
@@ -25,6 +25,8 @@ class Helper:
             - z_index: Précision sur l'organisation devant/derrière des images sous forme d'un entier
 
             - parent: L'id de l'element parent sur la page Web, body par defaut
+            
+            - id: L'id de l'image, si aucun l'id est "img_" + NOMBRE D'IMAGES
             
         Renvoie l'id de l'image
         """
@@ -57,6 +59,9 @@ class Helper:
         img_id = "img" + str(self.last_img_id)
         self.last_img_id += 1
         return self.add_image_id(img_id, path, position, size, zindex, parent)
+    
+    def change_image(self, id, img):
+        self.ws.attributs(id, attr = {'src' : f'../{img}'})
     
     def change_dimensions(self, id: str, position: tuple = None, size: tuple = None):
         """
