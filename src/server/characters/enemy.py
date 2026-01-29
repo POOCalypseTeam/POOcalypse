@@ -10,7 +10,7 @@ class Enemy:
         self.x = position[0]
         self.y = position[1]
         
-        self.id = self.helper.add_image(img_path, position)
+        self.id = self.helper.add_image(img_path, position, size=(64, 64))
         
         # TODO: Ajouter de la regen
         self.health = health

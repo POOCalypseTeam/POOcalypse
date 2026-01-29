@@ -8,6 +8,7 @@ BOARD_PATH = "content/data/worlds/worlds.db"
 TILESET_PATH = "assets/tilesets/%SET%/%IMG%.png"
 
 BLOCKS_SIZE = 16
+ZOOM = 2
 
 class Board:
     def __init__(self, helper: web_helper.Helper, world: str):
@@ -110,8 +111,8 @@ class Board:
                 for tile in tiles:
                     img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
                     img_path = TILESET_PATH.replace("%SET%", tileset).replace("%IMG%", tile[2])
-                    position = (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer], block_offset[1] + tile[1] * self.tile_pixel_sizes[layer])
-                    self.helper.add_image_id(img_id, img_path, position, (self.tile_pixel_sizes[layer],self.tile_pixel_sizes[layer]), parent=block_id)
+                    position = (ZOOM * (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer]), ZOOM * (block_offset[1] + tile[1] * self.tile_pixel_sizes[layer]))
+                    self.helper.add_image_id(img_id, img_path, position, (ZOOM * self.tile_pixel_sizes[layer], ZOOM * self.tile_pixel_sizes[layer]), parent=block_id)
                     
         link.close()    
         
@@ -201,7 +202,7 @@ class EditorBoard(Board):
             self.base.execute("INSERT INTO blocks(world,layer_index,block_x,block_y) VALUES (?,?,?,?);", (self.world, self.layer, block_pos[0], block_pos[1]))
             self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_pos[0], block_pos[1]))
             block_id = self.base.fetchone()[0]
-            self.helper.ws.insere(block_id, "div", parent="layer" + str(self.layer))
+            self.helper.ws.insere(block_id, "div", parent="layer_" + str(self.layer))
         else:
             block_id = res[0][0]
         
@@ -213,9 +214,9 @@ class EditorBoard(Board):
         elif res == 0:
             # On cree une nouvelle tile
             self.base.execute("INSERT INTO tiles VALUES (?,?,?,?);", (block_id, tile_pos[0], tile_pos[1], self.tile[:-4]))
-            position = (self.origin[0] + tile_pos[0] * self.tile_pixel_sizes[self.layer] + block_offsets[0], self.origin[1] + tile_pos[1] * self.tile_pixel_sizes[self.layer] + block_offsets[1])
+            position = (ZOOM * (self.origin[0] + tile_pos[0] * self.tile_pixel_sizes[self.layer] + block_offsets[0]), ZOOM * (self.origin[1] + tile_pos[1] * self.tile_pixel_sizes[self.layer] + block_offsets[1]))
             path = TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])
-            self.helper.add_image_id(img_id, path, position, (self.tile_pixel_sizes[self.layer],self.tile_pixel_sizes[self.layer]), parent=block_id)
+            self.helper.add_image_id(img_id, path, position, (ZOOM * self.tile_pixel_sizes[self.layer], ZOOM * self.tile_pixel_sizes[self.layer]), parent=block_id)
         else:
             # On modifie la tile d'avant
             self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_pos[0], tile_pos[1]))
@@ -244,7 +245,7 @@ class EditorBoard(Board):
         self.base.execute("DELETE FROM tiles WHERE block_id=? AND x=? AND y=?;", (block_id, tile_pos[0], tile_pos[1]))
         self.helper.ws.remove(img_id)
 
-    def action(self, click_pos):
+    def action(self, button: str, click_pos: tuple):
         if self.link == None:
             self.link = sqlite3.connect(BOARD_PATH)
             self.link.autocommit = True
@@ -263,8 +264,10 @@ class EditorBoard(Board):
         
         match self.tool:
             case 'draw':
-                if self.tile != "":
+                if button == 'L' and self.tile != "":
                     self.add_tile((block_x, block_y), (block_offset_x, block_offset_y), (tile_x, tile_y))
+                elif button == 'R':
+                    self.remove_tile((block_x, block_y), (tile_x, tile_y))
             case 'erase':
                 self.remove_tile((block_x, block_y), (tile_x, tile_y))
             case 'select':

@@ -40,7 +40,7 @@ BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
 
 IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 32
-MOVE_AMOUNT = 10
+MOVE_AMOUNT = 20
 MIN_X = 0
 MIN_Y = 0
 ANIMATION_UPDATE_FREQUENCY = 32
@@ -54,8 +54,8 @@ class Player:
         # TODO: Resize hitbox to fit character best
         self.width = IMG_SIZE
         self.height = IMG_SIZE
-        self.id = self.helper.add_image(IMG_STOP1, (self.x, self.y))
-        self.id2 = self.helper.add_image(PNG_PATH, (0,0))
+        self.id = self.helper.add_image(IMG_STOP1, (self.x, self.y), size=(64, 64), parent="player")
+        self.id2 = self.helper.add_image(PNG_PATH, (0,0), size=(64, 64), parent="player")
         self.r = 0
         self.l = 0
         self.b = 0

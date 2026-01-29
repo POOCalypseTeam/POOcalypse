@@ -53,7 +53,7 @@ class Game:
         self.player = Player(self.web_helper, (50, 50))
         self.web_manager.attributs(self.player.id, style={"z-index": 10})
 
-        self.board = graphics.board.Board(self.web_helper, "test_world")
+        self.board = graphics.board.Board(self.web_helper, "spawn")
         self.board.load(0)
         
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24

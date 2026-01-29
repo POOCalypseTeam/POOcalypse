@@ -101,9 +101,9 @@ class Editor:
             keys = self.keyboard_manager.get_keys()
             buttons = self.mouse_manager.get_buttons()
             
-            # Si le bouton gauche ou droite est appuye
             if buttons[0]['L'] or buttons[0]['R']:
-                self.board.action(buttons[1])
+                button = 'L' if buttons[0]['L'] else 'R'
+                self.board.action(button, buttons[1])
             
             last_loop_time = time.time()
             
