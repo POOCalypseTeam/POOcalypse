@@ -39,8 +39,8 @@ IMG_BOTTOM4 = 'assets/spritesheets/blonde_man/blonde_man_020.png'
 BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
 
 IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
-IMG_SIZE = 32
-MOVE_AMOUNT = 20
+IMG_SIZE = 64
+MOVE_AMOUNT = 50
 MIN_X = 0
 MIN_Y = 0
 ANIMATION_UPDATE_FREQUENCY = 32
@@ -75,7 +75,7 @@ class Player:
         
         self.movement_vector = [0, 0]
         # Changés par le sol / environnement
-        self.max_movement = 1
+        self.max_movement = 2
         self.friction_coef = 0.8
 
     def move_range(self, movement: tuple):

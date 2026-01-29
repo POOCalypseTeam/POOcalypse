@@ -23,6 +23,8 @@ div > * {
 #board {
     /* -6px pour le padding de #tileset */
     height: calc(85% - 6px);
+
+    overflow: hidden;
 }
 
 #tools {
