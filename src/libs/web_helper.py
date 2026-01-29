@@ -9,7 +9,37 @@ class Helper:
 
         self.last_img_id: int = 1
 
-    def add_image(self, path: str, position: tuple, size: tuple = None, zindex: int = 0, parent: str = "body", img_id: str = None):
+    def add_image_id(self, id: str, path: str, position: tuple, size: tuple = None, zindex: int = None, parent: str = "body") -> str:
+        """
+        Ajoute l'image pointee par path sur la page
+        
+        Parametres:
+            - id: L'id de l'image, "img_N" ne sera pas ajoute
+        
+            - path: Chemin vers l'image relatif au dossier /src/content
+            
+            - position: Position pour l'image sur la page sous la forme d'un tuple (x, y)
+            
+            - size: Taille de l'image, 0 pour la taille native de l'image, sous la forme d'un tuple (w, h)
+            
+            - z_index: Précision sur l'organisation devant/derrière des images sous forme d'un entier
+
+            - parent: L'id de l'element parent sur la page Web, body par defaut
+            
+            - id: L'id de l'image, si aucun l'id est "img_" + NOMBRE D'IMAGES
+            
+        Renvoie l'id de l'image
+        """
+        style = {"position": "absolute", "left": str(position[0]) + "px", "top": str(position[1]) + "px"}
+        if size != None:
+            style["width"] = str(size[0]) + "px"
+            style["height"] = str(size[1]) + "px"
+        if zindex != None:
+            style["z-index"] = str(zindex)
+        self.ws.insere(id, "img", attr={'src':f'../{path}'}, style=style, parent=parent)
+        return id
+    
+    def add_image(self, path: str, position: tuple, size: tuple = None, zindex: int = None, parent: str = "body") -> str:
         """
         Ajoute l'image pointee par path sur la page
         
@@ -24,20 +54,11 @@ class Helper:
 
             - parent: L'id de l'element parent sur la page Web, body par defaut
             
-            - id: L'id de l'image, si aucun l'id est "img_" + NOMBRE D'IMAGES
-            
         Renvoie l'id de l'image
-        """        
-        style = {"position": "absolute", "left": str(position[0]) + "px", "top": str(position[1]) + "px"}
-        if size != None:
-            style["width"] = str(size[0]) + "px"
-            style["height"] = str(size[1]) + "px"
-        style["z-index"] = str(zindex)
-        if img_id == None:
-            img_id = "img" + str(self.last_img_id)
-            self.last_img_id += 1
-        self.ws.insere(img_id, "img", attr={'src':f'../{path}'}, style=style, parent=parent)
-        return img_id
+        """
+        img_id = "img" + str(self.last_img_id)
+        self.last_img_id += 1
+        return self.add_image_id(img_id, path, position, size, zindex, parent)
     
     def change_image(self, id, img):
         self.ws.attributs(id, attr = {'src' : f'../{img}'})

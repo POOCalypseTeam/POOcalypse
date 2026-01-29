@@ -30,12 +30,17 @@ class Inter:
     _chemin_js = "/js"
     _js = """let socket = new WebSocket("ws://127.0.0.1:_ws_port");
 let readySent = true;
+let waiting = [];
 
 socket.onopen = function(e) {
   console.log("[open] Connection established");
   if (readySent == false)
   {
       transmettre("ready", "");
+  }
+  for (let i = 0; i < waiting.length; i++)
+  {
+      transmettre(waiting[i][0], waiting[0][1]);
   }
 };
 
@@ -67,6 +72,11 @@ function envoi(obj) {
 
 function transmettre(act,obj) {
     if (obj==undefined) obj="";
+    if (socket.readyState != 1)
+    {
+        waiting.push([act,obj]);
+        return;
+    }
     socket.send(JSON.stringify([act,obj]));
 };
 
@@ -82,10 +92,11 @@ document.addEventListener("DOMContentLoaded", (event) => {
     }
 });
 
-window.addEventListener("resize", (e) => {
+function sendWindowResize() {
     transmettre("get_window_size", [window.innerWidth, window.innerHeight]);
-});
+}
 
+window.addEventListener("resize", sendWindowResize);
 
 function faire(o){
     for (dico of o)
@@ -112,6 +123,14 @@ function faire(o){
         else if (type == "content" && elem != null)
         {
             elem.innerText = data;
+        }
+        else if (type == "class-a" && elem != null)
+        {
+            elem.classList.add(data);
+        }
+        else if (type == "class-r" && elem != null)
+        {
+            elem.classList.remove(data);
         }
         else if (type == "attributes" && elem != null)
         {
@@ -454,7 +473,7 @@ const ueh = (event) => {
 
         Utilise seulement par le gestionnaire d'evenement lors d'un appel par le client
         """
-        self.window_width= size[0]
+        self.window_width = size[0]
         self.window_height = size[1]
 
     def get_window_size(self):
@@ -893,6 +912,12 @@ const ueh = (event) => {
             self._envoi(data)
         else:
             self.pending.append(data)
+            
+    def add_class(self,id_objet:str,classe:str):
+        self._push([{"id":id_objet,"type":"class-a","data":classe}])
+        
+    def remove_class(self,id_objet:str,classe:str):
+        self._push([{"id":id_objet,"type":"class-r","data":classe}])
 
     def attributs(self,id_objet,attr={},style={}):
         """

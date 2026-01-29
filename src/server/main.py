@@ -1,5 +1,5 @@
 import os # remove
-import time # time, sleep
+import time # time
 import threading # Threading
 from math import sqrt
 
@@ -11,7 +11,7 @@ from characters.player import Player
 from characters.enemy import Enemy
 from characters.npc import Interactable, Npc
 from inputs.keyboard import Keyboard
-import inputs.mouse
+from inputs.mouse import Mouse
 
 game = None
 
@@ -26,7 +26,7 @@ def main():
         exit(0)
         return
     
-    game = Game(start_page = "index.html")
+    game = Game("index.html")
     
 def stop():
     global game
@@ -47,7 +47,7 @@ class Game:
         
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
-        self.web_manager.gestionnaire_souris(inputs.mouse.handle_input)
+        self.mouse_manager = Mouse(self.web_manager)
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         self.player = Player(self.web_helper, (50, 50))

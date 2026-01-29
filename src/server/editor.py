@@ -1,0 +1,119 @@
+import os # remove, listdir, path.isfile
+import time # time
+import threading # Threading
+import sqlite3
+
+import wsinter
+import web_helper
+
+import graphics.board
+from inputs.keyboard import Keyboard
+from inputs.mouse import Mouse
+
+editor = None
+
+def main():
+    global editor
+    
+    try:
+        lock = open("launched", "x")
+        lock.close()
+    except FileExistsError:
+        print("Une instance du serveur est deja lancee")
+        exit(0)
+        return
+    
+    editor = Editor(start_page = "editor.html")
+    
+def stop():
+    global editor
+    editor.stop()
+    
+    os.remove("launched")
+    exit(0)
+    
+class Editor:
+    def __init__(self, start_page: str):
+        self.web_manager = wsinter.Inter("content/pages/" + start_page)
+        # On utilise notre propre initialisation pour la souris
+        self.web_manager.demarre(clavier=True, souris=False)
+        
+        self.web_helper = web_helper.Helper(self.web_manager)
+        
+        self.board = None
+        self.link = sqlite3.connect("content/data/worlds/worlds.db")
+        self.base = self.link.cursor()
+        
+        self.add_elements()
+
+        self.keyboard_manager = Keyboard(self.web_manager)
+        self.mouse_manager = Mouse(self.web_manager)
+        
+        self.loop_thread = threading.Thread(target=self.loop)
+    
+    def add_elements(self):
+        # On ajoute tous les mondes possibles
+        self.base.execute("SELECT name FROM worlds;")
+        worlds = self.base.fetchall()
+        if len(worlds) == 1:
+            self.world_changed(None, worlds[0][0])
+        for world in worlds:
+            self.web_manager.insere(world[0], "option", attr={"value":world[0]}, parent="world")
+            self.web_manager.inner_text(world[0], world[0])
+            
+        # On ajoute toutes les tilesets possibles
+        for file in os.listdir("content/assets/tilesets"):
+            if os.path.isfile("content/assets/tilesets" + file):
+                continue
+            self.web_manager.insere(file, "option", attr={"value":file}, parent="tileset-choice")
+            self.web_manager.inner_text(file, file)                
+        
+        # On crée des gestionnaires pour les divers evenements
+        self.web_manager.gestionnaire("world_changed", self.world_changed)
+    
+    def world_changed(self, _, o: str):
+        self.world = o
+        
+        # On charge le plateau
+        self.board = graphics.board.Board(self.web_helper, self.world)
+        
+        if not self.loop_thread.is_alive():
+            self.loop_thread.start()
+        
+        self.web_manager.gestionnaire("layer_changed", self.board.layer_changed)
+        self.web_manager.gestionnaire("create_layer", self.board.create_layer)
+        self.web_manager.gestionnaire("delete_layer", self.board.delete_layer)
+        self.web_manager.gestionnaire("tile_changed", self.board.tile_changed)
+        self.web_manager.gestionnaire("tool_changed", self.board.tool_changed)
+            
+    def loop(self):
+        self.do_loop = True
+        last_loop_time = 0
+        
+        while self.board == None:
+            time.sleep(0.5)
+        
+        while self.do_loop:
+            delta_time = time.time() - last_loop_time
+            if delta_time < 0.017:
+                continue
+            
+            keys = self.keyboard_manager.get_keys()
+            # Si on reste appuye, un seul evenement est envoye, donc la position restere celle de depart, il faut attendre que la souris soit relevee pour dessiner, dans une ligne droite seulement
+            # Ou alors trouver une solution qui agisse sur le client directement, ex: une fois que le bouton est appuye, on va check toutes les 5ms et envoyer au serveur la position.
+            buttons = self.mouse_manager.get_buttons()
+            
+            # Si le bouton gauche est appuye
+            if buttons[0]['L']:
+                self.board.action(buttons[1])
+            
+            last_loop_time = time.time()
+            
+    def stop(self):
+        self.do_loop = False
+        if self.loop_thread.is_alive():
+            self.loop_thread.join()
+        self.web_manager.stop()
+        
+if __name__ == "__main__":
+    main()
