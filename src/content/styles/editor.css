@@ -97,7 +97,7 @@ select, input {
     color:#272729;
 }
 
-#index {
+#index, #tile_size {
     width: 30%;
 }
 

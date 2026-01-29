@@ -8,8 +8,10 @@ import web_helper
 BOARD_PATH = "content/data/worlds/worlds.db"
 TILESET_PATH = "assets/tilesets/%SET%/%IMG%.png"
 
+BLOCKS_SIZE = 16
+
 class Board:
-    def __init__(self, helper: web_helper.Helper, world: str, block_size: int = 16, tile_pixel_size: int = 16):
+    def __init__(self, helper: web_helper.Helper, world: str):
         """
         Parametres:
             - helper: L'instance Helper de la librairie web_helper
@@ -22,9 +24,11 @@ class Board:
         """
         self.helper = helper
         self.world = world
-        self.block_size = block_size
-        self.tile_pixel_size = tile_pixel_size
-        self.block_pixel_size = self.block_size * self.tile_pixel_size
+        
+        # Ca depend des layers
+        self.block_size = BLOCKS_SIZE
+        self.tile_pixel_sizes = {}
+        self.block_pixel_sizes = {}
         
         self.origin = (0, 0)
         
@@ -45,7 +49,7 @@ class Board:
         base = link.cursor()
         
         # Ajoute les elements pour ce monde precis
-        base.execute("SELECT layer_index,tileset,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
+        base.execute("SELECT layer_index,tileset,tiles_size,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
         layers = base.fetchall()
         if layers == None:
             print("Ce monde n'a pas de couche!")
@@ -57,6 +61,8 @@ class Board:
         for layer in layers:
             # On map les couches avec leur tileset
             self.layers[layer[0]] = layer[1]
+            self.tile_pixel_sizes[layer[0]] = layer[2]
+            self.block_pixel_sizes[layer[0]] = layer[2] * BLOCKS_SIZE
             
             self.helper.ws.insere("layer_" + str(layer[0]), "div", style={"z-index": layer[0] * 2}, parent="board")
             self.load(layer[0])
@@ -88,7 +94,7 @@ class Board:
         
         # On récupère la taille de la fenetre
         w,h = self.update_board_size()
-        block_w,block_h = (ceil(w / (self.block_pixel_size)), ceil(h / self.block_pixel_size))
+        block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
         # Pour chaque bloc, on récupère toutes les tiles correspondantes et on en fait le rendu
         block_w_offset = block_w // 2
         block_h_offset = block_h // 2
@@ -96,7 +102,7 @@ class Board:
             for block_y in range(0, block_h): # mais ca depend d'ou etait le joueur avant
                 # TODO: Afficher les joueurs, ennemis et NPC
                 # TODO: Actualiser quand la taille de la page change
-                block_offset = ((block_x) * self.block_pixel_size, (block_y) * self.block_pixel_size)
+                block_offset = ((block_x) * self.block_pixel_sizes[layer], (block_y) * self.block_pixel_sizes[layer])
 
                 # On recupere l'id du block
                 base.execute("SELECT block_id FROM blocks WHERE block_x=? AND block_y=? AND world=? AND layer_index=? LIMIT 1;", (block_x, block_y, self.world, layer))
@@ -109,8 +115,8 @@ class Board:
                 for tile in tiles:
                     img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
                     img_path = TILESET_PATH.replace("%SET%", tileset).replace("%IMG%", tile[2])
-                    position = (block_offset[0] + tile[0] * self.tile_pixel_size, block_offset[1] + tile[1] * self.tile_pixel_size)
-                    self.helper.add_image_id(img_id, img_path, position, (self.tile_pixel_size,self.tile_pixel_size), parent="layer_" + str(layer))
+                    position = (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer], block_offset[1] + tile[1] * self.tile_pixel_sizes[layer])
+                    self.helper.add_image_id(img_id, img_path, position, (self.tile_pixel_sizes[layer],self.tile_pixel_sizes[layer]), parent="layer_" + str(layer))
                     
         link.close()    
         
@@ -133,13 +139,15 @@ class Board:
     def tile_changed(self, _, o):
         self.tile = o
         
-    def create_layer(self, _, o: list[str, str, str]):
+    def create_layer(self, _, o: list[str, str, str, str]):
         self.layers[int(o[0])] = o[1]
+        self.tile_pixel_sizes[int(o[0])] = int(o[2])
+        self.block_pixel_sizes[int(o[0])] = int(o[2]) * BLOCKS_SIZE
         
         link = sqlite3.connect(BOARD_PATH)
         base = link.cursor()
         
-        base.execute("INSERT INTO layers VALUES (?,?,?,?);", (self.world, int(o[0]), o[1], bool(o[2])))
+        base.execute("INSERT INTO layers VALUES (?,?,?,?,?);", (self.world, int(o[0]), o[1], int(o[2]), bool(o[3])))
         link.commit()
         
         self.helper.ws.insere("layer_" + o[0], "div", style={"z-index": int(o[0]) * 2}, parent="board")
@@ -152,6 +160,8 @@ class Board:
         self.helper.ws.remove("layer_option_" + str(self.layer))
         self.helper.ws.remove("layer_" + str(self.layer))
         del self.layers[self.layer]
+        del self.tile_pixel_sizes[self.layer]
+        del self.block_pixel_sizes[self.layer]
         
         link = sqlite3.connect(BOARD_PATH)
         base = link.cursor()
@@ -190,14 +200,14 @@ class Board:
         elif res == 0:
             # On cree une nouvelle tile
             self.base.execute("INSERT INTO tiles VALUES (?,?,?,?);", (block_id, tile_pos[0], tile_pos[1], self.tile[:-4]))
-            position = (self.origin[0] + tile_pos[0] * self.tile_pixel_size + block_offsets[0], self.origin[1] + tile_pos[1] * self.tile_pixel_size + block_offsets[1])
-            self.helper.add_image_id(img_id, TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4]), position, (self.tile_pixel_size,self.tile_pixel_size), parent="layer_" + str(self.layer))
+            position = (self.origin[0] + tile_pos[0] * self.tile_pixel_sizes[self.layer] + block_offsets[0], self.origin[1] + tile_pos[1] * self.tile_pixel_sizes[self.layer] + block_offsets[1])
+            self.helper.add_image_id(img_id, TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4]), position, (self.tile_pixel_sizes[self.layer],self.tile_pixel_sizes[self.layer]), parent="layer_" + str(self.layer))
         else:
             # On modifie la tile d'avant
             self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_pos[0], tile_pos[1]))
             self.helper.ws.attributs(img_id, attr={'src': "../" + TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])})
         
-    def remove_tile(self, block_pos, block_offsets, tile_pos):        
+    def remove_tile(self, block_pos, tile_pos):        
         self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_pos[0], block_pos[1]))
         res = self.base.fetchall()
         block_id = ""
@@ -228,21 +238,21 @@ class Board:
         
         x,y = click_pos
         
-        block_x = (x - self.origin[0]) // self.block_pixel_size
-        block_y = (y - self.origin[1]) // self.block_pixel_size
+        block_x = (x - self.origin[0]) // self.block_pixel_sizes[self.layer]
+        block_y = (y - self.origin[1]) // self.block_pixel_sizes[self.layer]
         
-        block_offset_x = block_x * self.block_pixel_size
-        block_offset_y = block_y * self.block_pixel_size
+        block_offset_x = block_x * self.block_pixel_sizes[self.layer]
+        block_offset_y = block_y * self.block_pixel_sizes[self.layer]
         
-        tile_x = (x - block_offset_x) // self.tile_pixel_size
-        tile_y = (y - block_offset_y) // self.tile_pixel_size
+        tile_x = (x - block_offset_x) // self.tile_pixel_sizes[self.layer]
+        tile_y = (y - block_offset_y) // self.tile_pixel_sizes[self.layer]
         
         match self.tool:
             case 'draw':
                 if self.tile != "":
                     self.add_tile((block_x, block_y), (block_offset_x, block_offset_y), (tile_x, tile_y))
             case 'erase':
-                self.remove_tile((block_x, block_y), (block_offset_x, block_offset_y), (tile_x, tile_y))
+                self.remove_tile((block_x, block_y), (tile_x, tile_y))
             case 'select':
                 # Il faudrait implementer une variable qui contienne la premiere position, quand on a la deuxieme on decide de quoi faire
                 print("Ne fait rien pour l'instant")

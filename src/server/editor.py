@@ -75,7 +75,7 @@ class Editor:
         self.world = o
         
         # On charge le plateau
-        self.board = graphics.board.Board(self.web_helper, self.world, 16, 16)
+        self.board = graphics.board.Board(self.web_helper, self.world)
         
         if not self.loop_thread.is_alive():
             self.loop_thread.start()
@@ -111,7 +111,8 @@ class Editor:
             
     def stop(self):
         self.do_loop = False
-        self.loop_thread.join()
+        if self.loop_thread.is_alive():
+            self.loop_thread.join()
         self.web_manager.stop()
         
 if __name__ == "__main__":

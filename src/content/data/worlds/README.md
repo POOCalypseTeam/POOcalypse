@@ -16,6 +16,7 @@ CREATE TABLE layers (
     world VARCHAR,
     layer_index INT,
     tileset TEXT, -- Chemin vers le dossier des images, exemple: "exterior", pour "/content/assets/tileset/exterior/"
+    tiles_size INT,
     collisions BOOLEAN,
     PRIMARY KEY (world, layer_index)
 );

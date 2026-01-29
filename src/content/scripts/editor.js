@@ -4,6 +4,7 @@ worldSelect = document.getElementById("world");
 layerContainer = document.getElementById("layers");
 selected = null;
 indexInput = document.getElementById("index");
+tileSizeInput = document.getElementById("tile_size");
 collisionsCheck = document.getElementById("collisions");
 createLayerButton = document.getElementById("add");
 
@@ -60,6 +61,7 @@ function addLayer(layer) {
     parent.appendChild(tilesetText);
     parent.appendChild(enabledInput);
     parent.appendChild(deleteInput);
+    parent.layer_size = layer[2];
 
     // On utilise function(event) et pas (event) =>
     // Sinon il n'y a pas de `this` et event.target se réfère à l'élément clické
@@ -76,6 +78,8 @@ function addLayer(layer) {
         this.classList.add("selected");
         selected = this;
         transmettre("layer_changed", this.children[0].innerText);
+        tileset.style["grid-auto-columns"] = String(this.layer_size) + "px";
+        tileset.style["grid-template-rows"] = "repeat(auto-fill, minmax(" + String(this.layer_size) + "px, 1fr))";
     });
     layerContainer.appendChild(parent);
 }
@@ -92,8 +96,9 @@ add.addEventListener("click", (_) => {
         }
     }
     let tileset = tilesetSelect.value;
+    let tileSize = tileSizeInput.value;
     let collisions = collisionsCheck.value;
-    addLayer([index, tileset, collisions]);
+    addLayer([index, tileset, tileSize, collisions]);
 
     // On les ajoute au div#board
     /*layer = document.createElement("div");
@@ -102,7 +107,7 @@ add.addEventListener("click", (_) => {
     layer.style["z-index"] = index * 2;
     board.appendChild(layer);*/
 
-    transmettre("create_layer", [index, tileset, collisions])
+    transmettre("create_layer", [index, tileset, tileSize, collisions])
 });
 
 board.addEventListener("mousemove", (e) => {
