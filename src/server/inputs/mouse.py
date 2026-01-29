@@ -26,6 +26,7 @@ class Mouse:
   });
         """)
         web_manager.gestionnaire_souris(self.handle_input)
+        web_manager.gestionnaire("mouse_moved", self.mouse_moved)
         
         self.pressed_buttons = {"L": False, "R": False, "M": False}
         self.events = []
@@ -90,6 +91,9 @@ class Mouse:
         
         for event in self.events:
             event.match(state, self.pressed_buttons)
+            
+    def mouse_moved(self, _m, o):
+        self.handle_input("D", o)
             
     def get_buttons(self) -> tuple[dict[str, bool], tuple[int, int]]:
         """

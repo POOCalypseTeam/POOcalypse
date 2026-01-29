@@ -40,6 +40,7 @@ class Editor:
         
         self.web_helper = web_helper.Helper(self.web_manager)
         
+        self.board = None
         self.link = sqlite3.connect("content/data/worlds/worlds.db")
         self.base = self.link.cursor()
         
@@ -49,7 +50,6 @@ class Editor:
         self.mouse_manager = Mouse(self.web_manager)
         
         self.loop_thread = threading.Thread(target=self.loop)
-        self.loop_thread.start()
     
     def add_elements(self):
         # On ajoute tous les mondes possibles
@@ -77,6 +77,9 @@ class Editor:
         # On charge le plateau
         self.board = graphics.board.Board(self.web_helper, self.world, 16, 16)
         
+        if not self.loop_thread.is_alive():
+            self.loop_thread.start()
+        
         self.web_manager.gestionnaire("layer_changed", self.board.layer_changed)
         self.web_manager.gestionnaire("create_layer", self.board.create_layer)
         self.web_manager.gestionnaire("delete_layer", self.board.delete_layer)
@@ -87,7 +90,8 @@ class Editor:
         self.do_loop = True
         last_loop_time = 0
         
-        self.board.init_sql()
+        while self.board == None:
+            time.sleep(0.5)
         
         while self.do_loop:
             delta_time = time.time() - last_loop_time

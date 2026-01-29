@@ -164,11 +164,6 @@ class Board:
     def tool_changed(self, _m, o):
         self.tool = o
         
-    def init_sql(self):
-        self.link = sqlite3.connect(BOARD_PATH)
-        self.link.autocommit = True
-        self.base = self.link.cursor()
-        
     def add_tile(self, block_pos, block_offsets, tile_pos):        
         # On regarde s'il existe deja une tile
         # Sinon on la cree et on l'ajoute sur la page
@@ -226,6 +221,11 @@ class Board:
         self.helper.ws.remove(img_id)
 
     def action(self, click_pos):
+        if self.link == None:
+            self.link = sqlite3.connect(BOARD_PATH)
+            self.link.autocommit = True
+            self.base = self.link.cursor()
+        
         x,y = click_pos
         
         block_x = (x - self.origin[0]) // self.block_pixel_size

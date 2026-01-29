@@ -105,6 +105,10 @@ add.addEventListener("click", (_) => {
     transmettre("create_layer", [index, tileset, collisions])
 });
 
+board.addEventListener("mousemove", (e) => {
+    transmettre("mouse_moved", [e.target.id, e.buttons, e.clientX, e.clientY]);
+});
+
 function addTilesEvent() {
     children = tileset.children;
     for (let i = 0; i < children.length; i++) {
