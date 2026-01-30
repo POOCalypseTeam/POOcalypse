@@ -96,12 +96,12 @@ class Player:
         self.movement_vector[0] = cos(a)
         self.movement_vector[1] = sin(a)
     
-    def update(self, delta_time: float, keys: list, enemies: list[Enemy]):
-        self.update_movement(delta_time, keys)
+    def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
         if 'KeyR' in keys:
             self.attack(enemies)
+        return self.update_movement(delta_time, keys)
     
-    def update_movement(self, delta_time: float, keys: list):
+    def update_movement(self, delta_time: float, keys: list) -> tuple[float, float]:
         """
         delta_time est le temps en secondes depuis la derniere update, il sert de coefficient sur la vitesse de deplacement notamment
         """
@@ -141,6 +141,7 @@ class Player:
             self.helper.change_image(self.id, IMG_STOP)
         self.move(self.movement_vector)
         self.render()
+        return self.movement_vector
         
     def _process_move_keys(self, keys: dict) -> list:
         """
