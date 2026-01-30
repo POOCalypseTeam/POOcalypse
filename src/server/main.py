@@ -11,6 +11,12 @@ from characters.npc import Interactable, Npc
 from inputs.keyboard import Keyboard
 import inputs.mouse
 
+import base64
+
+audio = open("content/assets/music/musique_menu.mp3", 'rb')
+audio_text = audio.read()
+audio_base64 = base64.b64encode(audio_text)
+
 game = None
 
 def main():
@@ -40,6 +46,7 @@ class Game:
         """        
         self.web_manager = wsinter.Inter("content/pages/" + start_page)
         self.web_manager.demarre(clavier=True)
+        self.web_manager.gestionnaire("music",self.musique)
 
         self.web_helper = web_helper.Helper(self.web_manager)
         
@@ -69,7 +76,7 @@ class Game:
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()
-        
+
     def interact_key_handler(self, key):
         if self.interactable == None or not issubclass(type(self.interactable), Interactable):
             return
@@ -116,6 +123,10 @@ class Game:
                 self.web_manager.inner_text("action-bar", "")
                 
             last_loop_time = time.time()
+    
+    def musique(self,_m,_o):
+        self.web_manager.insere('audio','audio',{'innerHTML': '<source src=\'../assets/music/musique-menu(1).mp3\' type=\'audio/mpeg\'>','autoplay':1,'loop':1})
+
 
     def stop(self):
         """

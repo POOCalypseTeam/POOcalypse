@@ -1,0 +1,17 @@
+img {
+    display: none;
+}
+
+#action-bar,#dialog-content {
+    position: absolute;
+    margin: 0;
+}
+
+ul {
+    position: absolute;
+    margin: 0;
+}
+
+.background {
+    display: none;
+}
