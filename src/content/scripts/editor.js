@@ -108,13 +108,6 @@ add.addEventListener("click", (_) => {
     let collisions = collisionsCheck.value;
     addLayer([index, tileset, tileSize, collisions]);
 
-    // On les ajoute au div#board
-    /*layer = document.createElement("div");
-    layer.id = "layer_" + String(index);
-    // On multiplie par 2 pour laisser de la place au joueur si besoin
-    layer.style["z-index"] = index * 2;
-    board.appendChild(layer);*/
-
     transmettre("create_layer", [index, tileset, tileSize, collisions])
 });
 

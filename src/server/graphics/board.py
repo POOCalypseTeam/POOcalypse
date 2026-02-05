@@ -8,10 +8,9 @@ BOARD_PATH = "content/data/worlds/worlds.db"
 TILESET_PATH = "assets/tilesets/%SET%/%IMG%.png"
 
 BLOCKS_SIZE = 16
-ZOOM = 2
 
 class Board:
-    def __init__(self, helper: web_helper.Helper, world: str):
+    def __init__(self, helper: web_helper.Helper, world: str, zoom: int = 2):
         """
         Parametres:
             - helper: L'instance Helper de la librairie web_helper
@@ -24,6 +23,7 @@ class Board:
         """
         self.helper = helper
         self.world = world
+        self.zoom = zoom
         
         self.block_size = BLOCKS_SIZE
         # Ca depend des layers
@@ -111,8 +111,8 @@ class Board:
                 for tile in tiles:
                     img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
                     img_path = TILESET_PATH.replace("%SET%", tileset).replace("%IMG%", tile[2])
-                    position = (ZOOM * (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer]), ZOOM * (block_offset[1] + tile[1] * self.tile_pixel_sizes[layer]))
-                    self.helper.add_image_id(img_id, img_path, position, (ZOOM * self.tile_pixel_sizes[layer], ZOOM * self.tile_pixel_sizes[layer]), parent=block_id)
+                    position = (self.zoom * (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer]), self.zoom * (block_offset[1] + tile[1] * self.tile_pixel_sizes[layer]))
+                    self.helper.add_image_id(img_id, img_path, position, (self.zoom * self.tile_pixel_sizes[layer], self.zoom * self.tile_pixel_sizes[layer]), parent=block_id)
                     
         link.close()    
         
@@ -214,9 +214,9 @@ class EditorBoard(Board):
         elif res == 0:
             # On cree une nouvelle tile
             self.base.execute("INSERT INTO tiles VALUES (?,?,?,?);", (block_id, tile_pos[0], tile_pos[1], self.tile[:-4]))
-            position = (ZOOM * (self.origin[0] + tile_pos[0] * self.tile_pixel_sizes[self.layer] + block_offsets[0]), ZOOM * (self.origin[1] + tile_pos[1] * self.tile_pixel_sizes[self.layer] + block_offsets[1]))
+            position = (self.zoom * (self.origin[0] + tile_pos[0] * self.tile_pixel_sizes[self.layer]) + block_offsets[0], self.zoom * (self.origin[1] + tile_pos[1] * self.tile_pixel_sizes[self.layer]) + block_offsets[1])
             path = TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])
-            self.helper.add_image_id(img_id, path, position, (ZOOM * self.tile_pixel_sizes[self.layer], ZOOM * self.tile_pixel_sizes[self.layer]), parent=block_id)
+            self.helper.add_image_id(img_id, path, position, (self.zoom * self.tile_pixel_sizes[self.layer], self.zoom * self.tile_pixel_sizes[self.layer]), parent=block_id)
         else:
             # On modifie la tile d'avant
             self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_pos[0], tile_pos[1]))
@@ -253,14 +253,14 @@ class EditorBoard(Board):
         
         x,y = click_pos
         
-        block_x = (x - self.origin[0]) // self.block_pixel_sizes[self.layer]
-        block_y = (y - self.origin[1]) // self.block_pixel_sizes[self.layer]
+        block_x = (x - self.origin[0]) // (self.block_pixel_sizes[self.layer] * self.zoom)
+        block_y = (y - self.origin[1]) // (self.block_pixel_sizes[self.layer] * self.zoom)
         
-        block_offset_x = block_x * self.block_pixel_sizes[self.layer]
-        block_offset_y = block_y * self.block_pixel_sizes[self.layer]
+        block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
+        block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
         
-        tile_x = (x - block_offset_x) // self.tile_pixel_sizes[self.layer]
-        tile_y = (y - block_offset_y) // self.tile_pixel_sizes[self.layer]
+        tile_x = (x - block_offset_x) // (self.tile_pixel_sizes[self.layer] * self.zoom)
+        tile_y = (y - block_offset_y) // (self.tile_pixel_sizes[self.layer] * self.zoom)
         
         match self.tool:
             case 'draw':

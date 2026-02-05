@@ -8,12 +8,12 @@
         <title>Editor</title>
     </head>
     <body ondragstart="return false;" ondrop="return false;">
+        <ul id="tools">
+            <li onclick="transmettre('tool_changed', 'draw');">✏</li>
+            <li onclick="transmettre('tool_changed', 'erase');">🧼</li>
+            <li onclick="transmettre('tool_changed', 'select');">□</li>
+        </ul>
         <div id="board">
-            <ul id="tools">
-                <li onclick="transmettre('tool_changed', 'draw');">✏</li>
-                <li onclick="transmettre('tool_changed', 'erase');">🧼</li>
-                <li onclick="transmettre('tool_changed', 'select');">□</li>
-            </ul>
             <div id="tiles"></div>
         </div>
 
