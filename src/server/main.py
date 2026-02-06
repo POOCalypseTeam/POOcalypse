@@ -46,7 +46,7 @@ class Game:
         """        
         self.web_manager = wsinter.Inter("content/pages/" + start_page)
         self.web_manager.demarre(clavier=True)
-        self.web_manager.gestionnaire("music",self.musique)
+        self.web_manager.gestionnaire("musique",self.musique)
 
         self.web_helper = web_helper.Helper(self.web_manager)
         
@@ -125,6 +125,7 @@ class Game:
             last_loop_time = time.time()
     
     def musique(self,_m,_o):
+        print('help')
         self.web_manager.insere('audio','audio',{'innerHTML': '<source src=\'../assets/music/musique-menu(1).mp3\' type=\'audio/mpeg\'>','autoplay':1,'loop':1})
 
 

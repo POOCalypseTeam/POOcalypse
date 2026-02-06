@@ -7,11 +7,9 @@
         <title>POOcalypse</title>
     </head>
     <body>
-        <!--
-        <audio controls>
+        <audio autoplay loop muted id="music">
             <source src="../assets/music/musique-menu(1).mp3" type="audio/mpeg">
         </audio>
-        -->
         <p id="action-bar"></p>
 
         <div id="dialogs">
@@ -33,11 +31,15 @@
         </div>
         <div class="credits">
             <p>
-                Merci à Kenni pour les assets d'exterieur.
+                Assets d'exterieur :<br>Kenny
             </p>
             <p>
-                Merci à Penzilla pour les assets d'interieur.
+                Assets d'exterieur :<br>Penzilla
             </p>
+            <p>
+                Assets d'exterieur :<br>Walen
+            </p>
+            <button onclick="start_menu();">Menu</button>
         </div>
     <script>
         function start_game() {
@@ -48,13 +50,19 @@
             document.getElementById("menu").disabled = true;
             document.getElementById("credits").disabled = false;
         }
-        var i = 0
-        while (i == 0 ) {
-            document.addEventListener("mousemove",(e) => {
-                transmettre("music","");
-                i++;
-                });
-            };
+        function start_menu() {
+            document.getElementById("menu").disabled = false;
+            document.getElementById("credits").disabled = true;
+            const musique = document.getElementById("music");
+            musique.muted = false;
+
+        }
+        /*
+        document.addEventListener("mousemove",(e) => {
+            transmettre("musique","");
+        },
+        {once : true});
+        */
     </script>
     </body>
 </html>
