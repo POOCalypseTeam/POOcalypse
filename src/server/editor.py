@@ -100,6 +100,19 @@ class Editor:
             
             keys = self.keyboard_manager.get_keys()
             buttons = self.mouse_manager.get_buttons()
+
+            # On bouge la carte
+            move = [0, 0]
+            if "ArrowDown" in keys:
+                move[1] += 1
+            if "ArrowLeft" in keys:
+                move[0] -= 1
+            if "ArrowUp" in keys:
+                move[1] -= 1
+            if "ArrowRight" in keys:
+                move[0] += 1
+            if move != [0, 0]:
+                self.board.translate_direction(move)
             
             if buttons[0]['L'] or buttons[0]['R']:
                 button = 'L' if buttons[0]['L'] else 'R'
@@ -107,7 +120,7 @@ class Editor:
             
             last_loop_time = time.time()
 
-        if not self.board.commit:
+        if self.board.link != None and not self.board.commit:
             self.board.link.commit()
             
     def stop(self):

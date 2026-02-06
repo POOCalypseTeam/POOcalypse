@@ -8,6 +8,8 @@ BOARD_PATH = "content/data/worlds/worlds.db"
 TILESET_PATH = "assets/tilesets/%SET%/%IMG%.png"
 
 BLOCKS_SIZE = 16
+# La taille d'une tile classique, sans zoom
+TRANSLATE_AMOUNT = 16
 
 class Board:
     def __init__(self, helper: web_helper.Helper, world: str, zoom: int = 2):
@@ -116,10 +118,28 @@ class Board:
                     
         link.close()
 
-    def load_all(self, offset: tuple[float, float]):
-        self.origin = offset
+    def load_all(self):
         for layer in self.layers.keys():
             self.load(layer)
+
+    def translate(self, move: tuple):
+        """
+        Bouge la carte en utilisant le vecteur move, on bouge en utilisant le nombre de pixels dans move
+        """
+        if move == [0, 0]:
+            return
+        ox,oy = self.origin
+        mx,my = move
+        self.origin = (ox + mx, oy + my)
+        self.helper.ws.attributs("tiles", style={"left": str(self.origin[0]) + "px", "top": str(self.origin[1]) + "px"})
+
+    def translate_direction(self, move: tuple):
+        """
+        Bouge la carte en utilisant le vecteur move, on bouge en utilisant la taille d'un bloc pour le layer 0
+        """
+        if move == [0, 0]:
+            return
+        self.translate((move[0] * TRANSLATE_AMOUNT * self.zoom, move[1] * TRANSLATE_AMOUNT * self.zoom))
 
     
 class EditorBoard(Board):
@@ -137,6 +157,7 @@ class EditorBoard(Board):
         # Utilises pour action, qui devrait sinon en initialiser beaucoup trop
         self.link = None
         self.base = None
+        self.commit = False
         
     # Methodes pour l'interaction PAGE -> BOARD
     def layer_changed(self, _, o: int):
@@ -219,7 +240,7 @@ class EditorBoard(Board):
         elif res == 0:
             # On cree une nouvelle tile
             self.base.execute("INSERT INTO tiles VALUES (?,?,?,?);", (block_id, tile_pos[0], tile_pos[1], self.tile[:-4]))
-            position = (self.zoom * (self.origin[0] + tile_pos[0] * self.tile_pixel_sizes[self.layer]) + block_offsets[0], self.zoom * (self.origin[1] + tile_pos[1] * self.tile_pixel_sizes[self.layer]) + block_offsets[1])
+            position = (self.zoom * (tile_pos[0] * self.tile_pixel_sizes[self.layer]) + block_offsets[0], self.zoom * (tile_pos[1] * self.tile_pixel_sizes[self.layer]) + block_offsets[1])
             path = TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])
             self.helper.add_image_id(img_id, path, position, (self.zoom * self.tile_pixel_sizes[self.layer], self.zoom * self.tile_pixel_sizes[self.layer]), parent=block_id)
         else:

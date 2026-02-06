@@ -33,6 +33,10 @@ div > * {
     height: calc(85% - 6px);
 }
 
+#tiles {
+    position: absolute;
+}
+
 #tools {
     position: relative;
     padding: 0;

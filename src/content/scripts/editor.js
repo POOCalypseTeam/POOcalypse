@@ -18,6 +18,7 @@ worldSelect.addEventListener("change", (event) => {
         tiles.removeChild(tiles.lastChild);
     }
     transmettre("world_changed", event.target.value);
+    event.target.blur();
 });
 
 function addLayers(layers) {
