@@ -54,7 +54,7 @@ class Game:
         self.web_manager.attributs(self.player.id, style={"z-index": 10})
 
         self.board = graphics.board.Board(self.web_helper, "spawn")
-        self.board.load(0)
+        self.board.load_all((0, 0))
         
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
@@ -124,7 +124,8 @@ class Game:
                     if dst <= player_range:
                         in_range_enemies.append(enemy)
                 if not self.player.is_dead():
-                    self.player.update(delta_time, keys, in_range_enemies)
+                    player_movement = self.player.update(delta_time, keys, in_range_enemies)
+                    self.board.load_all(player_movement)
             
             self.interactable = None
             for npc in self.npc:
@@ -136,6 +137,9 @@ class Game:
                 self.web_manager.inner_text("action-bar", "")
                 
             last_loop_time = time.time()
+
+        if not self.board.commit:
+            self.board.link.commit()
 
     def stop(self):
         """

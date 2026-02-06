@@ -106,6 +106,9 @@ class Editor:
                 self.board.action(button, buttons[1])
             
             last_loop_time = time.time()
+
+        if not self.board.commit:
+            self.board.link.commit()
             
     def stop(self):
         self.do_loop = False

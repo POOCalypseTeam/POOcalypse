@@ -114,8 +114,13 @@ class Board:
                     position = (self.zoom * (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer]), self.zoom * (block_offset[1] + tile[1] * self.tile_pixel_sizes[layer]))
                     self.helper.add_image_id(img_id, img_path, position, (self.zoom * self.tile_pixel_sizes[layer], self.zoom * self.tile_pixel_sizes[layer]), parent=block_id)
                     
-        link.close()    
-        
+        link.close()
+
+    def load_all(self, offset: tuple[float, float]):
+        self.origin = offset
+        for layer in self.layers.keys():
+            self.load(layer)
+
     
 class EditorBoard(Board):
     def __init__(self, helper: web_helper.Helper, world: str):
@@ -248,7 +253,12 @@ class EditorBoard(Board):
     def action(self, button: str, click_pos: tuple):
         if self.link == None:
             self.link = sqlite3.connect(BOARD_PATH)
-            self.link.autocommit = True
+            self.commit = True
+            try:
+                self.link.autocommit = True
+            except AttributeError:
+                print("L'attribut autocommit n'est pas disponible pour sqlite3")
+                self.commit = False
             self.base = self.link.cursor()
         
         x,y = click_pos
