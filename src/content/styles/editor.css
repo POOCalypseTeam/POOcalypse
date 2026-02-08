@@ -7,7 +7,7 @@ body {
     margin: 0;
 
     display: grid;
-    grid-template-columns: auto 4fr 1fr;
+    grid-template-columns: 4fr auto 1fr;
 }
 
 * {

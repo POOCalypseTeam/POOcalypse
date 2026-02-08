@@ -8,14 +8,16 @@
         <title>Editor</title>
     </head>
     <body ondragstart="return false;" ondrop="return false;">
+        
+        <div id="board">
+            <div id="tiles"></div>
+        </div>
+
         <ul id="tools">
             <li onclick="transmettre('tool_changed', 'draw');">✏</li>
             <li onclick="transmettre('tool_changed', 'erase');">🧼</li>
             <li onclick="transmettre('tool_changed', 'select');">□</li>
         </ul>
-        <div id="board">
-            <div id="tiles"></div>
-        </div>
 
         <div id="world-info">
             <select name="world-choice" id="world">

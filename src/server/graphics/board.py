@@ -282,10 +282,10 @@ class EditorBoard(Board):
                 self.commit = False
             self.base = self.link.cursor()
         
-        x,y = click_pos
+        x,y = click_pos[0] - self.origin[0], click_pos[1] - self.origin[1]
         
-        block_x = (x - self.origin[0]) // (self.block_pixel_sizes[self.layer] * self.zoom)
-        block_y = (y - self.origin[1]) // (self.block_pixel_sizes[self.layer] * self.zoom)
+        block_x = (x) // (self.block_pixel_sizes[self.layer] * self.zoom)
+        block_y = (y) // (self.block_pixel_sizes[self.layer] * self.zoom)
         
         block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
         block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
