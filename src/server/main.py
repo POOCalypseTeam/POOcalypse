@@ -45,6 +45,8 @@ class Game:
 
         self.web_helper = web_helper.Helper(self.web_manager)
         
+        
+        
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
         self.mouse_manager = Mouse(self.web_manager)
@@ -69,6 +71,7 @@ class Game:
         base_enemy = Enemy(self.web_helper, (600, 300), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
         self.enemies.append(base_enemy)
         
+        # TODO: Passer dans player ?
         self.interactable: Interactable = None
         
         self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Enter'])
@@ -94,10 +97,10 @@ class Game:
         
         On vise 60 images par secondes, donc 60 iterations par seconde, faire plus serait consommer beaucoup de ressources pour pas grand chose
         
-        Poour la physique on pourrait meme viser 30 iterations par seconde
+        Pour la physique on pourrait meme viser 30 iterations par seconde
         
         Ainsi on conditionne le temps
-        """
+        """        
         self.do_loop = True
         last_loop_time = time.time()
         
@@ -125,7 +128,7 @@ class Game:
                         in_range_enemies.append(enemy)
                 if not self.player.is_dead():
                     player_movement = self.player.update(delta_time, keys, in_range_enemies)
-                    self.board.load_all(player_movement)
+                    #self.board.load_all(player_movement)
             
             self.interactable = None
             for npc in self.npc:
@@ -137,9 +140,6 @@ class Game:
                 self.web_manager.inner_text("action-bar", "")
                 
             last_loop_time = time.time()
-
-        if not self.board.commit:
-            self.board.link.commit()
 
     def stop(self):
         """

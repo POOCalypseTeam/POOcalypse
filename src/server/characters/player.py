@@ -139,7 +139,10 @@ class Player:
             self.s %= ANIMATION_UPDATE_FREQUENCY
             IMG_STOP = STOP[self.s // 8]
             self.helper.change_image(self.id, IMG_STOP)
-        self.move(self.movement_vector)
+            
+        self.x += self.movement_vector[0]
+        self.y += self.movement_vector[1]   
+
         self.render()
         return self.movement_vector
         
@@ -159,23 +162,6 @@ class Player:
         if "KeyD" in keys:
             move[0] += MOVE_AMOUNT
         return move
-        
-    def move(self, movement: tuple):
-        """
-        Effectue le mouvement indique sur le joueur tout en veillant a ce qu'il reste dans les bornes de la fenetre
-        
-        Parametres:
-            - movement: tuple de la forme (x,y) indiquant la quantite de mouvement dans chacune des directions
-        """
-        window_size = self.helper.ws.get_window_size()
-        
-        self.x += movement[0]
-        self.x = min(self.x, window_size[0] - self.width)
-        self.x = max(MIN_X, self.x)
-        
-        self.y += movement[1]
-        self.y = min(self.y, window_size[1] - self.height)
-        self.y = max(MIN_Y, self.y)
         
     def get_position(self):
         """

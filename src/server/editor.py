@@ -104,13 +104,13 @@ class Editor:
             # On bouge la carte
             move = [0, 0]
             if "ArrowDown" in keys:
-                move[1] += 1
-            if "ArrowLeft" in keys:
-                move[0] -= 1
-            if "ArrowUp" in keys:
                 move[1] -= 1
-            if "ArrowRight" in keys:
+            if "ArrowLeft" in keys:
                 move[0] += 1
+            if "ArrowUp" in keys:
+                move[1] += 1
+            if "ArrowRight" in keys:
+                move[0] -= 1
             if move != [0, 0]:
                 self.board.translate_direction(move)
             
