@@ -33,14 +33,21 @@ class Board:
         self.block_pixel_sizes = {}
         self.collisions = {}
         
+        # {layer: (x_start, x_end, y_start, y_end)}
+        self.board_bounds: dict[int, tuple[int, int, int, int]] = {}
+        # {block_id: (layer, block_x, block_y)}
+        self.rendered_blocks: dict[int, tuple[int, int, int]] = {}
+        
         self.layers: dict[int, str] = {}
         
+        # Centre
         self.origin = (0, 0)
         
         # On prete attention a la taille de board
         self.board_size = self.update_board_size()
         
         # Pour chaque couche, on crée un div
+        # TODO: Utiliser un système asynchrone commun aux plusieurs threads dans lesquels link et base peuvent etre utilises, comme ca il n'y a qu'une seule instance de link (ou un objet resource par exemple)
         link = sqlite3.connect(BOARD_PATH)
         base = link.cursor()
         
@@ -73,25 +80,41 @@ class Board:
         self.board_size = (w, h)
         return self.board_size
     
-    def add_block(self, layer, block_x, block_y):
+    def render_block(self, block_id, layer, block_x, block_y):
         link = sqlite3.connect(BOARD_PATH)
         base = link.cursor()
         
-        base.execute("SELECT block_id FROM blocks WHERE block_x=? AND block_y=? AND world=? AND layer_index=? LIMIT 1;", (block_x, block_y, self.world, layer))
-        block_id = base.fetchone()
-        if block_id == None:
-            return
-
-        self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
-
         block_offset = ((block_x) * self.block_pixel_sizes[layer], (block_y) * self.block_pixel_sizes[layer])
-        base.execute("SELECT x,y,image_name FROM tiles WHERE block_id=?;", (block_id[0],))
+        base.execute("SELECT x,y,image_name FROM tiles WHERE block_id=?;", (block_id,))
         tiles = base.fetchall()
         for tile in tiles:
             img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
             img_path = TILESET_PATH.replace("%SET%", self.layers[layer]).replace("%IMG%", tile[2])
             position = (self.zoom * (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer]), self.zoom * (block_offset[1] + tile[1] * self.tile_pixel_sizes[layer]))
             self.helper.add_image_id(img_id, img_path, position, (self.zoom * self.tile_pixel_sizes[layer], self.zoom * self.tile_pixel_sizes[layer]), parent=block_id)
+    
+    def add_block(self, layer, block_x, block_y) -> int:
+        link = sqlite3.connect(BOARD_PATH)
+        base = link.cursor()
+        
+        base.execute("SELECT block_id FROM blocks WHERE block_x=? AND block_y=? AND world=? AND layer_index=? LIMIT 1;", (block_x, block_y, self.world, layer))
+        block = base.fetchone()
+        if block == None:
+            return
+        
+        link.close()
+        
+        block_id = block[0]
+        if block_id in self.rendered_blocks.keys():
+            return
+        
+        self.rendered_blocks[block_id] = (layer, block_x, block_y)
+        self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
+        
+        self.render_block(block_id, layer, block_x, block_y)
+        
+        return block_id
+
 
     def load(self, layer: int, center_block: tuple = (0, 0)):
         """
@@ -100,25 +123,27 @@ class Board:
         # On récupère la taille de la fenetre
         w,h = self.update_board_size()
         block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
-        # Pour chaque bloc, on récupère toutes les tiles correspondantes et on en fait le rendu
         block_w_offset = block_w // 2
         block_h_offset = block_h // 2
         
-        for block_x in range(center_block[0] - block_w_offset, center_block[0] + block_w_offset):
-            for block_y in range(center_block[1] - block_h_offset, center_block[1] + block_h_offset):
+        x_start = center_block[0] - block_w_offset
+        x_end = center_block[0] + block_w_offset
+        y_start = center_block[1] - block_h_offset
+        y_end = center_block[1] + block_h_offset
+        self.board_bounds[layer] = (x_start, x_end, y_start, y_end)
+        
+        for block_x in range(x_start, x_end):
+            for block_y in range(y_start, y_end):
                 self.add_block(layer, block_x, block_y)
 
-    def load_all(self, center: tuple = (0, 0)):
+    def load_all(self):
         """
         Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
         """
         w,h = self.update_board_size()
-        self.origin = (w / 2, h / 2)
-        self.helper.ws.attributs("tiles", style={"left": str(self.origin[0]) + "px", "top": str(self.origin[1]) + "px"})
+        self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
         for layer in self.layers.keys():
-            # On recupere le bloc du centre
-            center_block = (center[0] // self.block_pixel_sizes[layer], center[1] // self.block_pixel_sizes[layer])
-            self.load(layer, center_block)
+            self.load(layer, (0, 0))
 
     def translate(self, move: tuple):
         """
@@ -129,10 +154,55 @@ class Board:
         ox,oy = self.origin
         mx,my = move
         
-        # TODO: verifier si on est toujours dans les mêmes blocs ou pas, si oui trql, sinon il faut enlever les blocs qu'on ne voit plus et affichier les nouveaux
-
         self.origin = (ox + mx, oy + my)
-        self.helper.ws.attributs("tiles", style={"left": str(self.origin[0]) + "px", "top": str(self.origin[1]) + "px"})
+
+        w,h = self.update_board_size()
+        
+        link = sqlite3.connect(BOARD_PATH)
+        base = link.cursor()
+        
+        blocks_to_remove = dict(self.rendered_blocks)
+        
+        for layer in self.layers.keys():
+            center_block = (int(self.origin[0]) // self.block_pixel_sizes[layer], int(self.origin[1]) // self.block_pixel_sizes[layer])
+            
+            block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
+            block_w_offset = block_w // 2
+            block_h_offset = block_h // 2
+            
+            x_start = center_block[0] - block_w_offset
+            x_end = center_block[0] + block_w_offset
+            y_start = center_block[1] - block_h_offset
+            y_end = center_block[1] + block_h_offset
+            
+            # Les blocs affiches n'ont pas change (on a pas assez bouge)
+            if (x_start, x_end, y_start, y_end) == self.board_bounds[layer]:
+                pass
+            
+            base.execute("SELECT block_id, block_x, block_y FROM blocks WHERE world=? AND layer_index=? AND block_x>=? AND block_x<=? AND block_y>=? AND block_y<=?", (self.world, layer, x_start, x_end, y_start, y_end))
+            blocks = base.fetchall()
+            
+            for block in blocks:
+                block_id, block_x, block_y = block
+                
+                # Le bloc est deja affiche, on ne le supprime pas
+                if block_id in self.rendered_blocks.keys():
+                    del blocks_to_remove[block_id]
+                    print(block_id)
+                    continue
+                
+                self.rendered_blocks[block_id] = (layer, block_x, block_y)
+                self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
+                self.render_block(block_id, layer, block_x, block_y)
+            
+            self.board_bounds[layer] = (x_start, x_end, y_start, y_end)
+
+        print(blocks_to_remove)
+        for block_id in blocks_to_remove.keys():
+            self.helper.ws.remove(block_id)
+            del self.rendered_blocks[block_id]
+            
+        self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
 
     def translate_direction(self, move: tuple):
         """
