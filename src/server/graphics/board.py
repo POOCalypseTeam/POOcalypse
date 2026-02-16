@@ -33,11 +33,6 @@ class Board:
         self.block_pixel_sizes = {}
         self.collisions = {}
         
-        # {layer: (x_start, x_end, y_start, y_end)}
-        self.board_bounds: dict[int, tuple[int, int, int, int]] = {}
-        # {block_id: (layer, block_x, block_y)}
-        self.rendered_blocks: dict[int, tuple[int, int, int]] = {}
-        
         self.layers: dict[int, str] = {}
         
         # Centre
@@ -105,12 +100,7 @@ class Board:
         link.close()
         
         block_id = block[0]
-        if block_id in self.rendered_blocks.keys():
-            return
-        
-        self.rendered_blocks[block_id] = (layer, block_x, block_y)
         self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
-        
         self.render_block(block_id, layer, block_x, block_y)
         
         return block_id
@@ -130,7 +120,6 @@ class Board:
         x_end = center_block[0] + block_w_offset
         y_start = center_block[1] - block_h_offset
         y_end = center_block[1] + block_h_offset
-        self.board_bounds[layer] = (x_start, x_end, y_start, y_end)
         
         for block_x in range(x_start, x_end):
             for block_y in range(y_start, y_end):
@@ -152,55 +141,12 @@ class Board:
         if move == [0, 0]:
             return
         ox,oy = self.origin
-        mx,my = move
+        mx = move[0] * self.zoom
+        my = move[1] * self.zoom
         
         self.origin = (ox + mx, oy + my)
-
+        
         w,h = self.update_board_size()
-        
-        link = sqlite3.connect(BOARD_PATH)
-        base = link.cursor()
-        
-        now_rendered_blocks = {}
-        
-        for layer in self.layers.keys():
-            center_block = (int(self.origin[0]) // self.block_pixel_sizes[layer], int(self.origin[1]) // self.block_pixel_sizes[layer])
-            
-            block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
-            block_w_offset = block_w // 2 + 1
-            block_h_offset = block_h // 2 + 1
-            
-            x_start = center_block[0] - block_w_offset
-            x_end = center_block[0] + block_w_offset
-            y_start = center_block[1] - block_h_offset
-            y_end = center_block[1] + block_h_offset
-            
-            # Les blocs affiches n'ont pas change (on a pas assez bouge)
-            if (x_start, x_end, y_start, y_end) == self.board_bounds[layer]:
-                continue
-            
-            base.execute("SELECT block_id, block_x, block_y FROM blocks WHERE world=? AND layer_index=? AND block_x>=? AND block_x<=? AND block_y>=? AND block_y<=?", (self.world, layer, x_start, x_end, y_start, y_end))
-            blocks = base.fetchall()
-            
-            for block in blocks:
-                block_id, block_x, block_y = block
-                now_rendered_blocks[block_id] = (layer, block_x, block_y)
-                
-                # Le bloc est deja affiche, on ne le supprime pas
-                if block_id in self.rendered_blocks.keys():
-                    continue
-                
-                self.rendered_blocks[block_id] = (layer, block_x, block_y)
-                self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
-                self.render_block(block_id, layer, block_x, block_y)
-            
-            self.board_bounds[layer] = (x_start, x_end, y_start, y_end)
-
-            previous_block_ids = [block_id for block_id,block in self.rendered_blocks.items() if block[0] == layer]
-            for previous_block in previous_block_ids:
-                if not previous_block in now_rendered_blocks.keys():
-                    self.helper.ws.remove(previous_block)
-                    del self.rendered_blocks[previous_block]
             
         self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
 
@@ -210,7 +156,7 @@ class Board:
         """
         if move == [0, 0]:
             return
-        self.translate((move[0] * TRANSLATE_AMOUNT * self.zoom, move[1] * TRANSLATE_AMOUNT * self.zoom))
+        self.translate((move[0] * TRANSLATE_AMOUNT, move[1] * TRANSLATE_AMOUNT))
 
     
 class EditorBoard(Board):

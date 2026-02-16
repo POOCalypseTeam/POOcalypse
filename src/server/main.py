@@ -45,8 +45,6 @@ class Game:
 
         self.web_helper = web_helper.Helper(self.web_manager)
         
-        
-        
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
         self.mouse_manager = Mouse(self.web_manager)
@@ -56,7 +54,7 @@ class Game:
         self.web_manager.attributs(self.player.id, style={"z-index": 10})
 
         self.board = graphics.board.Board(self.web_helper, "spawn")
-        self.board.load_all((0, 0))
+        self.board.load_all()
         
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
@@ -128,7 +126,7 @@ class Game:
                         in_range_enemies.append(enemy)
                 if not self.player.is_dead():
                     player_movement = self.player.update(delta_time, keys, in_range_enemies)
-                    #self.board.load_all(player_movement)
+                    self.board.translate(player_movement)
             
             self.interactable = None
             for npc in self.npc:
