@@ -123,8 +123,8 @@ class Board:
         # On récupère la taille de la fenetre
         w,h = self.update_board_size()
         block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
-        block_w_offset = block_w // 2
-        block_h_offset = block_h // 2
+        block_w_offset = block_w // 2 + 1
+        block_h_offset = block_h // 2 + 1
         
         x_start = center_block[0] - block_w_offset
         x_end = center_block[0] + block_w_offset
@@ -161,14 +161,14 @@ class Board:
         link = sqlite3.connect(BOARD_PATH)
         base = link.cursor()
         
-        blocks_to_remove = dict(self.rendered_blocks)
+        now_rendered_blocks = {}
         
         for layer in self.layers.keys():
             center_block = (int(self.origin[0]) // self.block_pixel_sizes[layer], int(self.origin[1]) // self.block_pixel_sizes[layer])
             
             block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
-            block_w_offset = block_w // 2
-            block_h_offset = block_h // 2
+            block_w_offset = block_w // 2 + 1
+            block_h_offset = block_h // 2 + 1
             
             x_start = center_block[0] - block_w_offset
             x_end = center_block[0] + block_w_offset
@@ -177,18 +177,17 @@ class Board:
             
             # Les blocs affiches n'ont pas change (on a pas assez bouge)
             if (x_start, x_end, y_start, y_end) == self.board_bounds[layer]:
-                pass
+                continue
             
             base.execute("SELECT block_id, block_x, block_y FROM blocks WHERE world=? AND layer_index=? AND block_x>=? AND block_x<=? AND block_y>=? AND block_y<=?", (self.world, layer, x_start, x_end, y_start, y_end))
             blocks = base.fetchall()
             
             for block in blocks:
                 block_id, block_x, block_y = block
+                now_rendered_blocks[block_id] = (layer, block_x, block_y)
                 
                 # Le bloc est deja affiche, on ne le supprime pas
                 if block_id in self.rendered_blocks.keys():
-                    del blocks_to_remove[block_id]
-                    print(block_id)
                     continue
                 
                 self.rendered_blocks[block_id] = (layer, block_x, block_y)
@@ -197,10 +196,11 @@ class Board:
             
             self.board_bounds[layer] = (x_start, x_end, y_start, y_end)
 
-        print(blocks_to_remove)
-        for block_id in blocks_to_remove.keys():
-            self.helper.ws.remove(block_id)
-            del self.rendered_blocks[block_id]
+            previous_block_ids = [block_id for block_id,block in self.rendered_blocks.items() if block[0] == layer]
+            for previous_block in previous_block_ids:
+                if not previous_block in now_rendered_blocks.keys():
+                    self.helper.ws.remove(previous_block)
+                    del self.rendered_blocks[previous_block]
             
         self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
 
