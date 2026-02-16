@@ -68,6 +68,11 @@ class Board:
         self.load_all()
         
     def update_board_size(self) -> tuple[float, float]:
+        """
+        Actualise les dimensions de la fenetre du navigateur pour self.board_size
+        
+        Renvoie le tuple (w,h) avec les dimensions de la fenetre du navigateur
+        """
         size = self.helper.ws.get_window_size()
         # Pour savoir quels coefficients appliquer, se referer a editor.css
         w = size[0]
@@ -76,6 +81,18 @@ class Board:
         return self.board_size
     
     def render_block(self, block_id, layer, block_x, block_y):
+        """
+        Affiche toutes les tiles comprises dans un bloc
+        
+        Le seul appel au SGBD est pour recuperer toutes les tiles du bloc, non pour recuperer sa couche ou sa position
+        
+        Parametres:
+            - block_id: L'id du bloc dans le SGBD
+            
+            - layer: Couche du bloc dans le monde
+            
+            - block_x,block_y: Position du bloc dans le monde
+        """
         link = sqlite3.connect(BOARD_PATH)
         base = link.cursor()
         
@@ -89,6 +106,18 @@ class Board:
             self.helper.add_image_id(img_id, img_path, position, (self.zoom * self.tile_pixel_sizes[layer], self.zoom * self.tile_pixel_sizes[layer]), parent=block_id)
     
     def add_block(self, layer, block_x, block_y) -> int:
+        """
+        Ajoute un div sur la page HTML pour le bloc
+        
+        Parametres:
+            - layer: Couche du bloc
+            
+            - block_x,block_y: Position du bloc
+            
+        Les parametres permettent de determiner le block_id
+        
+        Renvoie le block_id
+        """
         link = sqlite3.connect(BOARD_PATH)
         base = link.cursor()
         
@@ -111,7 +140,7 @@ class Board:
         Charge le layer specifie sur la page en centrant sur le block donne 
         """
         # On récupère la taille de la fenetre
-        w,h = self.update_board_size()
+        w,h = self.board_size
         block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
         block_w_offset = block_w // 2 + 1
         block_h_offset = block_h // 2 + 1
@@ -185,6 +214,7 @@ class EditorBoard(Board):
         return self.board_size
         
     # Methodes pour l'interaction PAGE -> BOARD
+    
     def layer_changed(self, _, o: int):
         self.layer = int(o)
         
@@ -240,10 +270,13 @@ class EditorBoard(Board):
 
     def action(self, button: str, click_pos: tuple):
         def add_tile(block_pos, block_offsets, tile_pos):
+            """
+            Cette methode ajoute une tile a la position donnee sur la page et actualise la base de donnees, elle ajoute un bloc si necessaire
+            """
             # On regarde s'il existe deja une tile
             # Sinon on la cree et on l'ajoute sur la page
             # Si oui, on la modifie dans la BD et sur la page
-            # Tout en creant les blocks necessaires si besoin
+            # Tout en creant les blocs necessaires si besoin
             self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_pos[0], block_pos[1]))
             res = self.base.fetchall()
             block_id = ""
@@ -271,10 +304,13 @@ class EditorBoard(Board):
                 self.helper.add_image_id(img_id, path, position, (self.zoom * self.tile_pixel_sizes[self.layer], self.zoom * self.tile_pixel_sizes[self.layer]), parent=block_id)
             else:
                 # On modifie la tile d'avant
-                self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_pos[0], tile_pos[1]))
                 self.helper.ws.attributs(img_id, attr={'src': "../" + TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])})
+                self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_pos[0], tile_pos[1]))
             
-        def remove_tile(block_pos, tile_pos):        
+        def remove_tile(block_pos, tile_pos):
+            """
+            Cette methode supprime la tile specifiee de la page et actualise la base de donnees
+            """
             self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_pos[0], block_pos[1]))
             res = self.base.fetchall()
             block_id = ""
@@ -294,8 +330,9 @@ class EditorBoard(Board):
                 return
         
             # On modifie la tile d'avant
-            self.base.execute("DELETE FROM tiles WHERE block_id=? AND x=? AND y=?;", (block_id, tile_pos[0], tile_pos[1]))
             self.helper.ws.remove(img_id)
+            self.base.execute("DELETE FROM tiles WHERE block_id=? AND x=? AND y=?;", (block_id, tile_pos[0], tile_pos[1]))
+
 
         if self.link == None:
             self.link = sqlite3.connect(BOARD_PATH)
@@ -307,7 +344,9 @@ class EditorBoard(Board):
                 self.commit = False
             self.base = self.link.cursor()
         
-        x,y = click_pos[0] - self.origin[0], click_pos[1] - self.origin[1]
+        w,h = self.update_board_size()
+        
+        x,y = click_pos[0] - int(w // 2) + self.origin[0], click_pos[1] - int(h // 2) + self.origin[1]
         
         block_x = (x) // (self.block_pixel_sizes[self.layer] * self.zoom)
         block_y = (y) // (self.block_pixel_sizes[self.layer] * self.zoom)
@@ -327,7 +366,7 @@ class EditorBoard(Board):
             case 'erase':
                 remove_tile((block_x, block_y), (tile_x, tile_y))
             case 'select':
-                # Il faudrait implementer une variable qui contienne la premiere position, quand on a la deuxieme on decide de quoi faire
+                # TODO: Il faudrait implementer une variable qui contienne la premiere position, quand on a la deuxieme on decide de quoi faire
                 print("Ne fait rien pour l'instant")
             case _:
                 raise TypeError("Il n'existe pas d'outil de ce type")
