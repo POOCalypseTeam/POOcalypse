@@ -94,8 +94,9 @@ class Editor:
             time.sleep(0.5)
         
         while self.do_loop:
-            delta_time = time.time() - last_loop_time
-            if delta_time < 0.017:
+            delta_time = time.time() - last_loop_time - 0.01
+            if delta_time < 0:
+                time.sleep(-delta_time / 4)
                 continue
             
             keys = self.keyboard_manager.get_keys()

@@ -102,13 +102,13 @@ class Game:
         last_loop_time = time.time()
 
         while self.do_loop:
-            delta_time = time.time() - last_loop_time
+            delta_time = time.time() - last_loop_time - 0.017
             # 1 / 60 ~= 0.017, on s'embete pas à faire le calcul tout le temps, on pourrait limite stocker la duree dans une variable mais pas tres utile non plus
-            if delta_time < 0.017:
+            if delta_time < 0:
+                time.sleep(-delta_time / 3)
                 continue
 
             last_loop_time = time.time()
-
 
             keys = self.keyboard_manager.get_keys()
 
