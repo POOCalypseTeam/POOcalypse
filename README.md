@@ -15,5 +15,35 @@ Si vous voulez apporter des modifications aux configurations, modifiez dans `lau
 Pour lancer via la console simplement, exécuter cette commande en se situant dans le dossier `/src/` du projet, sinon adaptez la commande:
 `PYTHONPATH=./libs/ python3 -i ./server/main.py`.<br>
 Pour stopper le serveur, écrire la commande `stop()` dans le terminal intéractif et attendre que le processus Python soit fini, sinon les ports utilisés par le processus resteront utilisés et ne pourront pas être réutilisés.<br>
-bonjour
 
+
+# Éditeur
+## Commencer
+
+Pour lancer l'éditeur il faut sélectionner la bonne configuration sur VSCode, en passant par le terminal, il faut exécuter le script `server/editor.py` au lieu de `server/main.py`.<br>
+La première chose à faire une fois lancé, c'est sélectionner un monde en haut à droite, puis une couche sur laquelle on veut travailler.<br>
+En selectionnant une couche, toutes les tiles disponibles s'affichent en bas, il est possible de les sélectionner puis de dessiner ave clic gauche ou effacer avec clic droite ou l'outil gomme.<br>
+
+## Creation de monde
+
+Si aucun monde n'a été créé il faut le faire manuellement en manipulant la base de données via sqlite3 par exemple.
+La base de donnée se situe, par rapport à la racine du projet: `/src/content/data/worlds/worlds.db`.
+Pour la modifier, il faut taper dans un terminal: `sqlite3 worlds.db`<br>
+Ensuite, il faut ajouter un monde avec la commande: `INSERT INTO worlds VALUES (%NOM_DU_MONDE%);` et remplacer `%NOM_DU_MONDE%`.
+
+## Ajoute de couches
+
+Si le monde vient d'être créé il n'a surement aucune couche, pour se faire il est possible de passer par sqlite3 ou par l'interface, il suffit de sélectionner les options souhaitées et cliquer sur le bouton **Ajouter**.
+Si vous ne voyez pas la couche s'afficher dans la liste, c'est probablement qu'une autre couche est au même niveau, ce qui n'est pas permis.
+
+## Suppression d'une couche
+
+Pour supprimer une couche, il faut passer par sqlite3 et entrer la commande: `DELETE FROM layers WHERE world=%MONDE% AND layer_index=%NIVEAU_COUCHE%;` en veillant à remplacer `%MONDE%` et `%NIVEAU_COUCHE%`.
+Néanmoins cela ne supprime pas le contenu de la couche concernée, c'est un problème car cela surcharge la base de données pour rien, donc il faut le supprimer.<br>
+En commencant par les tiles: `DELETE FROM tiles WHERE block_id IN (SELECT block_id FROM blocks WHERE world=%MONDE% AND layer_index=%NIVEAU_COUCHE%);`, toujours en remplaçant `%MONDE%` et `%NIVEAU_COUCHE%`.<br>
+Puis les blocks: `DELETE FROM blocks WHERE world=%MONDE% AND layer_index=%NIVEAU_COUCHE%);`.<br>
+
+## Suppression de mondes
+
+Pour supprimer un monde il faut supprimer toutes les couches, pour cela se référer à <a href="#suppression-dune-couche">la séction précédente</a> sans ajouter le paramètre `layer_index`.
+Enfin, supprimer le monde lui-même avec `DELETE FROM worlds WHERE name=%MONDE%;`
