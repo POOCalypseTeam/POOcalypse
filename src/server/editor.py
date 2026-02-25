@@ -99,6 +99,8 @@ class Editor:
                 time.sleep(-delta_time / 4)
                 continue
             
+            delta_time += 0.01
+            
             keys = self.keyboard_manager.get_keys()
             buttons = self.mouse_manager.get_buttons()
 

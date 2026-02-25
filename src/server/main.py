@@ -107,6 +107,8 @@ class Game:
             if delta_time < 0:
                 time.sleep(-delta_time / 3)
                 continue
+            
+            delta_time += 0.017
 
             last_loop_time = time.time()
 
