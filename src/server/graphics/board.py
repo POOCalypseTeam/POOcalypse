@@ -141,6 +141,7 @@ class Board:
         """
         # On récupère la taille de la fenetre
         w,h = self.board_size
+        # TODO: Considerer le zoom pour savoir combien en mettre dans cette zone ?
         block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
         block_w_offset = block_w // 2 + 1
         block_h_offset = block_h // 2 + 1
@@ -176,16 +177,10 @@ class Board:
         self.origin = (ox + mx, oy + my)
         
         w,h = self.update_board_size()
-            
+        
+        
+        
         self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
-
-    def translate_direction(self, move: tuple):
-        """
-        Bouge la carte en utilisant les directions donnees par le vecteur move, on bouge en utilisant TRANSLATE_AMOUNT
-        """
-        if move == [0, 0]:
-            return
-        self.translate((move[0] * TRANSLATE_AMOUNT, move[1] * TRANSLATE_AMOUNT))
 
     
 class EditorBoard(Board):
@@ -267,6 +262,21 @@ class EditorBoard(Board):
         
     def tool_changed(self, _m, o):
         self.tool = o
+        
+    def translate(self, move: tuple):
+        super().translate(move)
+        
+        w,h = self.board_size
+        self.helper.ws.attributs("board", style={"background-position-x": str((w * self.zoom) // 2) + "px"\
+                                                ,"background-position-y": str((h * self.zoom) // 2) + "px"})
+        
+    def translate_direction(self, move: tuple):
+        """
+        Bouge la carte en utilisant les directions donnees par le vecteur move, on bouge en utilisant TRANSLATE_AMOUNT
+        """
+        if move == [0, 0]:
+            return
+        self.translate((move[0] * TRANSLATE_AMOUNT, move[1] * TRANSLATE_AMOUNT))
 
     def action(self, button: str, click_pos: tuple):
         def add_tile(block_pos, block_offsets, tile_pos):
