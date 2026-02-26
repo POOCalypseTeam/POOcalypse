@@ -80,9 +80,8 @@ Ressources autres, dans des bases de données :
         - `./npc/` : Attributs sur les personnages non-jouable
         - `./player/` : Attributs sur le joueur
     - `./common/` : Attributs divers
-    - `./worlds/` : Attributs sur les mondes
 
-- `./databases/` : Bases de données
+- `./worlds/` : Données sur les mondes
 
 - `./lang/` : Textes :
     - `./fr/` : Français
@@ -101,27 +100,14 @@ Afin d'utiliser des fichiers à l'intérieur des sous-dossiers, on écrit : <cod
 **Ainsi, un fichier plus bas dans l'arborescence ne peut pas dépendre d'un fichier plus haut que lui.**<br>
 *Exemple: Un fichier dans `/src/server/accounts/` ne peut pas dépendre d'un fichier dans `/src/server/` ou pire dans `/src/server/web/`.*
 
-### `./accounts/`
+### `./characters/`
 
-Gère la connexion et la création de comptes
+Gère les différents personnages et autres éléments qui leur sont utile
 
-### `./graphics`
+### `./graphics/`
 
-Gère l’affichage
+Contient tout ce qui est graphique, ne contient que `board.py` pour l'instant
 
-- `./characters/` Gère l’affichage des personnages
-- `./effects/` : Gère l’affichage des effets, sorts, mana, etc.
-- `./world/` : Gère l’affichage du monde
+### `./inputs/`
 
-### `./multiplayer/`
-
-Gère s’il y en a un, le multijoueur
-
-### `./resources/`
-
-Gère l’accès aux ressources
-
-### `./web/`
-
-Gestionnaire de WSinter
-
+Permet de récupérer les entrées utilisateur: les clics souris et les touches du clavier
