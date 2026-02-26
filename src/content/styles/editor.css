@@ -29,7 +29,9 @@ div > * {
 #board {
     /* -6px pour le padding de #tileset */
     height: calc(85% - 6px);
+}
 
+.grid-background {
     image-rendering: pixelated;
     background-image: url("../assets/misc/editor_grid.png");
     background-repeat: repeat;

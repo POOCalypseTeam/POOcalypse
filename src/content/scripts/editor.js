@@ -131,3 +131,12 @@ function addTilesEvent() {
         });
     }
 }
+
+function hideBackground() {
+    if (board.classList.contains("grid-background")) {
+        board.classList.remove("grid-background");
+    }
+    else {
+        board.classList.add("grid-background");
+    }
+}

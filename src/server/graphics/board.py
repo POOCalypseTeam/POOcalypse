@@ -35,7 +35,7 @@ class Board:
         
         self.layers: dict[int, str] = {}
         
-        # Centre
+        # Coordonnees du centre en pixels
         self.origin = (0, 0)
         
         # On prete attention a la taille de board
@@ -200,6 +200,10 @@ class EditorBoard(Board):
         self.base = None
         self.commit = False
         
+        w,h = self.board_size
+        self.helper.ws.attributs("board", style={"background-position-x": str(-(self.origin[0]) + w / 2) + "px"\
+                                                ,"background-position-y": str(-(self.origin[1]) + h / 2) + "px"})
+        
     def update_board_size(self) -> tuple[float, float]:
         size = self.helper.ws.get_window_size()
         # Pour savoir quels coefficients appliquer, se referer a editor.css
@@ -267,8 +271,8 @@ class EditorBoard(Board):
         super().translate(move)
         
         w,h = self.board_size
-        self.helper.ws.attributs("board", style={"background-position-x": str((w * self.zoom) // 2) + "px"\
-                                                ,"background-position-y": str((h * self.zoom) // 2) + "px"})
+        self.helper.ws.attributs("board", style={"background-position-x": str(-(self.origin[0]) + w / 2) + "px"\
+                                                ,"background-position-y": str(-(self.origin[1]) + h / 2) + "px"})
         
     def translate_direction(self, move: tuple):
         """
