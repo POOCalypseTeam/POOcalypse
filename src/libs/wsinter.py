@@ -110,57 +110,65 @@ function faire(o){
         let data = dico["data"];
         let type = dico["type"];
         
-        if (type == "delete" && elem != null)
+        if (elem == null)
+        {
+            if (type == "create" && (dico["tagName"] != undefined))
+            {
+                elem = document.createElement(dico["tagName"]);
+                for (attr in data)
+                {
+                    elem[attr]=data[attr];
+                }
+                let parent = document.getElementById(dico["parent_id"]);
+                if ((parent == null) || (parent == undefined))
+                {
+                    parent = document.body;
+                }
+                if (parent != null)
+                {
+                    parent.appendChild(elem);
+                }
+            }
+            else {
+                console.log("No such element with this identifier exists, id:", dico["id"]);
+            }
+            continue;
+        }
+        
+        if (type == "delete")
         {
             elem.parentNode.removeChild(elem);
         }
-        else if (type == "children" && elem != null)
+        else if (type == "children")
         {
             while (elem.firstChild){
                 elem.removeChild(elem.lastChild);
             }
         }
-        else if (type == "content" && elem != null)
+        else if (type == "content")
         {
             elem.innerText = data;
         }
-        else if (type == "class-a" && elem != null)
+        else if (type == "class-a")
         {
             elem.classList.add(data);
         }
-        else if (type == "class-r" && elem != null)
+        else if (type == "class-r")
         {
             elem.classList.remove(data);
         }
-        else if (type == "attributes" && elem != null)
+        else if (type == "attributes")
         {
             for (attr in data)
             {
                 elem[attr]=data[attr];
             }
         }
-        else if (type == "style" && elem != null)
+        else if (type == "style")
         {
             for (sattr in data["style"])
             {
                 elem.style[sattr] = data["style"][sattr]; 
-            }
-        }
-        else if (type == "create" && (elem == null) && (dico["tagName"] != undefined))
-        {
-            elem = document.createElement(dico["tagName"]);
-            for (attr in data)
-            {
-                elem[attr]=data[attr];
-            }
-            let parent = document.getElementById(dico["parent_id"]);
-            if ((parent == null) || (parent == undefined))
-            {
-                parent = document.body;
-            }
-            if (parent != null)
-            {
-                parent.appendChild(elem);
             }
         }
         else {

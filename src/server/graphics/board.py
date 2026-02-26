@@ -194,6 +194,10 @@ class EditorBoard(Board):
         self.layer: int = 0
         self.tile: str = ""
         self.tool: str = "draw"
+        
+        # Coordonnees pour la selection, un tuple lorsque actif et None lorsque rien (bien vu l'artiste)
+        self.p1: tuple[tuple[int, int], tuple[int, int]] = None
+        self.p2: tuple[tuple[int, int], tuple[int, int]] = None
 
         # Utilises pour action, qui devrait sinon en initialiser beaucoup trop
         self.link = None
@@ -231,6 +235,8 @@ class EditorBoard(Board):
         
     def tile_changed(self, _, o):
         self.tile = o
+        if self.tool == "select":
+            self.selection(self.tile)
         
     def create_layer(self, _, o: list[str, str, str, str]):
         self.layers[int(o[0])] = o[1]
@@ -266,6 +272,9 @@ class EditorBoard(Board):
         
     def tool_changed(self, _m, o):
         self.tool = o
+        # Permet de reset la selection, par exemple en appuyant a nouveau sur le bouton de selection
+        self.p1 = None
+        self.p2 = None
         
     def translate(self, move: tuple):
         super().translate(move)
@@ -281,8 +290,62 @@ class EditorBoard(Board):
         if move == [0, 0]:
             return
         self.translate((move[0] * TRANSLATE_AMOUNT, move[1] * TRANSLATE_AMOUNT))
+    
+    def selection(self, tile: str):
+        """
+        Fait une action sur la zone selectionnee
+        
+        Parametres:
+            - tile: Une chaine de caracteres qui represente soit une tile, soit __erase__ et qui sert a effacer toute la zone
+        """
+        # Pas de zone selectionnee
+        if self.p1 == None or self.p2 == None:
+            return
+        
+        # assert (l'utilisateur est gentil et met p1 en haut à gauche et p2 en bas à droite), "Je te deteste..."
+        
+        x_count = self.block_size - self.p1[1][0] + (self.p2[0][0] - self.p1[0][0] - 1) * self.block_size + self.p2[1][0]
+        y_count = self.block_size - self.p2[1][1] + (self.p2[0][1] - self.p1[0][1] - 1) * self.block_size + self.p2[1][1]
+        
+        tile_x = self.p1[1][0]
+        tile_y = self.p1[1][1]
+        
+        block_x = self.p1[0][0]
+        block_y = self.p1[0][1]
+        
+        for _ in range(x_count):
+            tile_y = self.p1[1][1]
+            block_y = self.p1[0][1]
+            for _ in range(y_count):
+                img_id = "_".join(map(str, [self.layer, block_x * self.block_size + tile_x, block_y * self.block_size + tile_y]))
+                if tile == "__erase__":
+                    # Si on doit effacer, on regarde s'il y a une case, si oui on la supprime, sinon on se casse
+                    # TODO: Passer pa la fonction delete, réflechir si problématique quand l'élément n'existe pas, dans ce cas, éviter d'afficher bcp de messages d'erreurs qui s'affolent en disant que l'element n'existe pas
+                    pass
+                else: 
+                    # Si on doit dessiner, on regarde d'abord s'il y a un bloc, sinon en en crée un
+                    # Ensuite on regarde s'il y a une tile, si oui on la modifie, sinon on en ajoute une
+                    pass
+                
+                tile_y += 1
+                if tile_y == BLOCKS_SIZE:
+                    block_y += 1
+                    tile_y = 0
+            
+            tile_x += 1
+            if tile_x == BLOCKS_SIZE:
+                block_x += 1
+                tile_x = 0
 
     def action(self, button: str, click_pos: tuple):
+        """
+        Lorsqu'un bouton de la souris est appuye sur board
+        
+        Parametres:
+            - button: Le bouton qui a ete appuye, parmi ['L', 'R', 'M'] respectivement pour Gauche, Droite et Milieu
+            
+            - click_pos: La position en pixels sur la page du clic
+        """
         def add_tile(block_pos, block_offsets, tile_pos):
             """
             Cette methode ajoute une tile a la position donnee sur la page et actualise la base de donnees, elle ajoute un bloc si necessaire
@@ -380,7 +443,11 @@ class EditorBoard(Board):
             case 'erase':
                 remove_tile((block_x, block_y), (tile_x, tile_y))
             case 'select':
-                # TODO: Il faudrait implementer une variable qui contienne la premiere position, quand on a la deuxieme on decide de quoi faire
-                print("Ne fait rien pour l'instant")
+                # Une fois qu'une zone est selectionnee, il suffit d'appuyer sur la gomme ou une tile afin que toute la zone soit affectee par soit la gomme soit une tile
+                pos = ((block_x, block_y), (tile_x, tile_y))
+                if button == 'L':
+                    self.p1 = pos
+                if button == "R":
+                    self.p2 = pos
             case _:
                 raise TypeError("Il n'existe pas d'outil de ce type")
