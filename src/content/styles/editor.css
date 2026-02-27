@@ -1,0 +1,155 @@
+html, body {
+    overflow: hidden;
+}
+
+body {
+    height: 100vh;
+    margin: 0;
+
+    display: grid;
+    grid-template-columns: 4fr auto 1fr;
+}
+
+* {
+    user-select: none;
+}
+
+img {
+    image-rendering: pixelated;
+}
+
+body > div {
+    z-index: 1000;
+}
+
+div > * {
+    color: lightgray;
+}
+
+#board {
+    /* -6px pour le padding de #tileset */
+    height: calc(85% - 6px);
+
+    image-rendering: pixelated;
+    background-image: url("../assets/misc/editor_grid.png");
+    background-repeat: repeat;
+    background-size: 512px;
+}
+
+#tiles {
+    position: absolute;
+}
+
+#tools {
+    position: relative;
+    padding: 0;
+    margin: 5px;
+    z-index: 1000;
+    list-style-type: none;
+    color:#e4e4e4;
+}
+
+#tools > * {
+    text-align:center;
+    font-weight:bold;
+
+    margin-bottom: 2px;
+    padding:2px;
+
+    background-color: rgba(130, 130, 130, 10);
+    cursor:pointer;
+}
+
+#world-info {
+    height: 100vh;
+    padding-left: 5px;
+
+    background-color: #272729;
+}
+
+#world {
+    font-size: 28px;
+    text-align: center;
+    font-weight: bold;
+    width: 90%;
+    margin: 5px 0 0 5%;
+    background-color: transparent;
+    color:lightgray;
+    border: none;
+}
+
+#layers {
+    margin: 0 5px;
+    height: 20%;
+    background-color:#58585a;
+    overflow: scroll;
+}
+
+.layer {
+    display: grid;
+    grid-template-columns: 2fr 6fr 2fr 2fr;
+    border: 1px solid #707070;
+}
+
+.layer > * {
+    margin: 2px;
+    text-align:center;
+}
+
+.layer > span {
+    cursor: pointer;
+}
+
+.selected {
+    background-color: #707070;
+}
+
+#layer-options > * {
+    margin-top: 15px;
+}
+
+select, input {
+    color:#272729;
+}
+
+#index, #tile_size {
+    width: 30%;
+}
+
+#add {
+    color:#272729;
+    width: 98%;
+    font-size: 24px;
+    text-transform: uppercase;
+    font-weight:bold;
+    margin: 5px 2% 5px 0;
+    cursor: pointer;
+}
+
+#tileset {
+    position: absolute;
+    bottom: 0;
+    height: 15%;
+    padding: 3px;
+    /* Pour compenser le padding */
+    width: calc(100vw - 6px);
+
+    background-color: #272729;
+
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 16px;
+    grid-template-rows: repeat(auto-fill, minmax(16px, 1fr));
+    gap: 2px;
+    overflow: scroll;
+}
+
+#tileset > img {
+    display: block;
+    cursor:pointer;
+}
+
+.brush {
+    outline: 2px solid white;
+    outline-offset: -1px;
+}
