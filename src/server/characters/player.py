@@ -6,44 +6,56 @@ import web_helper
 from .weapon import Weapon
 from .enemy import Enemy
 
-IMG_STOP1 = 'assets/spritesheets/blonde_man/blonde_man_001.png'
-IMG_STOP2 = 'assets/spritesheets/blonde_man/blonde_man_002.png'
-IMG_STOP3 = 'assets/spritesheets/blonde_man/blonde_man_003.png'
-IMG_STOP4 = 'assets/spritesheets/blonde_man/blonde_man_004.png'
-STOP = [IMG_STOP1, IMG_STOP2, IMG_STOP3, IMG_STOP4]
+PNG_PATH = 'assets/spritesheets/player/player_000.png'
 
-PNG_PATH = 'assets/spritesheets/blonde_man/blonde_man_000.png'
+IMG_STOP1 = 'assets/spritesheets/player/player_001.png'
+IMG_STOP2 = 'assets/spritesheets/player/player_002.png'
+IMG_STOP3 = 'assets/spritesheets/player/player_003.png'
+IMG_STOP4 = 'assets/spritesheets/player/player_004.png'
+IMG_STOP5 = 'assets/spritesheets/player/player_005.png'
+IMG_STOP6 = 'assets/spritesheets/player/player_006.png'
+STOP = [IMG_STOP1, IMG_STOP2, IMG_STOP3, IMG_STOP4, IMG_STOP5, IMG_STOP6]
 
-IMG_LEFT1 = 'assets/spritesheets/blonde_man/blonde_man_005.png'
-IMG_LEFT2 = 'assets/spritesheets/blonde_man/blonde_man_006.png'
-IMG_LEFT3 = 'assets/spritesheets/blonde_man/blonde_man_007.png'
-IMG_LEFT4 = 'assets/spritesheets/blonde_man/blonde_man_008.png'
-LEFT = [IMG_LEFT1, IMG_LEFT2, IMG_LEFT3, IMG_LEFT4]
+IMG_LEFT1 = 'assets/spritesheets/player/player_007.png'
+IMG_LEFT2 = 'assets/spritesheets/player/player_008.png'
+IMG_LEFT3 = 'assets/spritesheets/player/player_009.png'
+IMG_LEFT4 = 'assets/spritesheets/player/player_010.png'
+IMG_LEFT5 = 'assets/spritesheets/player/player_011.png'
+IMG_LEFT6 = 'assets/spritesheets/player/player_012.png'
+LEFT = [IMG_LEFT1, IMG_LEFT2, IMG_LEFT3, IMG_LEFT4, IMG_LEFT5, IMG_LEFT6]
 
-IMG_RIGHT1 = 'assets/spritesheets/blonde_man/blonde_man_009.png'
-IMG_RIGHT2 = 'assets/spritesheets/blonde_man/blonde_man_010.png'
-IMG_RIGHT3 = 'assets/spritesheets/blonde_man/blonde_man_011.png'
-IMG_RIGHT4 = 'assets/spritesheets/blonde_man/blonde_man_012.png'
-RIGHT = [IMG_RIGHT1, IMG_RIGHT2, IMG_RIGHT3, IMG_RIGHT4]
+IMG_BOTTOM1 = 'assets/spritesheets/player/player_013.png'
+IMG_BOTTOM2 = 'assets/spritesheets/player/player_014.png'
+IMG_BOTTOM3 = 'assets/spritesheets/player/player_015.png'
+IMG_BOTTOM4 = 'assets/spritesheets/player/player_016.png'
+IMG_BOTTOM5 = 'assets/spritesheets/player/player_017.png'
+IMG_BOTTOM6 = 'assets/spritesheets/player/player_018.png'
+BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4, IMG_BOTTOM5, IMG_BOTTOM6]
 
-IMG_TOP1 = 'assets/spritesheets/blonde_man/blonde_man_013.png'
-IMG_TOP2 = 'assets/spritesheets/blonde_man/blonde_man_014.png'
-IMG_TOP3 = 'assets/spritesheets/blonde_man/blonde_man_015.png'
-IMG_TOP4 = 'assets/spritesheets/blonde_man/blonde_man_016.png'
-TOP = [IMG_TOP1, IMG_TOP2, IMG_TOP3, IMG_TOP4]
+IMG_RIGHT1 = 'assets/spritesheets/player/player_019.png'
+IMG_RIGHT2 = 'assets/spritesheets/player/player_020.png'
+IMG_RIGHT3 = 'assets/spritesheets/player/player_021.png'
+IMG_RIGHT4 = 'assets/spritesheets/player/player_022.png'
+IMG_RIGHT5 = 'assets/spritesheets/player/player_023.png'
+IMG_RIGHT6 = 'assets/spritesheets/player/player_024.png'
+RIGHT = [IMG_RIGHT1, IMG_RIGHT2, IMG_RIGHT3, IMG_RIGHT4, IMG_RIGHT5, IMG_RIGHT6]
 
-IMG_BOTTOM1 = 'assets/spritesheets/blonde_man/blonde_man_017.png'
-IMG_BOTTOM2 = 'assets/spritesheets/blonde_man/blonde_man_018.png'
-IMG_BOTTOM3 = 'assets/spritesheets/blonde_man/blonde_man_019.png'
-IMG_BOTTOM4 = 'assets/spritesheets/blonde_man/blonde_man_020.png'
-BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
+IMG_TOP1 = 'assets/spritesheets/player/player_025.png'
+IMG_TOP2 = 'assets/spritesheets/player/player_026.png'
+IMG_TOP3 = 'assets/spritesheets/player/player_027.png'
+IMG_TOP4 = 'assets/spritesheets/player/player_028.png'
+IMG_TOP5 = 'assets/spritesheets/player/player_029.png'
+IMG_TOP6 = 'assets/spritesheets/player/player_030.png'
+TOP = [IMG_TOP1, IMG_TOP2, IMG_TOP3, IMG_TOP4, IMG_TOP5, IMG_TOP6]
+
+
 
 IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 64
 MOVE_AMOUNT = 50
 MIN_X = 0
 MIN_Y = 0
-ANIMATION_UPDATE_FREQUENCY = 32
+ANIMATION_UPDATE_FREQUENCY = 48
 
 # Contient le joueur
 class Player:
