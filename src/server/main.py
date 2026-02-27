@@ -148,6 +148,8 @@ class Game:
         self.do_loop = False
         self.loop_thread.join()
         self.web_manager.stop()
+        self.board.link.commit()
+        self.board.link.close()
 
 # On verifie que le programme n'est pas importe mais bien lance
 if __name__ == "__main__":

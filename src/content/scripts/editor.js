@@ -13,6 +13,8 @@ tileset = document.getElementById("tileset");
 tilesetSelect = document.getElementById("tileset-choice");
 brush = null;
 
+//alert("J'atteste sur l'honneur que j'utiliserai l'outil sélection avec le premier coin en haut à gauche et le deuxième coin en bas à droite.");
+
 worldSelect.addEventListener("change", (event) => {
     while (tiles.firstChild) {
         tiles.removeChild(tiles.lastChild);

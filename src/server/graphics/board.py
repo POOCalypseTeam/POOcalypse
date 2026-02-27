@@ -43,15 +43,15 @@ class Board:
         
         # Pour chaque couche, on crée un div
         # TODO: Utiliser un système asynchrone commun aux plusieurs threads dans lesquels link et base peuvent etre utilises, comme ca il n'y a qu'une seule instance de link (ou un objet resource par exemple)
-        link = sqlite3.connect(BOARD_PATH)
-        base = link.cursor()
+        self.link = sqlite3.connect(BOARD_PATH, check_same_thread=False)
+        self.base = self.link.cursor()
         
         # Ajoute les elements pour ce monde precis
-        base.execute("SELECT layer_index,tileset,tiles_size,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
-        layers = base.fetchall()
+        self.base.execute("SELECT layer_index,tileset,tiles_size,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
+        layers = self.base.fetchall()
         if layers == None:
             print("Ce monde n'a pas de couche!")
-            link.close()
+            self.link.close()
             return
         layers = [list(layer) for layer in layers]
         
@@ -64,7 +64,6 @@ class Board:
             
             self.helper.ws.insere("layer_" + str(layer[0]), "div", style={"z-index": layer[0] * 2}, parent="tiles")
         
-        link.close()
         self.load_all()
         
     def update_board_size(self) -> tuple[float, float]:
@@ -92,13 +91,10 @@ class Board:
             - layer: Couche du bloc dans le monde
             
             - block_x,block_y: Position du bloc dans le monde
-        """
-        link = sqlite3.connect(BOARD_PATH)
-        base = link.cursor()
-        
+        """        
         block_offset = ((block_x) * self.block_pixel_sizes[layer], (block_y) * self.block_pixel_sizes[layer])
-        base.execute("SELECT x,y,image_name FROM tiles WHERE block_id=?;", (block_id,))
-        tiles = base.fetchall()
+        self.base.execute("SELECT x,y,image_name FROM tiles WHERE block_id=?;", (block_id,))
+        tiles = self.base.fetchall()
         for tile in tiles:
             img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
             img_path = TILESET_PATH.replace("%SET%", self.layers[layer]).replace("%IMG%", tile[2])
@@ -108,6 +104,8 @@ class Board:
     def add_block(self, layer, block_x, block_y) -> int:
         """
         Ajoute un div sur la page HTML pour le bloc
+
+        Si le bloc n'existe pas dans la base de données, il n'est pas cree !
         
         Parametres:
             - layer: Couche du bloc
@@ -118,15 +116,10 @@ class Board:
         
         Renvoie le block_id
         """
-        link = sqlite3.connect(BOARD_PATH)
-        base = link.cursor()
-        
-        base.execute("SELECT block_id FROM blocks WHERE block_x=? AND block_y=? AND world=? AND layer_index=? LIMIT 1;", (block_x, block_y, self.world, layer))
-        block = base.fetchone()
+        self.base.execute("SELECT block_id FROM blocks WHERE block_x=? AND block_y=? AND world=? AND layer_index=? LIMIT 1;", (block_x, block_y, self.world, layer))
+        block = self.base.fetchone()
         if block == None:
             return
-        
-        link.close()
         
         block_id = block[0]
         self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
@@ -200,8 +193,8 @@ class EditorBoard(Board):
         self.p2: tuple[tuple[int, int], tuple[int, int]] = None
 
         # Utilises pour action, qui devrait sinon en initialiser beaucoup trop
-        self.link = None
-        self.base = None
+        self.link = sqlite3.connect(BOARD_PATH, check_same_thread=False)
+        self.base = self.link.cursor()
         self.commit = False
         
         w,h = self.board_size
@@ -243,14 +236,10 @@ class EditorBoard(Board):
         self.tile_pixel_sizes[int(o[0])] = int(o[2])
         self.block_pixel_sizes[int(o[0])] = int(o[2]) * BLOCKS_SIZE
         
-        link = sqlite3.connect(BOARD_PATH)
-        base = link.cursor()
-        
-        base.execute("INSERT INTO layers VALUES (?,?,?,?,?);", (self.world, int(o[0]), o[1], int(o[2]), bool(o[3])))
-        link.commit()
+        self.base.execute("INSERT INTO layers VALUES (?,?,?,?,?);", (self.world, int(o[0]), o[1], int(o[2]), bool(o[3])))
+        self.link.commit()
         
         self.helper.ws.insere("layer_" + o[0], "div", style={"z-index": int(o[0]) * 2}, parent="tiles")
-        link.close()
         
     def delete_layer(self, _, o):
         if self.layer != int(o):
@@ -262,15 +251,12 @@ class EditorBoard(Board):
         del self.tile_pixel_sizes[self.layer]
         del self.block_pixel_sizes[self.layer]
         
-        link = sqlite3.connect(BOARD_PATH)
-        base = link.cursor()
-        
-        base.execute("DELETE FROM layers WHERE world=? AND layer_index=?;", (self.world, self.layer))
-        link.commit()
-        
-        link.close()
+        self.base.execute("DELETE FROM layers WHERE world=? AND layer_index=?;", (self.world, self.layer))
+        self.link.commit()
         
     def tool_changed(self, _m, o):
+        if self.tool == "select" and o == "erase":
+            self.selection("__erase__")
         self.tool = o
         # Permet de reset la selection, par exemple en appuyant a nouveau sur le bouton de selection
         self.p1 = None
@@ -312,16 +298,19 @@ class EditorBoard(Board):
         
         block_x = self.p1[0][0]
         block_y = self.p1[0][1]
+
+        block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
+        block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
         
-        for _ in range(x_count):
+        for _ in range(x_count + 1):
             tile_y = self.p1[1][1]
             block_y = self.p1[0][1]
-            for _ in range(y_count):
+            for _ in range(y_count + 1):
                 img_id = "_".join(map(str, [self.layer, block_x * self.block_size + tile_x, block_y * self.block_size + tile_y]))
                 if tile == "__erase__":
                     # Si on doit effacer, on regarde s'il y a une case, si oui on la supprime, sinon on se casse
-                    # TODO: Passer pa la fonction delete, réflechir si problématique quand l'élément n'existe pas, dans ce cas, éviter d'afficher bcp de messages d'erreurs qui s'affolent en disant que l'element n'existe pas
-                    pass
+                    self.helper.ws.remove(img_id)
+                    self.base.execute("DELETE FROM tiles WHERE block_id=(SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?) AND x=? AND y=?;", (self.world, self.layer, block_x, block_y, tile_x, tile_y))
                 else: 
                     # Si on doit dessiner, on regarde d'abord s'il y a un bloc, sinon en en crée un
                     # Ensuite on regarde s'il y a une tile, si oui on la modifie, sinon on en ajoute une
