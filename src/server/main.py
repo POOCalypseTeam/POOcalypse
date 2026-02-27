@@ -48,7 +48,6 @@ class Game:
         """
         self.web_manager = wsinter.Inter("content/pages/" + start_page)
         self.web_manager.demarre(clavier=True)
-        self.web_manager.gestionnaire("musique",self.musique)
 
         self.web_helper = web_helper.Helper(self.web_manager)
 
