@@ -13,6 +13,12 @@ from characters.npc import Interactable, Npc
 from inputs.keyboard import Keyboard
 from inputs.mouse import Mouse
 
+import base64
+
+audio = open("content/assets/music/musique_menu.mp3", 'rb')
+audio_text = audio.read()
+audio_base64 = base64.b64encode(audio_text)
+
 game = None
 
 def main():
@@ -42,6 +48,7 @@ class Game:
         """
         self.web_manager = wsinter.Inter("content/pages/" + start_page)
         self.web_manager.demarre(clavier=True)
+        self.web_manager.gestionnaire("musique",self.musique)
 
         self.web_helper = web_helper.Helper(self.web_manager)
 
