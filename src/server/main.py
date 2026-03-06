@@ -13,6 +13,12 @@ from characters.npc import Interactable, Npc
 from inputs.keyboard import Keyboard
 from inputs.mouse import Mouse
 
+import base64
+
+audio = open("content/assets/music/musique_menu.mp3", 'rb')
+audio_text = audio.read()
+audio_base64 = base64.b64encode(audio_text)
+
 game = None
 
 def main():
