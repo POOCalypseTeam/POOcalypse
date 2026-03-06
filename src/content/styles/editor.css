@@ -156,3 +156,12 @@ select, input {
     outline: 2px solid white;
     outline-offset: -1px;
 }
+
+.corner {
+    display: block;
+    position: absolute;
+}
+
+.hidden {
+    display: none;
+}

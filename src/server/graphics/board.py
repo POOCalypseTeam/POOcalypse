@@ -261,6 +261,8 @@ class EditorBoard(Board):
         # Permet de reset la selection, par exemple en appuyant a nouveau sur le bouton de selection
         self.p1 = None
         self.p2 = None
+        self.helper.ws.add_class("corner-1", "hidden")
+        self.helper.ws.add_class("corner-2", "hidden")
         
     def translate(self, move: tuple):
         super().translate(move)
@@ -434,9 +436,14 @@ class EditorBoard(Board):
             case 'select':
                 # Une fois qu'une zone est selectionnee, il suffit d'appuyer sur la gomme ou une tile afin que toute la zone soit affectee par soit la gomme soit une tile
                 pos = ((block_x, block_y), (tile_x, tile_y))
+                page_pos = (self.zoom * (tile_x * self.tile_pixel_sizes[self.layer]) + block_offset_x, self.zoom * (tile_y * self.tile_pixel_sizes[self.layer]) + block_offset_y)
                 if button == 'L':
                     self.p1 = pos
+                    self.helper.ws.remove_class("corner-1", "hidden")
+                    self.helper.ws.attributs("corner-1", style={"left": str(page_pos[0]), "top": str(page_pos[1])})
                 if button == "R":
                     self.p2 = pos
+                    self.helper.ws.remove_class("corner-2", "hidden")
+                    self.helper.ws.attributs("corner-2", style={"left": str(page_pos[0]), "top": str(page_pos[1])})
             case _:
                 raise TypeError("Il n'existe pas d'outil de ce type")
