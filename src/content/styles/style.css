@@ -55,6 +55,10 @@ img {
     image-rendering: pixelated;
 }
 
+.background {
+    display: none;
+}
+
 /* Player */
 #img0 {
     transition: top 50ms linear, left 50ms linear;
@@ -62,4 +66,8 @@ img {
     60px = health-bar.width
     32px = self.width */
     margin-left: 14px;
+}
+
+.credits {
+    display: none;
 }
