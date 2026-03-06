@@ -104,7 +104,7 @@ class Npc(Interactable):
         
         self.opened = False
         
-        self.id = self.helper.add_image(img_path, (self.x, self.y))
+        self.id = self.helper.add_image(img_path, (self.x, self.y), size=(64, 64))
         
     def interact(self):
         """

@@ -16,6 +16,7 @@ CREATE TABLE layers (
     world VARCHAR,
     layer_index INT,
     tileset TEXT, -- Chemin vers le dossier des images, exemple: "exterior", pour "/content/assets/tileset/exterior/"
+    tiles_size INT,
     collisions BOOLEAN,
     PRIMARY KEY (world, layer_index)
 );
@@ -38,10 +39,10 @@ Puis les autres tables:
 
 ```SQL
 CREATE TABLE tiles (
-    tile_id INTEGER PRIMARY KEY AUTOINCREMENT,
     block_id INT,
     x INT,
     y INT,
+    PRIMARY KEY (block_id, x, y),
     image_name TEXT, -- Par exemple: "interior_001.png", pour récupérer le fichier image: layer.tileset + image_name
     FOREIGN KEY (block_id) REFERENCES blocks(block_id)
 );
