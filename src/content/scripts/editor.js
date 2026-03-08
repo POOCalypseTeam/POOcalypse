@@ -16,7 +16,8 @@ brush = null;
 //alert("J'atteste sur l'honneur que j'utiliserai l'outil sélection avec le premier coin en haut à gauche et le deuxième coin en bas à droite.");
 
 worldSelect.addEventListener("change", (event) => {
-    while (tiles.firstChild) {
+    // On souhaite garder le premier enfant, sachant que c'est les cases de selection
+    while (tiles.length > 1) {
         tiles.removeChild(tiles.lastChild);
     }
     transmettre("world_changed", event.target.value);
