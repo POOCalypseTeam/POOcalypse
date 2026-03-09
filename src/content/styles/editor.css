@@ -7,7 +7,7 @@ body {
     margin: 0;
 
     display: grid;
-    grid-template-columns: 4fr auto 1fr;
+    grid-template-columns: 4fr 1fr;
 }
 
 * {
@@ -44,7 +44,7 @@ div > * {
 }
 
 #tools {
-    position: relative;
+    position: absolute;
     padding: 0;
     margin: 5px;
     z-index: 1000;
