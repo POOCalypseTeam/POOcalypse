@@ -17,7 +17,7 @@ brush = null;
 
 worldSelect.addEventListener("change", (event) => {
     // On souhaite garder le premier enfant, sachant que c'est les cases de selection
-    while (tiles.length > 1) {
+    while (tiles.children.length > 1) {
         tiles.removeChild(tiles.lastChild);
     }
     transmettre("world_changed", event.target.value);
