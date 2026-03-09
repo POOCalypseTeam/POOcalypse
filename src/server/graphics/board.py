@@ -403,9 +403,7 @@ class EditorBoard(Board):
         for _ in range(x_count + 1):
             
             for _ in range(y_count + 1):
-                # TODO: Corriger quand c'est la gomme, car condition toujours vraie presque
                 if current_block_id == None:
-                    print("Le bloc n'a pas d'id")
                     continue
                 
                 img_id = "_".join(map(str, [self.layer, block_x * self.block_size + tile_x, block_y * self.block_size + tile_y]))

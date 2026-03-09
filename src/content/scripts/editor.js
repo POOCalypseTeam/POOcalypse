@@ -138,6 +138,9 @@ function tool(toolElement, newActiveTool) {
     transmettre("tool_changed", newActiveTool);
     if (activeTool != null)
     {
+        // Si c'est l'outil de sélection et qu'on gomme on veut pas sélectionner l'outil gomme mais effacer la sélection
+        if (activeTool.innerText === "□" && newActiveTool === "erase" && !document.getElementById("corner-1").classList.contains("hidden") && !document.getElementById("corner-2").classList.contains("hidden"))
+            return;
         activeTool.classList.remove("tool-selected");
     }
     activeTool = toolElement;
