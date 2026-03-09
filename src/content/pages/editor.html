@@ -19,11 +19,11 @@
         </div>
 
         <ul id="tools">
-            <li onclick="transmettre('tool_changed', 'draw');">✏</li>
-            <li onclick="transmettre('tool_changed', 'erase');">🧼</li>
-            <li onclick="transmettre('tool_changed', 'select');">□</li>
+            <li class="tool" onclick="tool(this, 'draw');">✏</li>
+            <li class="tool" onclick="tool(this, 'erase');">🧼</li>
+            <li class="tool" onclick="tool(this, 'select');">□</li>
             <br>
-            <li onclick="hideBackground()"                      >⌗</li>
+            <li class="tool" onclick="hideBackground()"                      >⌗</li>
         </ul>
 
         <div id="world-info">

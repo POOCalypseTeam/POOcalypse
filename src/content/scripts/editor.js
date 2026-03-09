@@ -12,6 +12,7 @@ createLayerButton = document.getElementById("add");
 tileset = document.getElementById("tileset");
 tilesetSelect = document.getElementById("tileset-choice");
 brush = null;
+activeTool = null;
 
 //alert("J'atteste sur l'honneur que j'utiliserai l'outil sélection avec le premier coin en haut à gauche et le deuxième coin en bas à droite.");
 
@@ -133,6 +134,16 @@ function addTilesEvent() {
             transmettre("tile_changed", src.substring(src.lastIndexOf("/") + 1));
         });
     }
+}
+
+function tool(toolElement, newActiveTool) {
+    transmettre("tool_changed", newActiveTool);
+    if (activeTool != null)
+    {
+        activeTool.classList.remove("tool-selected");
+    }
+    activeTool = toolElement;
+    toolElement.classList.add("tool-selected");
 }
 
 function hideBackground() {
