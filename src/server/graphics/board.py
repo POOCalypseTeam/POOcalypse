@@ -295,12 +295,13 @@ class EditorBoard(Board):
         block_id = None
         if len(res) > 1:
             raise ValueError("Plusieurs blocs existent")
-        elif len(res) == 0 and create:
-            # On cree un nouveau bloc
-            self.base.execute("INSERT INTO blocks(world,layer_index,block_x,block_y) VALUES (?,?,?,?);", (self.world, self.layer, block_x, block_y))
-            self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_x, block_y))
-            block_id = self.base.fetchone()[0]
-            self.helper.ws.insere(block_id, "div", parent="layer_" + str(self.layer))
+        elif len(res) == 0:
+            if create:
+                # On cree un nouveau bloc
+                self.base.execute("INSERT INTO blocks(world,layer_index,block_x,block_y) VALUES (?,?,?,?);", (self.world, self.layer, block_x, block_y))
+                self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_x, block_y))
+                block_id = self.base.fetchone()[0]
+                self.helper.ws.insere(block_id, "div", parent="layer_" + str(self.layer))
         else:
             block_id = res[0][0]
             
@@ -360,23 +361,21 @@ class EditorBoard(Board):
         current_block_id = self.get_block_id(block_x, block_y, create=True)
         
         x_count = (self.p2[0][0] * self.block_size + self.p2[1][0]) - (self.p1[0][0] * self.block_size + self.p1[1][0])
-        y_count = (self.p2[0][1] * self.block_size + self.p2[1][1]) - (self.p1[0][1] * self.block_size + self.p1[1][0])
+        y_count = (self.p2[0][1] * self.block_size + self.p2[1][1]) - (self.p1[0][1] * self.block_size + self.p1[1][1])
 
         block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
         block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
         
-        print((x_count, y_count))
-        
         for _ in range(x_count + 1):
-            tile_y = self.p1[1][1]
-            block_y = self.p1[0][1]
+            
             for _ in range(y_count + 1):
+                # TODO: Corriger quand c'est la gomme, car condition toujours vraie presque
                 if current_block_id == None:
+                    print("Le bloc n'a pas d'id")
                     continue
                 
                 img_id = "_".join(map(str, [self.layer, block_x * self.block_size + tile_x, block_y * self.block_size + tile_y]))
                 if tile == "__erase__":
-                    # Si on doit effacer, on regarde s'il y a une case, si oui on la supprime, sinon on se casse
                     self.helper.ws.remove(img_id)
                     self.base.execute("DELETE FROM tiles WHERE block_id=(SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?) AND x=? AND y=?;", (self.world, self.layer, block_x, block_y, tile_x, tile_y))
                 else: 
@@ -393,10 +392,12 @@ class EditorBoard(Board):
             tile_x += 1
             if tile_x == self.block_size:
                 block_x += 1
-                current_block_id = self.get_block_id(block_x, block_y, create=create)
                 block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
                 block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
                 tile_x = 0
+            tile_y = self.p1[1][1]
+            block_y = self.p1[0][1]
+            current_block_id = self.get_block_id(block_x, block_y, create=create)
 
     def action(self, button: str, click_pos: tuple):
         """
