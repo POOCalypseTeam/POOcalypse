@@ -228,7 +228,7 @@ class EditorBoard(Board):
         
     def tile_changed(self, _, o):
         self.tile = o
-        if self.tool == "select":
+        if self.tool == "select" and self.p1 != None and self.p2 != None:
             self.selection(self.tile)
         
     def create_layer(self, _, o: list[str, str, str, str]):
@@ -255,8 +255,14 @@ class EditorBoard(Board):
         self.link.commit()
         
     def tool_changed(self, _m, o):
-        if self.tool == "select" and o == "erase":
+        """
+        Cette méthode est appelée lorsque l'outil est changé, via un gestionnaire d'événements WsInter
+        
+        Lorsque l'outil de sélection était sélectionné et que la gomme vient d'être cliquée
+        """
+        if self.tool == "select" and o == "erase" and self.p1 != None and self.p2 != None:
             self.selection("__erase__")
+            return
         self.tool = o
         # Permet de reset la selection, par exemple en appuyant a nouveau sur le bouton de selection
         self.p1 = None
@@ -338,6 +344,36 @@ class EditorBoard(Board):
             self.helper.ws.attributs(img_id, attr={'src': "../" + TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])})
             self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_pos[0], tile_pos[1]))
     
+    def adjust_selection(self):
+        """
+        Renvoie un tuple (c1, c2) avec c1 et c2 respectivement les coins haut-gauche et bas-droit, peu importe self.p1 et self.p2
+        """
+
+        x1 = self.p1[0][0] * self.block_size + self.p1[1][0]
+        y1 = self.p1[0][1] * self.block_size + self.p1[1][1]
+        
+        x2 = self.p2[0][0] * self.block_size + self.p2[1][0]
+        y2 = self.p2[0][1] * self.block_size + self.p2[1][1]
+
+        if x1 < x2:
+            min_x = (self.p1[0][0], self.p1[1][0])
+            max_x = (self.p2[0][0], self.p2[1][0])
+        else:
+            min_x = (self.p2[0][0], self.p2[1][0])
+            max_x = (self.p1[0][0], self.p1[1][0])
+
+        if y1 < y2:
+            min_y = (self.p1[0][1], self.p1[1][1])
+            max_y = (self.p2[0][1], self.p2[1][1])
+        else:
+            min_y = (self.p2[0][1], self.p2[1][1])
+            max_y = (self.p1[0][1], self.p1[1][1])
+            
+        c1 = ((min_x[0], min_y[0]), (min_x[1], min_y[1]))
+        c2 = ((max_x[0], max_y[0]), (max_x[1], max_y[1]))
+        
+        return (c1, c2)
+    
     def selection(self, tile: str):
         """
         Fait une action sur la zone selectionnee
@@ -345,23 +381,21 @@ class EditorBoard(Board):
         Parametres:
             - tile: Une chaine de caracteres qui represente soit une tile, soit __erase__ et qui sert a effacer toute la zone
         """
-        # Pas de zone selectionnee
-        if self.p1 == None or self.p2 == None:
-            return
+        assert self.p1 != None and self.p2 != None, "La selection n'est pas complete"
         
-        # assert (l'utilisateur est gentil et met p1 en haut à gauche et p2 en bas à droite), "Je te deteste..."
+        corner1, corner2 = self.adjust_selection()
         
         create = tile != "__erase__"
         
-        tile_x = self.p1[1][0]
-        tile_y = self.p1[1][1]
+        tile_x = corner1[1][0]
+        tile_y = corner1[1][1]
         
-        block_x = self.p1[0][0]
-        block_y = self.p1[0][1]
+        block_x = corner1[0][0]
+        block_y = corner1[0][1]
         current_block_id = self.get_block_id(block_x, block_y, create=True)
         
-        x_count = (self.p2[0][0] * self.block_size + self.p2[1][0]) - (self.p1[0][0] * self.block_size + self.p1[1][0])
-        y_count = (self.p2[0][1] * self.block_size + self.p2[1][1]) - (self.p1[0][1] * self.block_size + self.p1[1][1])
+        x_count = (corner2[0][0] * self.block_size + corner2[1][0]) - (corner1[0][0] * self.block_size + corner1[1][0])
+        y_count = (corner2[0][1] * self.block_size + corner2[1][1]) - (corner1[0][1] * self.block_size + corner1[1][1])
 
         block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
         block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
@@ -395,8 +429,8 @@ class EditorBoard(Board):
                 block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
                 block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
                 tile_x = 0
-            tile_y = self.p1[1][1]
-            block_y = self.p1[0][1]
+            tile_y = corner1[1][1]
+            block_y = corner1[0][1]
             current_block_id = self.get_block_id(block_x, block_y, create=create)
 
     def action(self, button: str, click_pos: tuple):

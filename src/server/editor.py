@@ -131,8 +131,9 @@ class Editor:
         if self.loop_thread.is_alive():
             self.loop_thread.join()
         self.web_manager.stop()
-        self.board.link.commit()
-        self.board.link.close()
+        if self.board.link != None:
+            self.board.link.commit()
+            self.board.link.close()
         
 if __name__ == "__main__":
     main()
