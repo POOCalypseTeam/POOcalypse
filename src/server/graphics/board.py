@@ -426,12 +426,12 @@ class EditorBoard(Board):
             tile_x += 1
             if tile_x == self.block_size:
                 block_x += 1
-                block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
-                block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
                 tile_x = 0
             tile_y = corner1[1][1]
             block_y = corner1[0][1]
             current_block_id = self.get_block_id(block_x, block_y, create=create)
+            block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
+            block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
 
     def action(self, button: str, click_pos: tuple):
         """
