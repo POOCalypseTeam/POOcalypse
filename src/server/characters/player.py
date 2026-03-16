@@ -6,56 +6,24 @@ import web_helper
 from .weapon import Weapon
 from .enemy import Enemy
 
-PNG_PATH = 'assets/spritesheets/player/player_000.png'
 
-IMG_STOP1 = 'assets/spritesheets/player/player_001.png'
-IMG_STOP2 = 'assets/spritesheets/player/player_002.png'
-IMG_STOP3 = 'assets/spritesheets/player/player_003.png'
-IMG_STOP4 = 'assets/spritesheets/player/player_004.png'
-IMG_STOP5 = 'assets/spritesheets/player/player_005.png'
-IMG_STOP6 = 'assets/spritesheets/player/player_006.png'
-STOP = [IMG_STOP1, IMG_STOP2, IMG_STOP3, IMG_STOP4, IMG_STOP5, IMG_STOP6]
+ANIM_STOP = 'assets/spritesheets/player/player_stop.gif'
+ANIM_LEFT = 'assets/spritesheets/player/player_left.gif'
+ANIM_BOTTOM = 'assets/spritesheets/player/player_bottom.gif'
+ANIM_RIGHT = 'assets/spritesheets/player/player_right.gif'
+ANIM_TOP = 'assets/spritesheets/player/player_top.gif'
+ANIM_DEATH = 'assets/spritesheets/player/player_death.gif'
+ANIM_ATTACK_TOP = 'assets/spritesheets/player/player_attack_top.gif'
+ANIM_ATTACK_BOTTOM = 'assets/spritesheets/player/player_attack_bottom.gif'
+ANIM_ATTACK_RIGHT = 'assets/spritesheets/player/player_attack_right.gif'
+ANIM_ATTACK_LEFT = 'assets/spritesheets/player/player_attack_left.gif'
 
-IMG_LEFT1 = 'assets/spritesheets/player/player_007.png'
-IMG_LEFT2 = 'assets/spritesheets/player/player_008.png'
-IMG_LEFT3 = 'assets/spritesheets/player/player_009.png'
-IMG_LEFT4 = 'assets/spritesheets/player/player_010.png'
-IMG_LEFT5 = 'assets/spritesheets/player/player_011.png'
-IMG_LEFT6 = 'assets/spritesheets/player/player_012.png'
-LEFT = [IMG_LEFT1, IMG_LEFT2, IMG_LEFT3, IMG_LEFT4, IMG_LEFT5, IMG_LEFT6]
-
-IMG_BOTTOM1 = 'assets/spritesheets/player/player_013.png'
-IMG_BOTTOM2 = 'assets/spritesheets/player/player_014.png'
-IMG_BOTTOM3 = 'assets/spritesheets/player/player_015.png'
-IMG_BOTTOM4 = 'assets/spritesheets/player/player_016.png'
-IMG_BOTTOM5 = 'assets/spritesheets/player/player_017.png'
-IMG_BOTTOM6 = 'assets/spritesheets/player/player_018.png'
-BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4, IMG_BOTTOM5, IMG_BOTTOM6]
-
-IMG_RIGHT1 = 'assets/spritesheets/player/player_019.png'
-IMG_RIGHT2 = 'assets/spritesheets/player/player_020.png'
-IMG_RIGHT3 = 'assets/spritesheets/player/player_021.png'
-IMG_RIGHT4 = 'assets/spritesheets/player/player_022.png'
-IMG_RIGHT5 = 'assets/spritesheets/player/player_023.png'
-IMG_RIGHT6 = 'assets/spritesheets/player/player_024.png'
-RIGHT = [IMG_RIGHT1, IMG_RIGHT2, IMG_RIGHT3, IMG_RIGHT4, IMG_RIGHT5, IMG_RIGHT6]
-
-IMG_TOP1 = 'assets/spritesheets/player/player_025.png'
-IMG_TOP2 = 'assets/spritesheets/player/player_026.png'
-IMG_TOP3 = 'assets/spritesheets/player/player_027.png'
-IMG_TOP4 = 'assets/spritesheets/player/player_028.png'
-IMG_TOP5 = 'assets/spritesheets/player/player_029.png'
-IMG_TOP6 = 'assets/spritesheets/player/player_030.png'
-TOP = [IMG_TOP1, IMG_TOP2, IMG_TOP3, IMG_TOP4, IMG_TOP5, IMG_TOP6]
-
-
-
-IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 64
 MOVE_AMOUNT = 50
 MIN_X = 0
 MIN_Y = 0
-ANIMATION_UPDATE_FREQUENCY = 48
+ANIM_ATTACK_DURATION = 0.550
+
 
 # Contient le joueur
 class Player:
@@ -66,18 +34,13 @@ class Player:
         # TODO: Resize hitbox to fit character best
         self.width = IMG_SIZE
         self.height = IMG_SIZE
-        self.id = self.helper.add_image(IMG_STOP1, (self.x, self.y), size=(64, 64), parent="player")
-        self.id2 = self.helper.add_image(PNG_PATH, (0,0), size=(64, 64), parent="player")
+        self.id = self.helper.add_image(ANIM_STOP, (self.x, self.y), size=(64, 64), parent="player")
         self.r = 0
         self.l = 0
         self.b = 0
         self.t = 0
         self.s = 0
-        for i in range(5):
-            for j in range(4):
-                self.helper.change_image(self.id2, IMG[i][j])
-                sleep(0.1)
-        self.helper.change_image(self.id2, PNG_PATH)
+        self.att = False
         
         self.health = 5
         self.max_health = 5
@@ -111,6 +74,7 @@ class Player:
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
         if 'KeyR' in keys:
             self.attack(enemies)
+            self.att = True
         return self.update_movement(delta_time, keys)
     
     def update_movement(self, delta_time: float, keys: list) -> tuple[float, float]:
@@ -124,33 +88,44 @@ class Player:
         self.movement_vector[0] *= coef
         self.movement_vector[1] *= coef
         movement = self._process_move_keys(keys)
+        delta_sum = 0
         if movement != [0, 0]:
             self.move_range(movement)        
             if movement[0] > 0:
-                self.r += 1
-                self.r %= ANIMATION_UPDATE_FREQUENCY
-                IMG_RIGHT = RIGHT[self.r // 8]
-                self.helper.change_image(self.id, IMG_RIGHT)
+                self.helper.change_image(self.id, ANIM_ATTACK_RIGHT if self.att else ANIM_RIGHT)
+                delta_sum = delta_time
+                while delta_sum < ANIM_ATTACK_DURATION:
+                    delta_sum += delta_time
+                self.att = False
+                delta_sum = 0
             elif movement[0] < 0:
-                self.l += 1
-                self.l %= ANIMATION_UPDATE_FREQUENCY
-                IMG_LEFT = LEFT[self.l // 8]
-                self.helper.change_image(self.id, IMG_LEFT)
+                self.helper.change_image(self.id, ANIM_ATTACK_LEFT if self.att else ANIM_LEFT)
+                delta_sum = delta_time
+                while delta_sum < ANIM_ATTACK_DURATION:
+                    delta_sum += delta_time
+                self.att = False
+                delta_sum = 0
             elif movement[1] > 0 :
-                self.b += 1
-                self.b %= ANIMATION_UPDATE_FREQUENCY
-                IMG_BOTTOM = BOTTOM[self.b // 8]
-                self.helper.change_image(self.id, IMG_BOTTOM)
+                self.helper.change_image(self.id, ANIM_ATTACK_BOTTOM if self.att else ANIM_BOTTOM)
+                delta_sum = delta_time
+                while delta_sum < ANIM_ATTACK_DURATION:
+                    delta_sum += delta_time
+                self.att = False
+                delta_sum = 0
             elif movement[1] < 0:
-                self.t += 1
-                self.t %= ANIMATION_UPDATE_FREQUENCY
-                IMG_TOP = TOP[self.t // 8]
-                self.helper.change_image(self.id, IMG_TOP)
+                self.helper.change_image(self.id, ANIM_ATTACK_TOP if self.att else ANIM_TOP)
+                delta_sum = delta_time
+                while delta_sum < ANIM_ATTACK_DURATION:
+                    delta_sum += delta_time
+                self.att = False
+                delta_sum = 0
         else:
-            self.s += 1
-            self.s %= ANIMATION_UPDATE_FREQUENCY
-            IMG_STOP = STOP[self.s // 8]
-            self.helper.change_image(self.id, IMG_STOP)
+            self.helper.change_image(self.id, ANIM_ATTACK_BOTTOM if self.att else ANIM_STOP)
+            delta_sum = delta_time
+            while delta_sum < ANIM_ATTACK_DURATION:
+                delta_sum += delta_time
+            self.att = False
+            delta_sum = 0
             
         self.x += self.movement_vector[0]
         self.y += self.movement_vector[1]   
@@ -207,7 +182,7 @@ class Player:
         self.health = max(0, self.health - damage)
         if self.health == 0:
             self.dead = True
-            # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement
+            self.helper.change_image(self.id, ANIM_DEATH)
         return self.dead
     
     def attack(self, enemies: list[Enemy]):
