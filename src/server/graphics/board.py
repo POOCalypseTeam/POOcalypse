@@ -157,6 +157,39 @@ class Board:
         for layer in self.layers.keys():
             self.load(layer, (0, 0))
 
+    def page_to_block(self, layer, coordinates) -> tuple:
+        """
+        Convertit les coordonnées de la page vers des coordonnées blocs et tiles
+        """
+        x,y = coordinates[0] - self.origin[0], coordinates[1] - self.origin[1]
+        
+        block_x = (x) // (self.block_pixel_sizes[layer] * self.zoom)
+        block_y = (y) // (self.block_pixel_sizes[layer] * self.zoom)
+        
+        block_offset_x = block_x * self.block_pixel_sizes[layer] * self.zoom
+        block_offset_y = block_y * self.block_pixel_sizes[layer] * self.zoom
+        
+        tile_x = (x - block_offset_x) // (self.tile_pixel_sizes[layer] * self.zoom)
+        tile_y = (y - block_offset_y) // (self.tile_pixel_sizes[layer] * self.zoom)
+
+        return (block_x, block_y, tile_x, tile_y)
+
+    def validate(self, points):
+        for point in points:
+            for layer in self.collisions.keys():
+                if not self.collisions[layer]:
+                    continue
+
+                coordinates = self.page_to_block(layer, point)
+
+                # On cherche les coordonnees bloc et tile du point
+                self.base.execute("SELECT * FROM tiles WHERE block_id=(SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?) AND x=? AND y=?;",\
+                                  (self.world, layer, coordinates[0], coordinates[1], coordinates[2], coordinates[3]))
+                res = self.base.fetchall()
+                if len(res) > 0:
+                    return False
+        return True
+
     def translate(self, move: tuple):
         """
         Bouge la carte en utilisant le vecteur move, on bouge en utilisant le nombre de pixels dans move

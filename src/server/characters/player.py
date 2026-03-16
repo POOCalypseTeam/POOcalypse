@@ -40,7 +40,7 @@ BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
 
 IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 64
-MOVE_AMOUNT = 42
+MOVE_AMOUNT = 64
 MIN_X = 0
 MIN_Y = 0
 ANIMATION_UPDATE_FREQUENCY = 32
@@ -51,7 +51,8 @@ class Player:
         self.helper = helper
         self.x = position[0]
         self.y = position[1]
-        # TODO: Resize hitbox to fit character best
+        # X1, Y1, X2, Y2
+        self.hitbox = (9, 18, 24, 25)
         self.width = IMG_SIZE
         self.height = IMG_SIZE
         self.id = self.helper.add_image(IMG_STOP1, (self.x, self.y), size=(64, 64), parent="player")
@@ -123,11 +124,7 @@ class Player:
             self.s %= ANIMATION_UPDATE_FREQUENCY
             IMG_STOP = STOP[self.s // 8]
             self.helper.change_image(self.id, IMG_STOP)
-            
-        self.x += self.movement_vector[0]
-        self.y += self.movement_vector[1]   
 
-        self.render()
         return self.movement_vector
         
     def _process_move_keys(self, keys: dict) -> list:
@@ -146,7 +143,20 @@ class Player:
         if "KeyD" in keys:
             move[0] += 1
         return move
-        
+    
+    def collision_points(self, movement):
+        """
+        Crée une liste de points qu'il faut vérifier pour savoir si on est en collision avec quelque chose
+        """
+        points = []
+        X,Y = self.x + movement[0], self.y + movement[1]
+
+        points.append((X + self.hitbox[0], Y + self.hitbox[1])) # C1
+        points.append((X + self.hitbox[1], Y + self.hitbox[0])) # C9
+        points.append((X + self.hitbox[1], Y + self.hitbox[1])) # C3
+        # C7 est supposé dans la box de base, qui ne collide avec rien, donc on le check pas a nouveau
+        return points
+
     def get_position(self):
         """
         Renvoie la position du joueur (x,y) sur la page par rapport a son coin superieur gauche
@@ -161,10 +171,12 @@ class Player:
         y = int(self.y + self.height / 2)
         return (x,y)
         
-    def render(self):
+    def render(self, movement):
         """
         Actualise la position du joueur sur la page
         """
+        self.x += self.movement_vector[0]
+        self.y += self.movement_vector[1]
         self.helper.change_dimensions(self.id, (self.x, self.y))
         
     def hit(self, damage: float):

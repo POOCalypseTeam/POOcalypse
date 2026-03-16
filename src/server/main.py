@@ -130,7 +130,9 @@ class Game:
                         in_range_enemies.append(enemy)
                 if not self.player.is_dead():
                     player_movement = self.player.update(delta_time, keys, in_range_enemies)
-                    self.board.translate(player_movement)
+                    if self.board.validate(self.player.collision_points(player_movement)):
+                        self.player.render(player_movement)
+                        #self.board.translate(player_movement)
 
             self.interactable = None
             for npc in self.npc:
