@@ -155,13 +155,19 @@ class Board:
         w,h = self.update_board_size()
         self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
         for layer in self.layers.keys():
+            if self.collisions[layer]:
+                continue
             self.load(layer, (0, 0))
 
     def page_to_block(self, layer, coordinates) -> tuple:
         """
         Convertit les coordonnées de la page vers des coordonnées blocs et tiles
         """
-        x,y = coordinates[0] - self.origin[0], coordinates[1] - self.origin[1]
+        w,h = self.update_board_size()
+        
+        x,y = coordinates[0] - int(w // 2) + self.origin[0], coordinates[1] - int(h // 2) + self.origin[1]
+        
+        self.helper.ws.attributs("pointer", style={"left": str(x) + "px", "top": str(y) + "px"})
         
         block_x = (x) // (self.block_pixel_sizes[layer] * self.zoom)
         block_y = (y) // (self.block_pixel_sizes[layer] * self.zoom)
@@ -184,7 +190,7 @@ class Board:
 
                 # On cherche les coordonnees bloc et tile du point
                 self.base.execute("SELECT * FROM tiles WHERE block_id=(SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?) AND x=? AND y=?;",\
-                                  (self.world, layer, coordinates[0], coordinates[1], coordinates[2], coordinates[3]))
+                                    (self.world, layer, coordinates[0], coordinates[1], coordinates[2], coordinates[3]))
                 res = self.base.fetchall()
                 if len(res) > 0:
                     return False
@@ -241,6 +247,15 @@ class EditorBoard(Board):
         h = size[1] * 0.85
         self.board_size = (w, h)
         return self.board_size
+    
+    def load_all(self):
+        """
+        Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
+        """
+        w,h = self.update_board_size()
+        self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
+        for layer in self.layers.keys():
+            self.load(layer, (0, 0))
         
     # Methodes pour l'interaction PAGE -> BOARD
     

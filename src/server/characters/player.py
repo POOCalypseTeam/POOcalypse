@@ -1,6 +1,5 @@
-from random import randint
 from time import sleep
-from math import sqrt, atan2, sin, cos
+from math import ceil, atan2, sin, cos
 import web_helper
 
 from .weapon import Weapon
@@ -51,7 +50,7 @@ class Player:
         self.helper = helper
         self.x = position[0]
         self.y = position[1]
-        # X1, Y1, X2, Y2
+        # X1, Y1, X2, Y2 pour l'image dans sa taille originale, il faut appliquer le zoom
         self.hitbox = (9, 18, 24, 25)
         self.width = IMG_SIZE
         self.height = IMG_SIZE
@@ -76,6 +75,7 @@ class Player:
         
         self.movement_vector = [0, 0]
         self.friction_coef = 0.8
+        self.collision_points = []
     
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
         if 'KeyR' in keys:
@@ -94,6 +94,7 @@ class Player:
         self.movement_vector[1] *= coef
         movement_direction = self._process_move_keys(keys)
         if movement_direction != [0, 0]:
+            self.calc_collision_points(movement_direction)
             angle = atan2(movement_direction[1], movement_direction[0])
             movement = (cos(angle) * MOVE_AMOUNT * delta_time, sin(angle) * MOVE_AMOUNT * delta_time)
             self.movement_vector[0] += movement[0]
@@ -144,18 +145,27 @@ class Player:
             move[0] += 1
         return move
     
-    def collision_points(self, movement):
+    def calc_collision_points(self, movement_direction):
         """
-        Crée une liste de points qu'il faut vérifier pour savoir si on est en collision avec quelque chose
+        Calcule les point de la hitbox qui sont dirigés vers la position voulue du joueur
+        
+        TODO: Pour résoudre les problèmes, il faut penser que la quantité de mouvement n'est pas toujours la même, la on regarde juste si on est dans une collision actuellement (WTF)
+        
+        Il faut regarder pour le ou les cions de la hitbox pour la position qui sera, donc il faut connaitre la quantité de mouvement, pas juste la direction
         """
-        points = []
-        X,Y = self.x + movement[0], self.y + movement[1]
-
-        points.append((X + self.hitbox[0], Y + self.hitbox[1])) # C1
-        points.append((X + self.hitbox[1], Y + self.hitbox[0])) # C9
-        points.append((X + self.hitbox[1], Y + self.hitbox[1])) # C3
-        # C7 est supposé dans la box de base, qui ne collide avec rien, donc on le check pas a nouveau
-        return points
+        if movement_direction[0] == 0:
+            Y = ceil(self.y) + (self.hitbox[1] if movement_direction[1] < 0 else self.hitbox[3]) * 2
+            self.collisions_points = [(ceil(self.x) + self.hitbox[0] * 2, Y), (ceil(self.x) + self.hitbox[2], Y)]
+        elif movement_direction[1] == 0:
+            X = ceil(self.x) + (self.hitbox[0] if movement_direction[0] < 0 else self.hitbox[2]) * 2
+            self.collisions_points = [(X, ceil(self.y) + self.hitbox[1] * 2), (X, ceil(self.y) + self.hitbox[3] * 2)]
+        else:
+            X = self.hitbox[0] if movement_direction[0] < 0 else self.hitbox[2]
+            Y = self.hitbox[1] if movement_direction[1] < 0 else self.hitbox[3]
+            self.collision_points = [(ceil(self.x) + X * 2, ceil(self.y) + Y * 2)]
+        
+    def get_collision_points(self):
+        return self.collision_points
 
     def get_position(self):
         """

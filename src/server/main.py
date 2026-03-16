@@ -66,7 +66,7 @@ class Game:
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
         self.enemies: list[Enemy] = []
         base_enemy = Enemy(self.web_helper, (600, 300), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
-        self.enemies.append(base_enemy)
+        #self.enemies.append(base_enemy)
 
         # TODO: Passer dans player ?
         self.interactable: Interactable = None
@@ -130,7 +130,7 @@ class Game:
                         in_range_enemies.append(enemy)
                 if not self.player.is_dead():
                     player_movement = self.player.update(delta_time, keys, in_range_enemies)
-                    if self.board.validate(self.player.collision_points(player_movement)):
+                    if player_movement != [0, 0] and self.board.validate(self.player.get_collision_points()):
                         self.player.render(player_movement)
                         #self.board.translate(player_movement)
 
