@@ -31,10 +31,11 @@ La base de donnée se situe, par rapport à la racine du projet: `/src/content/d
 Pour la modifier, il faut taper dans un terminal: `sqlite3 worlds.db`<br>
 Ensuite, il faut ajouter un monde avec la commande: `INSERT INTO worlds VALUES (%NOM_DU_MONDE%);` et remplacer `%NOM_DU_MONDE%`.
 
-## Ajoute de couches
+## Ajout de couches
 
 Si le monde vient d'être créé il n'a surement aucune couche, pour se faire il est possible de passer par sqlite3 ou par l'interface, il suffit de sélectionner les options souhaitées et cliquer sur le bouton **Ajouter**.
 Si vous ne voyez pas la couche s'afficher dans la liste, c'est probablement qu'une autre couche est au même niveau, ce qui n'est pas permis.
+Pour ajouter des collisions, il faut ajouter des couches spéciales, qui ne s'affichent que dans l'éditeur et non en jeu (comme les Barrier Block dans Minecraft)
 
 ## Suppression d'une couche
 
