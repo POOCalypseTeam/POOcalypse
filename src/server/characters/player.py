@@ -99,6 +99,8 @@ class Player:
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
         if 'KeyR' in keys:
             self.attack(enemies)
+        if 'KeyH' in keys:
+            self.heal()
         return self.update_movement(delta_time, keys)
     
     def update_movement(self, delta_time: float, keys: list) -> tuple[float, float]:
@@ -200,6 +202,10 @@ class Player:
             # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement
         return self.dead
     
+    def heal(self):
+        self.health += 1
+        self.helper.ws.remove_class("heart"+str(self.health), "hit")
+
     def attack(self, enemies: list[Enemy]):
         self.weapon.attack(enemies)
         
