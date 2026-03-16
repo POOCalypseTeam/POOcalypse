@@ -40,7 +40,7 @@ BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
 
 IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 64
-MOVE_AMOUNT = 50
+MOVE_AMOUNT = 42
 MIN_X = 0
 MIN_Y = 0
 ANIMATION_UPDATE_FREQUENCY = 32
@@ -74,27 +74,7 @@ class Player:
         self.weapon = Weapon(10, 40, 0.3)
         
         self.movement_vector = [0, 0]
-        # Changés par le sol / environnement
-        self.max_movement = 2
         self.friction_coef = 0.8
-
-    def move_range(self, movement: tuple):
-        """
-        Cette fonction ajoute a self.movement_vector le vecteur movement, passe en parametre
-        
-        Elle ajuste cette somme pour ne pas exceder le mouvement maximum
-        """
-        # On calcule la distance qui serait parcourue
-        self.movement_vector[0] += movement[0]
-        self.movement_vector[1] += movement[1]
-        distance = sqrt(self.movement_vector[0] ** 2 + self.movement_vector[1] ** 2)
-        if distance <= self.max_movement:
-            return
-        # On calcule l'angle de deplacement
-        a = atan2(self.movement_vector[1], self.movement_vector[0])
-        # On calcule les nouveaux x et y
-        self.movement_vector[0] = cos(a)
-        self.movement_vector[1] = sin(a)
     
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
         if 'KeyR' in keys:
@@ -111,25 +91,29 @@ class Player:
         coef = delta_time * self.friction_coef
         self.movement_vector[0] *= coef
         self.movement_vector[1] *= coef
-        movement = self._process_move_keys(keys)
-        if movement != [0, 0]:
-            self.move_range(movement)        
-            if movement[0] > 0:
-                self.r += 1
-                self.r %= ANIMATION_UPDATE_FREQUENCY
-                IMG_RIGHT = RIGHT[self.r // 8]
-                self.helper.change_image(self.id, IMG_RIGHT)
-            elif movement[0] < 0:
-                self.l += 1
-                self.l %= ANIMATION_UPDATE_FREQUENCY
-                IMG_LEFT = LEFT[self.l // 8]
-                self.helper.change_image(self.id, IMG_LEFT)
+        movement_direction = self._process_move_keys(keys)
+        if movement_direction != [0, 0]:
+            angle = atan2(movement_direction[1], movement_direction[0])
+            movement = (cos(angle) * MOVE_AMOUNT * delta_time, sin(angle) * MOVE_AMOUNT * delta_time)
+            self.movement_vector[0] += movement[0]
+            self.movement_vector[1] += movement[1] 
+            if abs(movement[0]) > abs(movement[1]):
+                if movement[0] > 0:
+                    self.r += 1
+                    self.r %= ANIMATION_UPDATE_FREQUENCY
+                    IMG_RIGHT = RIGHT[self.r // 8]
+                    self.helper.change_image(self.id, IMG_RIGHT)
+                elif movement[0] < 0:
+                    self.l += 1
+                    self.l %= ANIMATION_UPDATE_FREQUENCY
+                    IMG_LEFT = LEFT[self.l // 8]
+                    self.helper.change_image(self.id, IMG_LEFT)
             elif movement[1] > 0 :
                 self.b += 1
                 self.b %= ANIMATION_UPDATE_FREQUENCY
                 IMG_BOTTOM = BOTTOM[self.b // 8]
                 self.helper.change_image(self.id, IMG_BOTTOM)
-            elif movement[1] < 0:
+            else:
                 self.t += 1
                 self.t %= ANIMATION_UPDATE_FREQUENCY
                 IMG_TOP = TOP[self.t // 8]
@@ -154,13 +138,13 @@ class Player:
         """
         move = [0, 0]
         if "KeyW" in keys:
-            move[1] -= MOVE_AMOUNT
+            move[1] -= 1
         if "KeyA" in keys:
-            move[0] -= MOVE_AMOUNT
+            move[0] -= 1
         if "KeyS" in keys:
-            move[1] += MOVE_AMOUNT
+            move[1] += 1
         if "KeyD" in keys:
-            move[0] += MOVE_AMOUNT
+            move[0] += 1
         return move
         
     def get_position(self):
