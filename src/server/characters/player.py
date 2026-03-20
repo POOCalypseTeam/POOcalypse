@@ -1,5 +1,5 @@
 from time import sleep
-from math import ceil, atan2, sin, cos
+from math import pi, atan2, sin, cos
 import web_helper
 
 from .weapon import Weapon
@@ -39,7 +39,7 @@ BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
 
 IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 64
-MOVE_AMOUNT = 64
+MOVE_AMOUNT = 32
 MIN_X = 0
 MIN_Y = 0
 ANIMATION_UPDATE_FREQUENCY = 32
@@ -94,11 +94,11 @@ class Player:
         self.movement_vector[1] *= coef
         movement_direction = self._process_move_keys(keys)
         if movement_direction != [0, 0]:
-            self.calc_collision_points(movement_direction)
             angle = atan2(movement_direction[1], movement_direction[0])
-            movement = (cos(angle) * MOVE_AMOUNT * delta_time, sin(angle) * MOVE_AMOUNT * delta_time)
+            movement = (cos(angle) * MOVE_AMOUNT * delta_time * 2, sin(angle) * MOVE_AMOUNT * delta_time * 2)
             self.movement_vector[0] += movement[0]
             self.movement_vector[1] += movement[1] 
+            self.calc_collision_points(self.movement_vector)
             if abs(movement[0]) > abs(movement[1]):
                 if movement[0] > 0:
                     self.r += 1
@@ -145,7 +145,7 @@ class Player:
             move[0] += 1
         return move
     
-    def calc_collision_points(self, movement_direction):
+    def calc_collision_points(self, movement):
         """
         Calcule les point de la hitbox qui sont dirigés vers la position voulue du joueur
         
@@ -153,7 +153,7 @@ class Player:
         
         Il faut regarder pour le ou les cions de la hitbox pour la position qui sera, donc il faut connaitre la quantité de mouvement, pas juste la direction
         """
-        if movement_direction[0] == 0:
+        """if movement_direction[0] == 0:
             Y = ceil(self.y) + (self.hitbox[1] if movement_direction[1] < 0 else self.hitbox[3]) * 2
             self.collisions_points = [(ceil(self.x) + self.hitbox[0] * 2, Y), (ceil(self.x) + self.hitbox[2], Y)]
         elif movement_direction[1] == 0:
@@ -162,7 +162,65 @@ class Player:
         else:
             X = self.hitbox[0] if movement_direction[0] < 0 else self.hitbox[2]
             Y = self.hitbox[1] if movement_direction[1] < 0 else self.hitbox[3]
-            self.collision_points = [(ceil(self.x) + X * 2, ceil(self.y) + Y * 2)]
+            self.collision_points = [(ceil(self.x) + X * 2, ceil(self.y) + Y * 2)]"""
+        angle = atan2(movement[1], movement[0])
+        step = pi / 4
+        steps = 0
+        while angle > 0.001:
+            angle -= step
+            steps += 1
+        match (steps):
+            case 0: # 0
+                x = self.x + self.hitbox[2] * 2 + movement[0]
+                p1 = (x, self.y + self.hitbox[1] * 2 + movement[1])
+                p2 = (x, self.y + self.hitbox[3] * 2 + movement[1])
+                self.collision_points = [p1, p2]
+            case 1: # pi/4
+                x = self.x + self.hitbox[2] * 2 + movement[0]
+                y = self.y + self.hitbox[1] * 2 + movement[1]
+                p1 = (self.x + self.hitbox[0] * 2 + movement[0], y)
+                p2 = (x, y)
+                p3 = (x, self.y + self.hitbox[3] * 2 + movement[1])
+                self.collision_points = [p1, p2, p3]
+            case 2: # pi/2
+                y = self.y + self.hitbox[1] * 2 + movement[1]
+                p1 = (self.x + self.hitbox[0] * 2 + movement[0], y)
+                p2 = (self.x + self.hitbox[2] * 2 + movement[0], y)
+                self.collision_points = [p1, p2]
+            case 3: # 3pi/4
+                x = self.x + self.hitbox[0] * 2 + movement[0]
+                y = self.y + self.hitbox[1] * 2 + movement[1]
+                p1 = (self.x + self.hitbox[2] * 2 + movement[0], y)
+                p2 = (x, y)
+                p3 = (x, self.y + self.hitbox[3] * 2 + movement[1])
+                self.collision_points = [p1, p2, p3]
+            case 4: # pi
+                x = self.x + self.hitbox[0] * 2 + movement[0]
+                p1 = (x, self.y + self.hitbox[1] * 2 + movement[1])
+                p2 = (x, self.y + self.hitbox[3] * 2 + movement[1])
+                self.collision_points = [p1, p2]
+            case 5: # 5pi/4
+                x = self.x + self.hitbox[0] * 2 + movement[0]
+                y = self.y + self.hitbox[3] * 2 + movement[1]
+                p1 = (self.x + self.hitbox[2] * 2 + movement[0], y)
+                p2 = (x, y)
+                p3 = (x, self.y + self.hitbox[1] * 2 + movement[1])
+                self.collision_points = [p1, p2, p3]
+            case 6: # 3pi/2
+                y = self.y + self.hitbox[3] * 2 + movement[1]
+                p1 = (self.x + self.hitbox[0] * 2 + movement[0], y)
+                p2 = (self.x + self.hitbox[2] * 2 + movement[0], y)
+                self.collision_points = [p1, p2]
+            case 7: #7pi/4
+                x = self.x + self.hitbox[2] * 2 + movement[0]
+                y = self.y + self.hitbox[3] * 2 + movement[1]
+                p1 = (self.x + self.hitbox[0] * 2 + movement[0], y)
+                p2 = (x, y)
+                p3 = (x, self.y + self.hitbox[1] * 2 + movement[1])
+                self.collision_points = [p1, p2, p3]
+            case _:
+                raise ValueError("L'angle ne correspond a rien du tout...")
+
         
     def get_collision_points(self):
         return self.collision_points
