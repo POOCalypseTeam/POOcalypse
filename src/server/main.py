@@ -51,7 +51,7 @@ class Game:
 
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         self.player = Player(self.web_helper, (50, 50))
-        self.web_manager.attributs(self.player.id, style={"z-index": 10})
+        self.web_manager.attributs(self.player.id, style={"z-index": 3})
 
         self.board = graphics.board.Board(self.web_helper, "spawn")
 
@@ -131,7 +131,7 @@ class Game:
                 if not self.player.is_dead():
                     player_movement = self.player.update(delta_time, keys, in_range_enemies)
                     if player_movement != [0, 0] and self.board.validate(self.player.get_collision_points()):
-                        self.player.render(player_movement)
+                        self.player.render()
                         #self.board.translate(player_movement)
 
             self.interactable = None

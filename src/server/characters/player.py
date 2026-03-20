@@ -148,10 +148,6 @@ class Player:
     def calc_collision_points(self, movement):
         """
         Calcule les point de la hitbox qui sont dirigés vers la position voulue du joueur
-        
-        TODO: Pour résoudre les problèmes, il faut penser que la quantité de mouvement n'est pas toujours la même, la on regarde juste si on est dans une collision actuellement (WTF)
-        
-        Il faut regarder pour le ou les cions de la hitbox pour la position qui sera, donc il faut connaitre la quantité de mouvement, pas juste la direction
         """
         """if movement_direction[0] == 0:
             Y = ceil(self.y) + (self.hitbox[1] if movement_direction[1] < 0 else self.hitbox[3]) * 2
@@ -239,9 +235,9 @@ class Player:
         y = int(self.y + self.height / 2)
         return (x,y)
         
-    def render(self, movement):
+    def render(self):
         """
-        Actualise la position du joueur sur la page
+        Actualise la position du joueur sur la page avec le mouvement stocké dans self.movement_vector
         """
         self.x += self.movement_vector[0]
         self.y += self.movement_vector[1]
