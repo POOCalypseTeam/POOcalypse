@@ -71,3 +71,19 @@ img {
 .credits {
     display: none;
 }
+
+.vie {
+    position: absolute;
+    top: 0;
+}
+
+.vie img {
+        width: 60px;
+        /*filter: grayscale(0.8);*/
+        z-index: 20;
+        position: relative;
+}
+
+.hit {
+    filter: grayscale(0.8);
+}

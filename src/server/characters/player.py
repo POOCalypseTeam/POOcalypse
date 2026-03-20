@@ -1,5 +1,5 @@
 from random import randint
-from time import sleep
+from time import sleep, time
 from math import sqrt, atan2, sin, cos
 import web_helper
 
@@ -69,6 +69,7 @@ class Player:
         
         self.health = 5
         self.max_health = 5
+        self.last_heal = time()
         self.dead = False
 
         self.weapon = Weapon(10, 40, 0.3)
@@ -99,6 +100,8 @@ class Player:
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
         if 'KeyR' in keys:
             self.attack(enemies)
+        if 'KeyH' in keys:
+            self.heal(1)
         return self.update_movement(delta_time, keys)
     
     def update_movement(self, delta_time: float, keys: list) -> tuple[float, float]:
@@ -193,11 +196,19 @@ class Player:
         Renvoie True si le joueur est mort, False sinon
         """
         self.health = max(0, self.health - damage)
+        for i in range(5-self.health):
+            self.helper.ws.add_class("heart"+str(5-i), "hit")
         if self.health == 0:
             self.dead = True
             # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement
         return self.dead
     
+    def heal(self, cooldown: float):
+        if time() - self.last_heal >= cooldown:
+            self.health = min(self.health+1, self.max_health)
+            self.helper.ws.remove_class("heart"+str(self.health), "hit")
+            self.last_heal = time()
+
     def attack(self, enemies: list[Enemy]):
         self.weapon.attack(enemies)
         
