@@ -174,3 +174,8 @@ class Player:
         """
         return self.dead
     
+    def ressuciteaaaa(self):
+        self.helper.change_image(self.id, ANIM_STOP)
+        self.health = 5
+        self.max_health = 5
+        self.dead = False

@@ -131,6 +131,11 @@ class Game:
                 if not self.player.is_dead():
                     player_movement = self.player.update(delta_time, keys, in_range_enemies)
                     self.board.translate(player_movement)
+                else:
+                    if 'KeyP' in keys:
+                        self.player = Player(self.web_helper, (50, 50))
+                        self.web_manager.attributs(self.player.id, style={"z-index": 10})
+                        
 
             self.interactable = None
             for npc in self.npc:
