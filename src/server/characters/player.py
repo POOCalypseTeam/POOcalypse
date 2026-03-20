@@ -41,6 +41,7 @@ class Player:
         self.t = 0
         self.s = 0
         self.att = False
+        self.delta_sum = 0
         
         self.health = 5
         self.max_health = 5
@@ -75,6 +76,11 @@ class Player:
         if 'KeyR' in keys:
             self.attack(enemies)
             self.att = True
+        if self.delta_sum < ANIM_ATTACK_DURATION:
+            self.delta_sum += delta_time
+        else:
+            self.att = False
+            self.delta_sum = 0
         return self.update_movement(delta_time, keys)
     
     def update_movement(self, delta_time: float, keys: list) -> tuple[float, float]:
@@ -88,45 +94,19 @@ class Player:
         self.movement_vector[0] *= coef
         self.movement_vector[1] *= coef
         movement = self._process_move_keys(keys)
-        delta_sum = 0
         if movement != [0, 0]:
             self.move_range(movement)        
             if movement[0] > 0:
                 self.helper.change_image(self.id, ANIM_ATTACK_RIGHT if self.att else ANIM_RIGHT)
-                delta_sum = delta_time
-                while delta_sum < ANIM_ATTACK_DURATION:
-                    delta_sum += delta_time
-                self.att = False
-                delta_sum = 0
             elif movement[0] < 0:
                 self.helper.change_image(self.id, ANIM_ATTACK_LEFT if self.att else ANIM_LEFT)
-                delta_sum = delta_time
-                while delta_sum < ANIM_ATTACK_DURATION:
-                    delta_sum += delta_time
-                self.att = False
-                delta_sum = 0
             elif movement[1] > 0 :
                 self.helper.change_image(self.id, ANIM_ATTACK_BOTTOM if self.att else ANIM_BOTTOM)
-                delta_sum = delta_time
-                while delta_sum < ANIM_ATTACK_DURATION:
-                    delta_sum += delta_time
-                self.att = False
-                delta_sum = 0
             elif movement[1] < 0:
                 self.helper.change_image(self.id, ANIM_ATTACK_TOP if self.att else ANIM_TOP)
-                delta_sum = delta_time
-                while delta_sum < ANIM_ATTACK_DURATION:
-                    delta_sum += delta_time
-                self.att = False
-                delta_sum = 0
         else:
             self.helper.change_image(self.id, ANIM_ATTACK_BOTTOM if self.att else ANIM_STOP)
-            delta_sum = delta_time
-            while delta_sum < ANIM_ATTACK_DURATION:
-                delta_sum += delta_time
-            self.att = False
-            delta_sum = 0
-            
+
         self.x += self.movement_vector[0]
         self.y += self.movement_vector[1]   
 
