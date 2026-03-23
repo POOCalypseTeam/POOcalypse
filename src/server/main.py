@@ -51,7 +51,7 @@ class Game:
 
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         self.player = Player(self.web_helper, (50, 50))
-        self.web_manager.attributs(self.player.id, style={"z-index": 3})
+        self.web_manager.attributs(self.player.id, style={"z-index": 7})
 
         self.board = graphics.board.Board(self.web_helper, "spawn")
 

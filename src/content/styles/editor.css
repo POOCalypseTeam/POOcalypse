@@ -43,6 +43,10 @@ div > * {
     position: absolute;
 }
 
+#tiles > * {
+    position: absolute;
+}
+
 #tools {
     position: absolute;
     padding: 0;
