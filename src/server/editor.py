@@ -131,7 +131,7 @@ class Editor:
         if self.loop_thread.is_alive():
             self.loop_thread.join()
         self.web_manager.stop()
-        if self.board.link != None:
+        if self.board != None and self.board.link != None:
             self.board.link.commit()
             self.board.link.close()
         

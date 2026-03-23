@@ -51,7 +51,7 @@ class Player:
         self.x = position[0]
         self.y = position[1]
         # X1, Y1, X2, Y2 pour l'image dans sa taille originale, il faut appliquer le zoom
-        self.hitbox = (9, 27, 22, 32)
+        self.hitbox = (9, 26, 22, 32)
         self.width = IMG_SIZE
         self.height = IMG_SIZE
         self.id = self.helper.add_image(IMG_STOP1, (self.x, self.y), size=(64, 64), parent="player")
