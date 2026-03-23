@@ -140,8 +140,8 @@ class Game:
                     self.interactable = npc
                     self.web_manager.inner_text("action-bar", "Appuyez sur E pour interagir")
 
-            if self.interactable == None:
-                self.web_manager.inner_text("action-bar", "")
+            #if self.interactable == None:
+            #    self.web_manager.inner_text("action-bar", "")
 
     def stop(self):
         """

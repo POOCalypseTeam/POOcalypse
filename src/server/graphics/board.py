@@ -155,8 +155,8 @@ class Board:
         w,h = self.update_board_size()
         self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
         for layer in self.layers.keys():
-            if self.collisions[layer]:
-                continue
+            #if self.collisions[layer]:
+            #    continue
             self.load(layer, (0, 0))
 
     def page_to_block(self, layer, coordinates) -> tuple:

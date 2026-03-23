@@ -159,63 +159,69 @@ class Player:
             X = self.hitbox[0] if movement_direction[0] < 0 else self.hitbox[2]
             Y = self.hitbox[1] if movement_direction[1] < 0 else self.hitbox[3]
             self.collision_points = [(ceil(self.x) + X * 2, ceil(self.y) + Y * 2)]"""
-        angle = atan2(movement[1], movement[0])
+        X = round(movement[0], 2)
+        Y = round(movement[1], 2)
+        angle = atan2(Y, -X) + pi
         step = pi / 4
         steps = 0
+        self.helper.change_text("action-bar", str(angle))
         while angle > 0.001:
             angle -= step
             steps += 1
         match (steps):
-            case 0: # 0
-                x = self.x + self.hitbox[2] * 2 + movement[0]
-                p1 = (x, self.y + self.hitbox[1] * 2 + movement[1])
-                p2 = (x, self.y + self.hitbox[3] * 2 + movement[1])
+            case 0 | 8: # 0
+                x = self.x + self.hitbox[2] * 2 + X
+                p1 = (x, self.y + self.hitbox[1] * 2 + Y)
+                p2 = (x, self.y + self.hitbox[3] * 2 + Y)
                 self.collision_points = [p1, p2]
             case 1: # pi/4
-                x = self.x + self.hitbox[2] * 2 + movement[0]
-                y = self.y + self.hitbox[1] * 2 + movement[1]
-                p1 = (self.x + self.hitbox[0] * 2 + movement[0], y)
+                x = self.x + self.hitbox[2] * 2 + X
+                y = self.y + self.hitbox[1] * 2 + Y
+                p1 = (self.x + self.hitbox[0] * 2 + X, y)
                 p2 = (x, y)
-                p3 = (x, self.y + self.hitbox[3] * 2 + movement[1])
+                p3 = (x, self.y + self.hitbox[3] * 2 + Y)
                 self.collision_points = [p1, p2, p3]
             case 2: # pi/2
-                y = self.y + self.hitbox[1] * 2 + movement[1]
-                p1 = (self.x + self.hitbox[0] * 2 + movement[0], y)
-                p2 = (self.x + self.hitbox[2] * 2 + movement[0], y)
+                y = self.y + self.hitbox[1] * 2 + Y
+                p1 = (self.x + self.hitbox[0] * 2 + X, y)
+                p2 = (self.x + self.hitbox[2] * 2 + X, y)
                 self.collision_points = [p1, p2]
             case 3: # 3pi/4
-                x = self.x + self.hitbox[0] * 2 + movement[0]
-                y = self.y + self.hitbox[1] * 2 + movement[1]
-                p1 = (self.x + self.hitbox[2] * 2 + movement[0], y)
+                x = self.x + self.hitbox[0] * 2 + X
+                y = self.y + self.hitbox[1] * 2 + Y
+                p1 = (self.x + self.hitbox[2] * 2 + X, y)
                 p2 = (x, y)
-                p3 = (x, self.y + self.hitbox[3] * 2 + movement[1])
+                p3 = (x, self.y + self.hitbox[3] * 2 + Y)
                 self.collision_points = [p1, p2, p3]
             case 4: # pi
-                x = self.x + self.hitbox[0] * 2 + movement[0]
-                p1 = (x, self.y + self.hitbox[1] * 2 + movement[1])
-                p2 = (x, self.y + self.hitbox[3] * 2 + movement[1])
+                x = self.x + self.hitbox[0] * 2 + X
+                p1 = (x, self.y + self.hitbox[1] * 2 + Y)
+                p2 = (x, self.y + self.hitbox[3] * 2 + Y)
                 self.collision_points = [p1, p2]
             case 5: # 5pi/4
-                x = self.x + self.hitbox[0] * 2 + movement[0]
-                y = self.y + self.hitbox[3] * 2 + movement[1]
-                p1 = (self.x + self.hitbox[2] * 2 + movement[0], y)
+                x = self.x + self.hitbox[0] * 2 + X
+                y = self.y + self.hitbox[3] * 2 + Y
+                p1 = (self.x + self.hitbox[2] * 2 + X, y)
                 p2 = (x, y)
-                p3 = (x, self.y + self.hitbox[1] * 2 + movement[1])
+                p3 = (x, self.y + self.hitbox[1] * 2 + Y)
                 self.collision_points = [p1, p2, p3]
             case 6: # 3pi/2
-                y = self.y + self.hitbox[3] * 2 + movement[1]
-                p1 = (self.x + self.hitbox[0] * 2 + movement[0], y)
-                p2 = (self.x + self.hitbox[2] * 2 + movement[0], y)
+                y = self.y + self.hitbox[3] * 2 + Y
+                p1 = (self.x + self.hitbox[0] * 2 + X, y)
+                p2 = (self.x + self.hitbox[2] * 2 + X, y)
                 self.collision_points = [p1, p2]
             case 7: #7pi/4
-                x = self.x + self.hitbox[2] * 2 + movement[0]
-                y = self.y + self.hitbox[3] * 2 + movement[1]
-                p1 = (self.x + self.hitbox[0] * 2 + movement[0], y)
+                x = self.x + self.hitbox[2] * 2 + X
+                y = self.y + self.hitbox[3] * 2 + Y
+                p1 = (self.x + self.hitbox[0] * 2 + X, y)
                 p2 = (x, y)
-                p3 = (x, self.y + self.hitbox[1] * 2 + movement[1])
+                p3 = (x, self.y + self.hitbox[1] * 2 + Y)
                 self.collision_points = [p1, p2, p3]
             case _:
                 raise ValueError("L'angle ne correspond a rien du tout...")
+        for i in range(len(self.collision_points)):
+            point = self.collision_points[i]
+            self.helper.ws.attributs("point" + str(i), style={"left": str(point[0]) + "px", "top": str(point[1]) + "px"})
 
         
     def get_collision_points(self):
