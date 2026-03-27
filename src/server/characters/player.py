@@ -23,6 +23,7 @@ MOVE_AMOUNT = 50
 MIN_X = 0
 MIN_Y = 0
 ANIM_ATTACK_DURATION = 0.550
+ANIM_DEATH_DURATION = 0.650
 
 
 # Contient le joueur
@@ -35,12 +36,8 @@ class Player:
         self.width = IMG_SIZE
         self.height = IMG_SIZE
         self.id = self.helper.add_image(ANIM_STOP, (self.x, self.y), size=(64, 64), parent="player")
-        self.r = 0
-        self.l = 0
-        self.b = 0
-        self.t = 0
-        self.s = 0
         self.att = False
+        self.rip = False
         self.delta_sum = 0
         
         self.health = 5
@@ -81,7 +78,15 @@ class Player:
         else:
             self.att = False
             self.delta_sum = 0
-        return self.update_movement(delta_time, keys)
+        if self.health == 0:
+            self.rip = True
+            if self.delta_sum < ANIM_DEATH_DURATION:
+                self.delta_sum += delta_time
+            else:
+                self.rip = False
+                self.delta_sum = 0
+            self.health = -1
+        return self.update_movement(delta_time, keys) 
     
     def update_movement(self, delta_time: float, keys: list) -> tuple[float, float]:
         """
@@ -162,7 +167,9 @@ class Player:
         self.health = max(0, self.health - damage)
         if self.health == 0:
             self.dead = True
-            self.helper.change_image(self.id, ANIM_DEATH)
+            if self.rip:
+                self.helper.change_image(self.id, ANIM_DEATH)
+                print("Coucou")
         return self.dead
     
     def attack(self, enemies: list[Enemy]):
@@ -173,9 +180,3 @@ class Player:
         Renvoie True si le joueur est mort, False sinon
         """
         return self.dead
-    
-    def ressuciteaaaa(self):
-        self.helper.change_image(self.id, ANIM_STOP)
-        self.health = 5
-        self.max_health = 5
-        self.dead = False

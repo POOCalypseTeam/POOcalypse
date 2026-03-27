@@ -65,7 +65,7 @@ class Game:
 
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
         self.enemies: list[Enemy] = []
-        base_enemy = Enemy(self.web_helper, (600, 300), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
+        base_enemy = Enemy(self.web_helper, (300, 150), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
         self.enemies.append(base_enemy)
 
         # TODO: Passer dans player ?
@@ -133,6 +133,7 @@ class Game:
                     self.board.translate(player_movement)
                 else:
                     if 'KeyP' in keys:
+                        self.web_manager.remove_children("player")
                         self.player = Player(self.web_helper, (50, 50))
                         self.web_manager.attributs(self.player.id, style={"z-index": 10})
                         
