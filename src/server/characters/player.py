@@ -78,14 +78,16 @@ class Player:
         else:
             self.att = False
             self.delta_sum = 0
-        if self.health == 0:
-            self.rip = True
+        if self.rip:
+            print('coucou')
             if self.delta_sum < ANIM_DEATH_DURATION:
                 self.delta_sum += delta_time
+                print('Anim pas encore finie')
             else:
                 self.rip = False
                 self.delta_sum = 0
-            self.health = -1
+                print('Anim finie !')
+
         return self.update_movement(delta_time, keys) 
     
     def update_movement(self, delta_time: float, keys: list) -> tuple[float, float]:
@@ -167,9 +169,9 @@ class Player:
         self.health = max(0, self.health - damage)
         if self.health == 0:
             self.dead = True
-            if self.rip:
+            self.rip = True
+            while self.rip:
                 self.helper.change_image(self.id, ANIM_DEATH)
-                print("Coucou")
         return self.dead
     
     def attack(self, enemies: list[Enemy]):
@@ -180,3 +182,5 @@ class Player:
         Renvoie True si le joueur est mort, False sinon
         """
         return self.dead
+
+        
