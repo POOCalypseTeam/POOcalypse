@@ -97,7 +97,7 @@ class Editor:
 
         while self.do_loop:
             delta_time = time.time() - last_loop_time - 0.01
-            delta_save_time += delta_time
+            delta_save_time += delta_time + 0.01
             if delta_time < 0:
                 time.sleep(-delta_time / 4)
                 continue
