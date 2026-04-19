@@ -83,6 +83,10 @@ class Game:
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()
 
+        self.menu_cooldown = 0.5
+        self.last_menu_time = time.time()
+        self.menu = False
+
     def interact_key_handler(self, key):
         if self.interactable == None or not issubclass(type(self.interactable), Interactable):
             return
@@ -120,13 +124,20 @@ class Game:
 
             keys = self.keyboard_manager.get_keys()
 
+            if "KeyI" in keys and time.time() - self.last_menu_time >= self.menu_cooldown:
+                self.menu = not self.menu
+                self.last_menu_time = time.time()
+                if self.menu == True :
+                    self.web_manager.attributs("menu",{}, style={"visibility": "visible"})
+                else:
+                    self.web_manager.attributs("menu",{}, style={"visibility": "hidden"})
             # On actualise la liste des ennemis en supprimant ceux qui sont morts
             for enemy in self.enemies:
                 if enemy.is_dead():
                     self.enemies.remove(enemy)
 
             # Toutes les instructions ici sont mises en pauses lorsqu'un menu est ouvert par le joueur
-            if self.interactable is None or not self.interactable.is_opened():
+            if (self.interactable is None or not self.interactable.is_opened()) and self.menu == False :
                 in_range_enemies = []
                 player_range = self.player.weapon.range
                 for enemy in self.enemies:

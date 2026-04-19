@@ -4,17 +4,14 @@
         <link rel="stylesheet" href="../styles/menu-style.css" id="menu">
         <link rel="stylesheet" href="../styles/style.css" id="game" disabled>
         <link rel="stylesheet" href="../styles/credits-style.css" id="credits" disabled>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>POOcalypse</title>
     </head>
-    <body>
+    <body ondragstart="return false;" ondrop="return false;">
         <audio autoplay loop muted id="music">
             <source src="../assets/music/musique-menu(1).mp3" type="audio/mpeg">
         </audio>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="../styles/style.css">
-    </head>
-    <body ondragstart="return false;" ondrop="return false;">
         <div id="player">
             <img src="../assets/spritesheets/blonde_man/blonde_man_001.png" alt="player" id="img0">
         </div>
@@ -50,6 +47,48 @@
             </p>
             <button onclick="start_menu();">Menu</button>
         </div>
+        <div id="menu">
+  <div id="div1">
+    <div id="div5">
+      <div id="case-menu">
+      </div>
+    </div>
+    <div id="div6">
+      <div id="div7" class="case-first">
+      </div>
+      <div id="div8" class="case-first">
+      </div>
+      <div id="div9" class="case-first">
+      </div>
+      <div id="div10" class="case-first">
+      </div>
+    </div>
+  </div>
+  <div id="div2" class="ligne">
+    <div id="div11" class="case">
+    </div>
+    <div id="div12" class="case">
+    </div>
+    <div id="div13" class="case">
+    </div>
+    <div id="div14" class="case">
+    </div>
+    <div id="div15" class="case">
+    </div>
+  </div>
+  <div id="div3" class="ligne">
+    <div id="div16" class="case">
+    </div>
+    <div id="div17" class="case">
+    </div>
+    <div id="div18" class="case">
+    </div>
+    <div id="div19" class="case">
+    </div>
+    <div id="div20" class="case">
+    </div>
+  </div>
+</div>
     <script>
         function start_game() {
             document.getElementById("menu").disabled = true;
