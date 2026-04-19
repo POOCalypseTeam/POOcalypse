@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
     <head>
-        <link rel="stylesheet" href="../styles/menu-style.css" id="menu">
+        <link rel="stylesheet" href="../styles/menu-style.css" id="linkmenu">
         <link rel="stylesheet" href="../styles/style.css" id="game" disabled>
         <link rel="stylesheet" href="../styles/credits-style.css" id="credits" disabled>
         <meta charset="UTF-8">
@@ -91,15 +91,15 @@
 </div>
     <script>
         function start_game() {
-            document.getElementById("menu").disabled = true;
+            document.getElementById("linkmenu").disabled = true;
             document.getElementById("game").disabled = false;
         }
         function start_credits() {
-            document.getElementById("menu").disabled = true;
+            document.getElementById("linkmenu").disabled = true;
             document.getElementById("credits").disabled = false;
         }
         function start_menu() {
-            document.getElementById("menu").disabled = false;
+            document.getElementById("linkmenu").disabled = false;
             document.getElementById("credits").disabled = true;
             const musique = document.getElementById("music");
             musique.muted = false;
