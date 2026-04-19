@@ -3,11 +3,8 @@ import os # listdir
 from math import ceil
 
 import web_helper
+from constants import BOARD_PATH, TILESET_PATH_PLACEHOLDER, BLOCKS_SIZE
 
-BOARD_PATH = "content/data/worlds/worlds.db"
-TILESET_PATH = "assets/tilesets/%SET%/%IMG%.png"
-
-BLOCKS_SIZE = 16
 # La taille d'une tile classique, sans zoom
 TRANSLATE_AMOUNT = 16
 
@@ -97,7 +94,7 @@ class Board:
         tiles = self.base.fetchall()
         for tile in tiles:
             img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
-            img_path = TILESET_PATH.replace("%SET%", self.layers[layer]).replace("%IMG%", tile[2])
+            img_path = TILESET_PATH_PLACEHOLDER.replace("%SET%", self.layers[layer]).replace("%IMG%", tile[2])
             position = (self.zoom * (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer]), self.zoom * (block_offset[1] + tile[1] * self.tile_pixel_sizes[layer]))
             self.helper.add_image_id(img_id, img_path, position, (self.zoom * self.tile_pixel_sizes[layer], self.zoom * self.tile_pixel_sizes[layer]), parent=block_id)
     
@@ -385,11 +382,11 @@ class EditorBoard(Board):
             # On cree une nouvelle tile
             self.base.execute("INSERT INTO tiles VALUES (?,?,?,?);", (block_id, tile_pos[0], tile_pos[1], self.tile[:-4]))
             position = (self.zoom * (tile_pos[0] * self.tile_pixel_sizes[self.layer]) + block_offsets[0], self.zoom * (tile_pos[1] * self.tile_pixel_sizes[self.layer]) + block_offsets[1])
-            path = TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])
+            path = TILESET_PATH_PLACEHOLDER.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])
             self.helper.add_image_id(img_id, path, position, (self.zoom * self.tile_pixel_sizes[self.layer], self.zoom * self.tile_pixel_sizes[self.layer]), parent=block_id)
         else:
             # On modifie la tile d'avant
-            self.helper.ws.attributs(img_id, attr={'src': "../" + TILESET_PATH.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])})
+            self.helper.ws.attributs(img_id, attr={'src': "../" + TILESET_PATH_PLACEHOLDER.replace("%SET%", self.layers[self.layer]).replace("%IMG%", self.tile[:-4])})
             self.base.execute("UPDATE tiles SET image_name = ? WHERE block_id=? AND x=? AND y=?;", (self.tile[:-4], block_id, tile_pos[0], tile_pos[1]))
     
     def adjust_selection(self):
