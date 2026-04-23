@@ -3,13 +3,14 @@ import os # listdir
 from math import ceil
 
 import web_helper
+import collision_resolver
 from constants import BOARD_PATH, TILESET_PATH_PLACEHOLDER, BLOCKS_SIZE
 
 # La taille d'une tile classique, sans zoom
 TRANSLATE_AMOUNT = 16
 
 class Board:
-    def __init__(self, helper: web_helper.Helper, world: str, zoom: int = 2):
+    def __init__(self, helper: web_helper.Helper, world: str, collision_resolver: collision_resolver.CollisionResolver, zoom: int = 2):
         """
         Parametres:
             - helper: L'instance Helper de la librairie web_helper
@@ -22,6 +23,7 @@ class Board:
         """
         self.helper = helper
         self.world = world
+        self.collision_resolver = collision_resolver
         self.zoom = zoom
         
         self.block_size = BLOCKS_SIZE
@@ -124,6 +126,50 @@ class Board:
         
         return block_id
 
+    def get_block_presence(self, block_id, x, y, size):
+        """
+        Fonction récursive, qui pour le bloc donné va jusqu'à une taille de 1 et renvoie un tuple de la forme (bool, (bool, ..., ..., ..., ...), (...), (...), (...)) selon s'il y a un bloc ou non
+        """
+        if size == 1:
+            self.base.execute("SELECT x FROM tiles WHERE block_id=? AND x=? AND y=?;", (block_id, x, y))
+            return [len(self.base.fetchall()) == 1]
+        half_size = size // 2
+        b7 = self.get_block_presence(block_id, x, y, half_size)
+        b9 = self.get_block_presence(block_id, x + half_size, y, half_size)
+        b1 = self.get_block_presence(block_id, x, y + half_size, half_size)
+        b3 = self.get_block_presence(block_id, x + half_size, y + half_size, half_size)
+        return (b1[0] or b3[0] or b7[0] or b9[0], b7, b9, b1, b3)
+
+    def get_block_lods(self, layer: int, block_x: int, block_y: int) -> tuple[bytes | list[bool]]:
+        """
+        Pour le bloc spécifié, effectue un pré-traitement pour savoir où il y a des blocs afin que la recherche de collisions soit plus rapide
+        """
+        self.base.execute("SELECT block_id FROM blocks WHERE block_x=? AND block_y=? AND world=? AND layer_index=? LIMIT 1;", (block_x, block_y, self.world, layer))
+        block = self.base.fetchone()
+        if block == None:
+            return
+        
+        self.get_block_presence(block[0], 0, 0, BLOCKS_SIZE)
+
+    def add_block_collider(self, layer: int, center_block: tuple = (0, 0)):
+        w,h = self.board_size
+        block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
+        block_w_offset = block_w // 2 + 1
+        block_h_offset = block_h // 2 + 1
+        
+        x_start = center_block[0] - block_w_offset
+        x_end = center_block[0] + block_w_offset
+        y_start = center_block[1] - block_h_offset
+        y_end = center_block[1] + block_h_offset
+        
+        bps = self.block_pixel_sizes[layer]
+        
+        for block_x in range(x_start, x_end):
+            for block_y in range(y_start, y_end):
+                position = (self.zoom * (block_x * bps), self.zoom * (block_y * bps), self.zoom * (block_x * bps + block_w), self.zoom * (block_y * bps + block_h))
+                lods = self.get_block_lods(layer, block_x, block_y)
+                if lods != None:
+                    self.collision_resolver.add_block(position, lods)
 
     def load(self, layer: int, center_block: tuple = (0, 0)):
         """
@@ -153,7 +199,8 @@ class Board:
         self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
         for layer in self.layers.keys():
             if self.collisions[layer]:
-                continue
+                # Il n'est pas nécessaire de vérifier si self.collisions est à None car c'est le cas seulement si board est EditorBoard, auquel cas load_all est surchargé
+                self.add_block_collider(layer, (0, 0))
             self.load(layer, (0, 0))
 
     def page_to_block(self, layer, coordinates) -> tuple:
@@ -214,7 +261,7 @@ class Board:
     
 class EditorBoard(Board):
     def __init__(self, helper: web_helper.Helper, world: str):
-        super().__init__(helper, world)
+        super().__init__(helper, world, None)
         layers = []
         for l in self.layers.keys():
             layers.append([l, self.layers[l], self.tile_pixel_sizes[l], self.collisions[l]])

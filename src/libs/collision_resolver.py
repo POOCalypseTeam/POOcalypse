@@ -62,25 +62,44 @@ class Collider:
         return self.tag_code & MOVABLE
 
 class Block(Collider):
-    def __init__(self, position: tuple[float, float, float, float], size: int):
-        super._init__(position, BLOCK, handler=None)
+    def __init__(self, position: tuple[float, float, float, float], lods, size: int):
+        """
+        Parametres:
+            - position: Un tuple (X1, Y1, X2, Y2) donnant la position du coin haut gauche du block
+            
+            - lods: Niveaux de détails conercant les collisions, se référer à board.py.Board.get_block_lods()
+            
+            - size: Un entier donnant la taille du block en nombre de tiles
+        """
+        super().__init__(position, BLOCK, handler=None)
         self.size = size
         # Les blocs initalisés ici ne sont pas associés à un id
         size //= 2
         center_x = position[2] / 2
         center_y = position[3] / 2
         # Coins par rapport au pavé numérique du clavier
-        # TODO: Pour chacun de ses coins, regarder s'il y a effectivement des tiles, s'il n'y en a pas, ce n'est pas nécessaire d'aller plus loin
+        self.b7 = None
+        self.b9 = None
+        self.b1 = None
+        self.b3 = None
         if size != 1:
-            self.b7 = Block((position[0], position[1], center_x, center_y), size)
-            self.b9 = Block((center_x, position[1], position[2], center_y), size)
-            self.b1 = Block((position[0], center_y, center_x, position[3]), size)
-            self.b3 = Block((center_x, center_y, position[2], position[3]), size)
+            if lods[1][0]:
+                self.b7 = Block((position[0], position[1], center_x, center_y), lods[1], size)
+            if lods[2][0]:
+                self.b9 = Block((center_x, position[1], position[2], center_y), lods[2], size)
+            if lods[3][0]:
+                self.b1 = Block((position[0], center_y, center_x, position[3]), lods[3], size)
+            if lods[4][0]:
+                self.b3 = Block((center_x, center_y, position[2], position[3]), lods[4], size)
         else:
-            self.b7 = Collider((position[0], position[1], center_x, center_y), CANT_PASS)
-            self.b9 = Collider((center_x, position[1], position[2], center_y), CANT_PASS)
-            self.b1 = Collider((position[0], center_y, center_x, position[3]), CANT_PASS)
-            self.b3 = Collider((center_x, center_y, position[2], position[3]), CANT_PASS)
+            if lods[1][0]:
+                self.b7 = Collider((position[0], position[1], center_x, center_y), CANT_PASS)
+            if lods[2][0]:
+                self.b9 = Collider((center_x, position[1], position[2], center_y), CANT_PASS)
+            if lods[3][0]:
+                self.b1 = Collider((position[0], center_y, center_x, position[3]), CANT_PASS)
+            if lods[4][0]:
+                self.b3 = Collider((center_x, center_y, position[2], position[3]), CANT_PASS)
             
     def check_for_collision(self, box: tuple[float, float, float, float]) -> bool:
         """
@@ -91,16 +110,16 @@ class Block(Collider):
         Lorsque size atteint effectivement 1, ce n'est plus un Block mais un Collider donc il n'y a plus d'appels récursifs, la méthode termine
         """
         # On regarde tout d'abord s'il y a collision avec le gros bloc
-        if super.check_for_collision(box):
+        if super().check_for_collision(box):
             # Si oui, on regarde quel petit bloc est concerné et on lui passe l'appel de fonction
-            return  self.b1.check_for_collision(box) or \
-                    self.b3.check_for_collision(box) or \
-                    self.b7.check_for_collision(box) or \
-                    self.b9.check_for_collision(box)
+            return  (self.b1 != None and self.b1.check_for_collision(box)) or \
+                    (self.b3 != None and self.b3.check_for_collision(box)) or \
+                    (self.b7 != None and self.b7.check_for_collision(box)) or \
+                    (self.b9 != None and self.b9.check_for_collision(box))
         return False
         
         
-class Collisions:
+class CollisionResolver:
     """
     Cette classe permet de répertorier toutes les collisions du jeu, avec différentes couches et différentes actions lorsqu'il y a en effet collision
     """
@@ -129,7 +148,7 @@ class Collisions:
         self.colliders.append(collider)
         return collider
     
-    def add_block(self, position: tuple[float, float, float, float]):
+    def add_block(self, position: tuple[float, float, float, float], block_lods):
         """
         Ajoute un bloc a la liste des colliders
         
@@ -138,7 +157,10 @@ class Collisions:
             
         Renvoie le bloc
         """
-        block = Block(position, BLOCKS_SIZE)
+        # Le bloc n'a pas de tile pouvant faire une collision, rien ne sert de collide il faut optimiser
+        if not block_lods[0]:
+            return
+        block = Block(position, block_lods, BLOCKS_SIZE)
         block.set_id(len(self.colliders))
         self.colliders.append(block)
         return block

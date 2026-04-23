@@ -5,6 +5,7 @@ from math import sqrt
 
 import wsinter
 import web_helper
+import collision_resolver
 
 import graphics.board
 from characters.player import Player
@@ -53,7 +54,8 @@ class Game:
         self.player = Player(self.web_helper, (50, 50))
         self.web_manager.attributs(self.player.id, style={"z-index": 7})
 
-        self.board = graphics.board.Board(self.web_helper, "spawn")
+        self.collision_resolver = collision_resolver.CollisionResolver()
+        self.board = graphics.board.Board(self.web_helper, "spawn", self.collision_resolver)
 
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
