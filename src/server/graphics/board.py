@@ -247,8 +247,8 @@ class Board:
         if move == [0, 0]:
             return
         ox,oy = self.origin
-        mx = move[0] * self.zoom
-        my = move[1] * self.zoom
+        mx = move[0]
+        my = move[1]
         
         self.origin = (ox + mx, oy + my)
         
@@ -375,7 +375,7 @@ class EditorBoard(Board):
         """
         if move == [0, 0]:
             return
-        self.translate((move[0] * TRANSLATE_AMOUNT, move[1] * TRANSLATE_AMOUNT))
+        self.translate((move[0] * TRANSLATE_AMOUNT * self.zoom, move[1] * TRANSLATE_AMOUNT * self.zoom))
 
     def get_block_id(self, block_x: int, block_y: int, create: bool = False) -> str:
         """

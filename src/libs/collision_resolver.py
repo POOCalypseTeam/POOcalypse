@@ -22,8 +22,6 @@ class Collider:
         Leve une erreur lorsque le tag_code a TRIGGER mais qu'il n'y a pas de handler, ou l'inverse
         """
         self.position: tuple[float, float, float, float] = position
-        if not tag_code & BLOCK:
-            print(self.position)
         self.tag_code: int = tag_code
         self.handler: callable = handler
         if tag_code & TRIGGER and (handler == None or type(handler) != callable):
@@ -90,8 +88,8 @@ class Block(Collider):
         # Les blocs initalisés ici ne sont pas associés à un id
         size //= 2
         pixel_size = position[2] - position[0]
-        center_x = position[2] - (pixel_size // 2)
-        center_y = position[3] - (pixel_size // 2)
+        center_x = position[2] - (pixel_size / 2) - 1
+        center_y = position[3] - (pixel_size / 2) - 1
         # Coins par rapport au pavé numérique du clavier
         self.b7 = None
         self.b9 = None
@@ -188,15 +186,6 @@ class CollisionResolver:
         # TODO: ATTENTION, ça peut grandir très vite ça si on ne supprime pas vraiment les colliders
         self.colliders[collider.id] = None
 
-    """def attempt_movement(self, collider: Collider, movement: tuple[float, float]):
-        ""
-        Ajoute ce mouvement a la file de mouvement qu'il faut vérifier
-
-        Lorsque self.resolve_collision est appelé, il essaie tous les mouvements de la file et les valide ou non
-        ""
-        assert not collider.is_movable(), "Ce collider ne peut pas etre bouge"
-        self.to_check.append(collider, movement)"""
-    
     def attempt_movement(self, pos, mov):
         """
         Appelée par la boucle principale

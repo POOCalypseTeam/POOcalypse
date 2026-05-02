@@ -133,10 +133,10 @@ class Game:
                 if not self.player.is_dead():
                     player_movement = self.player.update(delta_time, keys, in_range_enemies)
                     if player_movement != [0, 0]:
-                        res = self.collision_resolver.attempt_movement(self.player.get_boundaries(), player_movement)
+                        res = self.collision_resolver.attempt_movement(self.player.get_boundaries(player_movement), player_movement)
                         if res[0]:
                             self.player.render(player_movement)
-                        #self.board.translate(player_movement)
+                            # Actualiser les blocs rendus sur la carte et scroller si nécessaire
 
             self.interactable = None
             for npc in self.npc:
