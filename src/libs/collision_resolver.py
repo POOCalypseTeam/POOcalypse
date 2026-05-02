@@ -1,10 +1,12 @@
 from constants import BLOCKS_SIZE
 
 # ==== Tags ==== #
-CANT_PASS = 1       # Impossible de passer a travers
-TRIGGER   = 2       # Déclenche un événement au passage
-MOVABLE   = 4       # Possible de bouger le collider (ex: joueur, ennemis)
-BLOCK     = 8       # Bloc qui contient des collisions mais pas sur toute sa surface, il sera divisé en 4 blocs égaux jusq'une tile
+CANT_PASS    = 1       # Impossible de passer a travers
+TRIGGER      = 2       # Déclenche un événement au passage
+MOVABLE      = 4       # Possible de bouger le collider (ex: joueur, ennemis)
+BLOCK        = 8       # Bloc qui contient des collisions mais pas sur toute sa surface, il sera divisé en 4 blocs égaux jusq'une tile
+TARGET       = 16      # Collider qui peut être visé par un projectile
+INTERACTABLE = 32      # Il est possible d'intéragir en appuyant sur E
 
 
 class Collider:
@@ -20,6 +22,8 @@ class Collider:
         Leve une erreur lorsque le tag_code a TRIGGER mais qu'il n'y a pas de handler, ou l'inverse
         """
         self.position: tuple[float, float, float, float] = position
+        if not tag_code & BLOCK:
+            print(self.position)
         self.tag_code: int = tag_code
         self.handler: callable = handler
         if tag_code & TRIGGER and (handler == None or type(handler) != callable):
@@ -28,6 +32,10 @@ class Collider:
             raise ValueError("Il y a un handler mais le code n'est pas TRIGGER")
         
         self.id: int = -1
+        
+    def get_position_after_movement(self, mov: tuple[float, float]) -> tuple[float, float, float, float]:
+        pos = self.position
+        return (pos[0] + mov[0], pos[1] + mov[1], pos[2] + mov[0], pos[3] + mov[1])
         
     def check_for_collision(self, box: tuple[float, float, float, float]) -> bool:
         """
@@ -60,6 +68,12 @@ class Collider:
     
     def is_movable(self):
         return self.tag_code & MOVABLE
+    
+    def is_block(self):
+        return self.tag_code & BLOCK
+    
+    def is_target(self):
+        return self.tag_code & TARGET
 
 class Block(Collider):
     def __init__(self, position: tuple[float, float, float, float], lods, size: int):
@@ -75,8 +89,9 @@ class Block(Collider):
         self.size = size
         # Les blocs initalisés ici ne sont pas associés à un id
         size //= 2
-        center_x = position[2] / 2
-        center_y = position[3] / 2
+        pixel_size = position[2] - position[0]
+        center_x = position[2] - (pixel_size // 2)
+        center_y = position[3] - (pixel_size // 2)
         # Coins par rapport au pavé numérique du clavier
         self.b7 = None
         self.b9 = None
@@ -125,8 +140,8 @@ class CollisionResolver:
     """
     
     def __init__(self):
-        self.colliders = []
-        self.to_check = []
+        self.colliders: list[Collider] = []
+        self.to_check: list[Collider] = []
     
     def add_collider(self, position: tuple[float, float, float, float], tag_code: int, handler: callable = None) -> None:
         """
@@ -173,20 +188,26 @@ class CollisionResolver:
         # TODO: ATTENTION, ça peut grandir très vite ça si on ne supprime pas vraiment les colliders
         self.colliders[collider.id] = None
 
-    def attempt_movement(self, collider: Collider, movement: tuple[float, float]):
-        """
+    """def attempt_movement(self, collider: Collider, movement: tuple[float, float]):
+        ""
         Ajoute ce mouvement a la file de mouvement qu'il faut vérifier
 
         Lorsque self.resolve_collision est appelé, il essaie tous les mouvements de la file et les valide ou non
-        """
+        ""
         assert not collider.is_movable(), "Ce collider ne peut pas etre bouge"
-        self.to_check.append(collider, movement)
+        self.to_check.append(collider, movement)"""
     
-    def resolve_collision(self):
+    def attempt_movement(self, pos, mov):
         """
         Appelée par la boucle principale
 
         Vérifie pour chaque mouvement de la liste s'il est valide ou non et s'il faut déclencher des événements
         """
-        for collider, movement in self.to_check:
-            pass
+        validate = True
+        nearby = []
+        for collision_candidate in self.colliders:
+            # On regarde s'il y a collision avec la map
+            if validate and collision_candidate.is_block() and collision_candidate.check_for_collision((pos[0] + mov[0], pos[1] + mov[1], pos[2] + mov[0], pos[3] + mov[1])):
+                # Si tel est le cas, on renvoie False pour la validation du mouvement
+                validate = False
+        return (validate, nearby)

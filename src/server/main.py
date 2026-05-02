@@ -51,7 +51,7 @@ class Game:
         self.mouse_manager = Mouse(self.web_manager)
 
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
-        self.player = Player(self.web_helper, (50, 50))
+        self.player = Player(self.web_helper, (0, 0))
         self.web_manager.attributs(self.player.id, style={"z-index": 7})
 
         self.collision_resolver = collision_resolver.CollisionResolver()
@@ -132,8 +132,10 @@ class Game:
                         in_range_enemies.append(enemy)
                 if not self.player.is_dead():
                     player_movement = self.player.update(delta_time, keys, in_range_enemies)
-                    if player_movement != [0, 0] and self.board.validate(self.player.get_collision_points()):
-                        self.player.render()
+                    if player_movement != [0, 0]:
+                        res = self.collision_resolver.attempt_movement(self.player.get_boundaries(), player_movement)
+                        if res[0]:
+                            self.player.render(player_movement)
                         #self.board.translate(player_movement)
 
             self.interactable = None

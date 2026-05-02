@@ -92,6 +92,7 @@ class Player:
         coef = delta_time * self.friction_coef
         self.movement_vector[0] *= coef
         self.movement_vector[1] *= coef
+        self.movement_vector = [round(self.movement_vector[0], 3), round(self.movement_vector[1], 3)]
         movement_direction = self._process_move_keys(keys)
         if movement_direction != [0, 0]:
             angle = atan2(movement_direction[1], movement_direction[0])
@@ -229,6 +230,14 @@ class Player:
         """
         return (self.x, self.y)
     
+    def get_boundaries(self):
+        """
+        Renvoie le tuple (X1, Y1, X2, Y2) qui definit la boite de collisions du joueur, attention elle ne correspond pas exactement au visuel du joueur, elle est plus petite
+        """
+        corners = [self.x, self.y, self.x + self.width, self.y + self.height]
+        # On oublie pas d'appliquer le zoom (=2)
+        return [corners[i] + self.hitbox[i] * 2 for i in range(4)]
+    
     def get_center_pos(self):
         """
         Renvoie la position du joueur (x,y) sur la page centree sur le joueur
@@ -237,12 +246,12 @@ class Player:
         y = int(self.y + self.height / 2)
         return (x,y)
         
-    def render(self):
+    def render(self, movement_vector):
         """
         Actualise la position du joueur sur la page avec le mouvement stocké dans self.movement_vector
         """
-        self.x += self.movement_vector[0]
-        self.y += self.movement_vector[1]
+        self.y += movement_vector[1]
+        self.x += movement_vector[0]
         self.helper.change_dimensions(self.id, (self.x, self.y))
         
     def hit(self, damage: float):

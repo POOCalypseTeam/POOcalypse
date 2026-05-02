@@ -149,7 +149,7 @@ class Board:
         if block == None:
             return
         
-        self.get_block_presence(block[0], 0, 0, BLOCKS_SIZE)
+        return self.get_block_presence(block[0], 0, 0, BLOCKS_SIZE)
 
     def add_block_collider(self, layer: int, center_block: tuple = (0, 0)):
         w,h = self.board_size
@@ -162,11 +162,11 @@ class Board:
         y_start = center_block[1] - block_h_offset
         y_end = center_block[1] + block_h_offset
         
-        bps = self.block_pixel_sizes[layer]
+        bps = self.block_pixel_sizes[layer] * self.zoom
         
         for block_x in range(x_start, x_end):
             for block_y in range(y_start, y_end):
-                position = (self.zoom * (block_x * bps), self.zoom * (block_y * bps), self.zoom * (block_x * bps + block_w), self.zoom * (block_y * bps + block_h))
+                position = (block_x * bps, block_y * bps, bps * (block_x + 1) - 1, bps * (block_y + 1) - 1)
                 lods = self.get_block_lods(layer, block_x, block_y)
                 if lods != None:
                     self.collision_resolver.add_block(position, lods)
