@@ -34,9 +34,6 @@ class Board:
         
         self.layers: dict[int, str] = {}
         
-        # Coordonnees du centre en pixels
-        self.origin = (0, 0)
-        
         # On prete attention a la taille de board
         self.board_size = self.update_board_size()
         
@@ -44,6 +41,17 @@ class Board:
         # TODO: Utiliser un système asynchrone commun aux plusieurs threads dans lesquels link et base peuvent etre utilises, comme ca il n'y a qu'une seule instance de link (ou un objet resource par exemple)
         self.link = sqlite3.connect(BOARD_PATH, check_same_thread=False)
         self.base = self.link.cursor()
+        
+        # Coordonnees du centre en pixels
+        self.base.execute("SELECT origin_x,origin_y FROM worlds WHERE name=?;", (self.world,))
+        origin = self.base.fetchall()
+        if len(origin) != 1:
+            # Pour rajouter les colonnes:
+            # `ALTER TABLE worlds ADD COLUMN {origin_x/origin_y} INTEGER;`
+            self.link.close()
+            raise ValueError("Il y a une erreur dans la base de données: Le monde n'a pas d'origine")
+        self.origin = origin[0]
+        self.shift = (0,0)
         
         # Ajoute les elements pour ce monde precis
         self.base.execute("SELECT layer_index,tileset,tiles_size,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
@@ -151,7 +159,7 @@ class Board:
         
         return self.get_block_presence(block[0], 0, 0, BLOCKS_SIZE)
 
-    def add_block_collider(self, layer: int, center_block: tuple = (0, 0)):
+    def add_collider_layer(self, layer: int, center_block: tuple = (0, 0)):
         w,h = self.board_size
         block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
         block_w_offset = block_w // 2 + 1
@@ -177,8 +185,7 @@ class Board:
         """
         # On récupère la taille de la fenetre
         w,h = self.board_size
-        # TODO: Considerer le zoom pour savoir combien en mettre dans cette zone ?
-        block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
+        block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer] * self.zoom)), ceil(h / self.block_pixel_sizes[layer] * self.zoom))
         block_w_offset = block_w // 2 + 1
         block_h_offset = block_h // 2 + 1
         
@@ -196,49 +203,14 @@ class Board:
         Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
         """
         w,h = self.update_board_size()
-        self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
+        self.shift = (w / 2 - self.origin[0], h / 2 - self.origin[1])
+        self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
         for layer in self.layers.keys():
             if self.collisions[layer]:
                 # Il n'est pas nécessaire de vérifier si self.collisions est à None car c'est le cas seulement si board est EditorBoard, auquel cas load_all est surchargé
-                self.add_block_collider(layer, (0, 0))
-            self.load(layer, (0, 0))
-
-    def page_to_block(self, layer, coordinates) -> tuple:
-        """
-        Convertit les coordonnées de la page vers des coordonnées blocs et tiles
-        """
-        w,h = self.update_board_size()
-        
-        x,y = coordinates[0] - int(w // 2) + self.origin[0], coordinates[1] - int(h // 2) + self.origin[1]
-        
-        self.helper.ws.attributs("pointer", style={"left": str(x) + "px", "top": str(y) + "px"})
-        
-        block_x = (x) // (self.block_pixel_sizes[layer] * self.zoom)
-        block_y = (y) // (self.block_pixel_sizes[layer] * self.zoom)
-        
-        block_offset_x = block_x * self.block_pixel_sizes[layer] * self.zoom
-        block_offset_y = block_y * self.block_pixel_sizes[layer] * self.zoom
-        
-        tile_x = (x - block_offset_x) // (self.tile_pixel_sizes[layer] * self.zoom)
-        tile_y = (y - block_offset_y) // (self.tile_pixel_sizes[layer] * self.zoom)
-
-        return (block_x, block_y, tile_x, tile_y)
-
-    def validate(self, points):
-        for point in points:
-            for layer in self.collisions.keys():
-                if not self.collisions[layer]:
-                    continue
-
-                coordinates = self.page_to_block(layer, point)
-
-                # On cherche les coordonnees bloc et tile du point
-                self.base.execute("SELECT * FROM tiles WHERE block_id=(SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?) AND x=? AND y=?;",\
-                                    (self.world, layer, coordinates[0], coordinates[1], coordinates[2], coordinates[3]))
-                res = self.base.fetchall()
-                if len(res) > 0:
-                    return False
-        return True
+                self.add_collider_layer(layer, self.origin)
+                continue
+            self.load(layer, self.origin)
 
     def translate(self, move: tuple):
         """
@@ -246,17 +218,18 @@ class Board:
         """
         if move == [0, 0]:
             return
-        ox,oy = self.origin
+        ox,oy = self.shift
         mx = move[0]
         my = move[1]
         
-        self.origin = (ox + mx, oy + my)
+        # TODO: Changer pour EditorBoard
+        self.shift = (ox + mx, oy + my)
         
         w,h = self.update_board_size()
         
         
         
-        self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
+        self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
 
     
 class EditorBoard(Board):

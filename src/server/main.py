@@ -50,12 +50,13 @@ class Game:
         self.keyboard_manager = Keyboard(self.web_manager)
         self.mouse_manager = Mouse(self.web_manager)
 
-        # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
-        self.player = Player(self.web_helper, (0, 0))
-        self.web_manager.attributs(self.player.id, style={"z-index": 7})
-
         self.collision_resolver = collision_resolver.CollisionResolver()
         self.board = graphics.board.Board(self.web_helper, "spawn", self.collision_resolver)
+        
+        # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
+        # Les coordonnées qui lui sont passées sont celles
+        self.player = Player(self.web_helper, self.board.origin)
+        self.web_manager.attributs(self.player.id, style={"z-index": 7})
 
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
@@ -70,7 +71,6 @@ class Game:
         base_enemy = Enemy(self.web_helper, (600, 300), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
         #self.enemies.append(base_enemy)
 
-        # TODO: Passer dans player ?
         self.interactable: Interactable = None
 
         self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Enter'])
@@ -137,6 +137,7 @@ class Game:
                         if res[0]:
                             self.player.render(player_movement)
                             # Actualiser les blocs rendus sur la carte et scroller si nécessaire
+                            self.board.translate(web_helper.multiply_list(player_movement, -1))
 
             self.interactable = None
             for npc in self.npc:

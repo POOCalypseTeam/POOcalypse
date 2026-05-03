@@ -46,15 +46,14 @@ ANIMATION_UPDATE_FREQUENCY = 32
 
 # Contient le joueur
 class Player:
-    def __init__(self, helper: web_helper.Helper, position: tuple):
+    def __init__(self, helper: web_helper.Helper, map_center: tuple):
         self.helper = helper
-        self.x = position[0]
-        self.y = position[1]
         # X1, Y1, X2, Y2 pour l'image dans sa taille originale, il faut appliquer le zoom
         self.hitbox = (9, 26, 22, 32)
         self.width = IMG_SIZE
         self.height = IMG_SIZE
-        self.id = self.helper.add_image(IMG_STOP1, (self.x, self.y), size=(64, 64), parent="player")
+        self.x = map_center[0]
+        self.y = map_center[1]
         self.id2 = self.helper.add_image(PNG_PATH, (0,0), size=(64, 64), parent="player")
         self.r = 0
         self.l = 0
@@ -66,6 +65,8 @@ class Player:
                 self.helper.change_image(self.id2, IMG[i][j])
                 sleep(0.1)
         self.helper.change_image(self.id2, PNG_PATH)
+        w,h = self.helper.ws.get_window_size()
+        self.id = self.helper.add_image(IMG_STOP1, ((w - self.width) / 2, (h - self.height) / 2), size=(64, 64), parent="player")
         
         self.health = 5
         self.max_health = 5
@@ -75,7 +76,6 @@ class Player:
         
         self.movement_vector = [0, 0]
         self.friction_coef = 0.8
-        self.collision_points = []
     
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
         if 'KeyR' in keys:
@@ -99,7 +99,6 @@ class Player:
             movement = (cos(angle) * MOVE_AMOUNT * delta_time * 2, sin(angle) * MOVE_AMOUNT * delta_time * 2)
             self.movement_vector[0] += movement[0]
             self.movement_vector[1] += movement[1] 
-            self.calc_collision_points(self.movement_vector)
             if abs(movement[0]) > abs(movement[1]):
                 if movement[0] > 0:
                     self.r += 1
@@ -146,84 +145,6 @@ class Player:
             move[0] += 1
         return move
     
-    def calc_collision_points(self, movement):
-        """
-        Calcule les point de la hitbox qui sont dirigés vers la position voulue du joueur
-        """
-        """if movement_direction[0] == 0:
-            Y = ceil(self.y) + (self.hitbox[1] if movement_direction[1] < 0 else self.hitbox[3]) * 2
-            self.collisions_points = [(ceil(self.x) + self.hitbox[0] * 2, Y), (ceil(self.x) + self.hitbox[2], Y)]
-        elif movement_direction[1] == 0:
-            X = ceil(self.x) + (self.hitbox[0] if movement_direction[0] < 0 else self.hitbox[2]) * 2
-            self.collisions_points = [(X, ceil(self.y) + self.hitbox[1] * 2), (X, ceil(self.y) + self.hitbox[3] * 2)]
-        else:
-            X = self.hitbox[0] if movement_direction[0] < 0 else self.hitbox[2]
-            Y = self.hitbox[1] if movement_direction[1] < 0 else self.hitbox[3]
-            self.collision_points = [(ceil(self.x) + X * 2, ceil(self.y) + Y * 2)]"""
-        X = round(movement[0], 2)
-        Y = round(movement[1], 2)
-        angle = atan2(Y, -X) + pi
-        step = pi / 4
-        steps = 0
-        while angle > 0.001:
-            angle -= step
-            steps += 1
-        match (steps):
-            case 0 | 8: # 0
-                x = self.x + self.hitbox[2] * 2 + X
-                p1 = (x, self.y + self.hitbox[1] * 2 + Y)
-                p2 = (x, self.y + self.hitbox[3] * 2 + Y)
-                self.collision_points = [p1, p2]
-            case 1: # pi/4
-                x = self.x + self.hitbox[2] * 2 + X
-                y = self.y + self.hitbox[1] * 2 + Y
-                p1 = (self.x + self.hitbox[0] * 2 + X, y)
-                p2 = (x, y)
-                p3 = (x, self.y + self.hitbox[3] * 2 + Y)
-                self.collision_points = [p1, p2, p3]
-            case 2: # pi/2
-                y = self.y + self.hitbox[1] * 2 + Y
-                p1 = (self.x + self.hitbox[0] * 2 + X, y)
-                p2 = (self.x + self.hitbox[2] * 2 + X, y)
-                self.collision_points = [p1, p2]
-            case 3: # 3pi/4
-                x = self.x + self.hitbox[0] * 2 + X
-                y = self.y + self.hitbox[1] * 2 + Y
-                p1 = (self.x + self.hitbox[2] * 2 + X, y)
-                p2 = (x, y)
-                p3 = (x, self.y + self.hitbox[3] * 2 + Y)
-                self.collision_points = [p1, p2, p3]
-            case 4: # pi
-                x = self.x + self.hitbox[0] * 2 + X
-                p1 = (x, self.y + self.hitbox[1] * 2 + Y)
-                p2 = (x, self.y + self.hitbox[3] * 2 + Y)
-                self.collision_points = [p1, p2]
-            case 5: # 5pi/4
-                x = self.x + self.hitbox[0] * 2 + X
-                y = self.y + self.hitbox[3] * 2 + Y
-                p1 = (self.x + self.hitbox[2] * 2 + X, y)
-                p2 = (x, y)
-                p3 = (x, self.y + self.hitbox[1] * 2 + Y)
-                self.collision_points = [p1, p2, p3]
-            case 6: # 3pi/2
-                y = self.y + self.hitbox[3] * 2 + Y
-                p1 = (self.x + self.hitbox[0] * 2 + X, y)
-                p2 = (self.x + self.hitbox[2] * 2 + X, y)
-                self.collision_points = [p1, p2]
-            case 7: #7pi/4
-                x = self.x + self.hitbox[2] * 2 + X
-                y = self.y + self.hitbox[3] * 2 + Y
-                p1 = (self.x + self.hitbox[0] * 2 + X, y)
-                p2 = (x, y)
-                p3 = (x, self.y + self.hitbox[1] * 2 + Y)
-                self.collision_points = [p1, p2, p3]
-            case _:
-                raise ValueError("L'angle ne correspond a rien du tout...")
-
-        
-    def get_collision_points(self):
-        return self.collision_points
-
     def get_position(self):
         """
         Renvoie la position du joueur (x,y) sur la page par rapport a son coin superieur gauche
@@ -250,7 +171,8 @@ class Player:
         """
         self.y += movement_vector[1]
         self.x += movement_vector[0]
-        self.helper.change_dimensions(self.id, (self.x, self.y))
+        # Pas besoin, c'est la map qui le fait, on a cependant toujours besoin de savoir ou est le joueur
+        #self.helper.change_dimensions(self.id, (self.x, self.y))
         
     def hit(self, damage: float):
         """
