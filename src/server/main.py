@@ -45,6 +45,10 @@ class Game:
         self.web_manager.demarre(clavier=True)
 
         self.web_helper = web_helper.Helper(self.web_manager)
+        
+        # On attend que la page soit prête, surtout pour la taille de la page
+        while not self.web_manager.ready:
+            time.sleep(0.01)
 
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
@@ -111,8 +115,13 @@ class Game:
                 continue
             
             delta_time += 0.017
-
             last_loop_time = time.time()
+            
+            window_size = self.web_manager.get_window_size_if_changed()
+            
+            if window_size != None:
+                # TODO: Aussi faire le rendu de la carte, en veillant à supprimer les autres tiles, il faut attendre le chargement dynamique, ce sont les mêmes valeurs
+                self.player.update_graphics(window_size)
 
             keys = self.keyboard_manager.get_keys()
 

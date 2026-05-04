@@ -36,7 +36,7 @@ socket.onopen = function(e) {
   console.log("[open] Connection established");
   if (readySent == false)
   {
-      transmettre("ready", "");
+      transmettre("ready", [window.innerWidth, window.innerHeight]);
   }
   for (let i = 0; i < waiting.length; i++)
   {
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementsByTagName('HEAD')[0].id="head"; 
     document.body.oncontextmenu=(e)=>{return false;};
     if (socket.readyState == 1) {
-        transmettre("ready", "");
+        transmettre("ready", [window.innerWidth, window.innerHeight]);
     }
     else {
         readySent = false;
@@ -239,8 +239,9 @@ const ueh = (event) => {
 
         self._stopped=False
 
-        self.window_width = 1280
-        self.window_height = 720
+        self.window_width = -1
+        self.window_height = -1
+        self.window_size_changed = False
 
     def touches(self):
         """
@@ -467,11 +468,12 @@ const ueh = (event) => {
         self.gestionnaire("get_window_size", self._set_window_size)
         self.injecte("transmettre('get_window_size', [window.innerWidth, window.innerHeight]);")
 
-    def _ready(self, _m, _o):
+    def _ready(self, _m, o):
         self.ready = True
         for pending in self.pending:
             self._envoi(pending)
         del self._handlers["ready"]
+        self._set_window_size(_m, o)
 
     def _set_window_size(self, _, size: list[int, int]):
         """
@@ -483,9 +485,17 @@ const ueh = (event) => {
         """
         self.window_width = size[0]
         self.window_height = size[1]
+        self.window_size_changed = True
 
     def get_window_size(self):
         return (self.window_width, self.window_height)
+    
+    def get_window_size_if_changed(self):
+        if self.window_size_changed:
+            self.window_size_changed = False
+            return self.get_window_size()
+        else:
+            return None
 
     def gestionnaire_stop(self, handler:callable=lambda : print("Extinction.")):
         """

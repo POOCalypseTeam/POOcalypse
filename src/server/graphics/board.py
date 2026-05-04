@@ -203,7 +203,7 @@ class Board:
         Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
         """
         w,h = self.update_board_size()
-        self.shift = (w / 2 - self.origin[0], h / 2 - self.origin[1])
+        self.shift = (w / 2 - self.origin[0] * TRANSLATE_AMOUNT, h / 2 - self.origin[1] * TRANSLATE_AMOUNT)
         self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
         for layer in self.layers.keys():
             if self.collisions[layer]:
@@ -231,7 +231,7 @@ class Board:
         
         self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
 
-    
+
 class EditorBoard(Board):
     def __init__(self, helper: web_helper.Helper, world: str):
         super().__init__(helper, world, None)
@@ -247,6 +247,8 @@ class EditorBoard(Board):
         # Coordonnees pour la selection, un tuple lorsque actif et None lorsque rien (bien vu l'artiste)
         self.p1: tuple[tuple[int, int], tuple[int, int]] = None
         self.p2: tuple[tuple[int, int], tuple[int, int]] = None
+        
+        self.origin = (0, 0)
 
         # Utilises pour action, qui devrait sinon en initialiser beaucoup trop
         self.link = sqlite3.connect(BOARD_PATH, check_same_thread=False)
@@ -336,9 +338,15 @@ class EditorBoard(Board):
         self.helper.ws.add_class("corner-2", "hidden")
         
     def translate(self, move: tuple):
-        super().translate(move)
+        ox,oy = self.origin
+        mx = move[0] * self.zoom
+        my = move[1] * self.zoom
         
-        w,h = self.board_size
+        self.origin = (ox + mx, oy + my)
+        
+        w,h = self.update_board_size()
+        
+        self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
         self.helper.ws.attributs("board", style={"background-position-x": str(-(self.origin[0]) + w / 2) + "px"\
                                                 ,"background-position-y": str(-(self.origin[1]) + h / 2) + "px"})
         
@@ -348,7 +356,7 @@ class EditorBoard(Board):
         """
         if move == [0, 0]:
             return
-        self.translate((move[0] * TRANSLATE_AMOUNT * self.zoom, move[1] * TRANSLATE_AMOUNT * self.zoom))
+        self.translate((move[0] * TRANSLATE_AMOUNT, move[1] * TRANSLATE_AMOUNT))
 
     def get_block_id(self, block_x: int, block_y: int, create: bool = False) -> str:
         """

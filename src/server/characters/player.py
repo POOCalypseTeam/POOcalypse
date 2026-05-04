@@ -52,8 +52,8 @@ class Player:
         self.hitbox = (9, 26, 22, 32)
         self.width = IMG_SIZE
         self.height = IMG_SIZE
-        self.x = map_center[0]
-        self.y = map_center[1]
+        self.x = map_center[0] - self.width / 2
+        self.y = map_center[1] - self.height / 2
         self.id2 = self.helper.add_image(PNG_PATH, (0,0), size=(64, 64), parent="player")
         self.r = 0
         self.l = 0
@@ -76,6 +76,9 @@ class Player:
         
         self.movement_vector = [0, 0]
         self.friction_coef = 0.8
+        
+    def update_graphics(self, window_size):
+        self.helper.change_dimensions(self.id, position=((window_size[0] - self.width) / 2, (window_size[1] - self.height) / 2))
     
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
         if 'KeyR' in keys:
