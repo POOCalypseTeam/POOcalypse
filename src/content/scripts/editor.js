@@ -57,6 +57,7 @@ function addLayer(layer) {
             e.target.innerText = "🕶";
             layer.style["display"] = "block";
         }
+        e.stopPropagation();
     });
 
     deleteInput = document.createElement("span");

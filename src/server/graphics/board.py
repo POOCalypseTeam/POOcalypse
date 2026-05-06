@@ -222,7 +222,6 @@ class Board:
         mx = move[0]
         my = move[1]
         
-        # TODO: Changer pour EditorBoard
         self.shift = (ox + mx, oy + my)
         
         w,h = self.update_board_size()
@@ -247,17 +246,12 @@ class EditorBoard(Board):
         # Coordonnees pour la selection, un tuple lorsque actif et None lorsque rien (bien vu l'artiste)
         self.p1: tuple[tuple[int, int], tuple[int, int]] = None
         self.p2: tuple[tuple[int, int], tuple[int, int]] = None
-        
-        self.origin = (0, 0)
 
         # Utilises pour action, qui devrait sinon en initialiser beaucoup trop
         self.link = sqlite3.connect(BOARD_PATH, check_same_thread=False)
         self.base = self.link.cursor()
         self.commit = False
         
-        w,h = self.board_size
-        self.helper.ws.attributs("board", style={"background-position-x": str(-(self.origin[0]) + w / 2) + "px"\
-                                                ,"background-position-y": str(-(self.origin[1]) + h / 2) + "px"})
         
     def update_board_size(self) -> tuple[float, float]:
         size = self.helper.ws.get_window_size()
@@ -272,7 +266,10 @@ class EditorBoard(Board):
         Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
         """
         w,h = self.update_board_size()
-        self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
+        self.shift = (w / 2 - self.origin[0] * TRANSLATE_AMOUNT, h / 2 - self.origin[1] * TRANSLATE_AMOUNT)
+        self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
+        self.helper.ws.attributs("board", style={"background-position-x": str(self.shift[0]) + "px"\
+                                                ,"background-position-y": str(self.shift[1]) + "px"})
         for layer in self.layers.keys():
             self.load(layer, (0, 0))
         
@@ -280,6 +277,7 @@ class EditorBoard(Board):
     
     def layer_changed(self, _, o: int):
         self.layer = int(o)
+        self.tile = ""
         
         # On supprime tout d'abord
         self.helper.ws.remove_children("tileset")
@@ -287,7 +285,7 @@ class EditorBoard(Board):
         tileset_path = "/assets/tilesets/" + self.layers[self.layer] + "/"
         # Charge les images
         i = 0
-        for file in os.listdir("content" + tileset_path):
+        for file in sorted(os.listdir("content" + tileset_path)):
             self.helper.ws.insere("palette_" + str(i), "img", attr={'src':'../' + tileset_path + file}, parent="tileset")
             i += 1
             
@@ -337,7 +335,7 @@ class EditorBoard(Board):
         self.helper.ws.add_class("corner-1", "hidden")
         self.helper.ws.add_class("corner-2", "hidden")
         
-    def translate(self, move: tuple):
+    """def translate(self, move: tuple):
         ox,oy = self.origin
         mx = move[0] * self.zoom
         my = move[1] * self.zoom
@@ -348,7 +346,7 @@ class EditorBoard(Board):
         
         self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
         self.helper.ws.attributs("board", style={"background-position-x": str(-(self.origin[0]) + w / 2) + "px"\
-                                                ,"background-position-y": str(-(self.origin[1]) + h / 2) + "px"})
+                                                ,"background-position-y": str(-(self.origin[1]) + h / 2) + "px"})"""
         
     def translate_direction(self, move: tuple):
         """
@@ -357,6 +355,8 @@ class EditorBoard(Board):
         if move == [0, 0]:
             return
         self.translate((move[0] * TRANSLATE_AMOUNT, move[1] * TRANSLATE_AMOUNT))
+        self.helper.ws.attributs("board", style={"background-position-x": str(self.shift[0]) + "px"\
+                                                ,"background-position-y": str(self.shift[1]) + "px"})
 
     def get_block_id(self, block_x: int, block_y: int, create: bool = False) -> str:
         """
@@ -549,9 +549,7 @@ class EditorBoard(Board):
                 self.commit = False
             self.base = self.link.cursor()
         
-        w,h = self.update_board_size()
-        
-        x,y = click_pos[0] - int(w // 2) + self.origin[0], click_pos[1] - int(h // 2) + self.origin[1]
+        x,y = click_pos[0] - int(self.shift[0]), click_pos[1] - int(self.shift[1])
         
         block_x = (x) // (self.block_pixel_sizes[self.layer] * self.zoom)
         block_y = (y) // (self.block_pixel_sizes[self.layer] * self.zoom)
