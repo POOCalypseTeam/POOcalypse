@@ -1,0 +1,1 @@
+PLAYER_SPRITESHEET_PATH = 'assets/spritesheets/player/'

@@ -50,8 +50,7 @@ class Game:
         self.mouse_manager = Mouse(self.web_manager)
 
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
-        self.player = Player(self.web_helper, (50, 50))
-        self.web_manager.attributs(self.player.id, style={"z-index": 10})
+        self.init_player((50, 50), 10)
 
         self.board = graphics.board.Board(self.web_helper, "spawn")
 
@@ -76,6 +75,10 @@ class Game:
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()
+        
+    def init_player(self, position: tuple[int, int], zindex: int):
+        self.player = Player(self.web_helper, position)
+        self.web_manager.attributs(self.player.id, style={"z-index": zindex})
 
     def interact_key_handler(self, key):
         if self.interactable == None or not issubclass(type(self.interactable), Interactable):
@@ -109,10 +112,13 @@ class Game:
                 continue
             
             delta_time += 0.017
-
             last_loop_time = time.time()
 
             keys = self.keyboard_manager.get_keys()
+            
+            if 'KeyP' in keys and self.player.is_dead():
+                self.web_manager.remove_children("player")
+                self.init_player((50, 50), 10)
 
             # On actualise la liste des ennemis en supprimant ceux qui sont morts
             for enemy in self.enemies:
@@ -128,15 +134,8 @@ class Game:
                     dst = sqrt((enemy.x - self.player.x) ** 2 + (enemy.y - self.player.y) ** 2)
                     if dst <= player_range:
                         in_range_enemies.append(enemy)
-                if not self.player.is_dead():
-                    player_movement = self.player.update(delta_time, keys, in_range_enemies)
-                    self.board.translate(player_movement)
-                else:
-                    if 'KeyP' in keys:
-                        self.web_manager.remove_children("player")
-                        self.player = Player(self.web_helper, (50, 50))
-                        self.web_manager.attributs(self.player.id, style={"z-index": 10})
-                        
+                player_movement = self.player.update(delta_time, keys, in_range_enemies)
+                self.board.translate(player_movement)
 
             self.interactable = None
             for npc in self.npc:

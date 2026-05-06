@@ -1,30 +1,31 @@
-from random import randint
-from time import sleep
 from math import sqrt, atan2, sin, cos
 import web_helper
+from constants import PLAYER_SPRITESHEET_PATH
 
 from .weapon import Weapon
 from .enemy import Enemy
 
 
-ANIM_STOP = 'assets/spritesheets/player/player_stop.gif'
-ANIM_LEFT = 'assets/spritesheets/player/player_left.gif'
-ANIM_BOTTOM = 'assets/spritesheets/player/player_bottom.gif'
-ANIM_RIGHT = 'assets/spritesheets/player/player_right.gif'
-ANIM_TOP = 'assets/spritesheets/player/player_top.gif'
-ANIM_DEATH = 'assets/spritesheets/player/player_death.gif'
-ANIM_ATTACK_TOP = 'assets/spritesheets/player/player_attack_top.gif'
-ANIM_ATTACK_BOTTOM = 'assets/spritesheets/player/player_attack_bottom.gif'
-ANIM_ATTACK_RIGHT = 'assets/spritesheets/player/player_attack_right.gif'
-ANIM_ATTACK_LEFT = 'assets/spritesheets/player/player_attack_left.gif'
+ANIM_STOP           = PLAYER_SPRITESHEET_PATH + 'player_stop.gif'
+ANIM_LEFT           = PLAYER_SPRITESHEET_PATH + 'player_left.gif'
+ANIM_BOTTOM         = PLAYER_SPRITESHEET_PATH + 'player_bottom.gif'
+ANIM_RIGHT          = PLAYER_SPRITESHEET_PATH + 'player_right.gif'
+ANIM_TOP            = PLAYER_SPRITESHEET_PATH + 'player_top.gif'
+ANIM_DEATH          = PLAYER_SPRITESHEET_PATH + 'player_death.gif'
+ANIM_DEATH_END      = PLAYER_SPRITESHEET_PATH + 'player_050.png'
+ANIM_ATTACK_TOP     = PLAYER_SPRITESHEET_PATH + 'player_attack_top.gif'
+ANIM_ATTACK_BOTTOM  = PLAYER_SPRITESHEET_PATH + 'player_attack_bottom.gif'
+ANIM_ATTACK_RIGHT   = PLAYER_SPRITESHEET_PATH + 'player_attack_right.gif'
+ANIM_ATTACK_LEFT    = PLAYER_SPRITESHEET_PATH + 'player_attack_left.gif'
 
 IMG_SIZE = 64
 MOVE_AMOUNT = 50
 MIN_X = 0
 MIN_Y = 0
-ANIM_ATTACK_DURATION = 0.550
-ANIM_DEATH_DURATION = 0.650
-
+ANIM_ATTACK_DURATION = 0.450    # 0.550
+ANIM_DEATH_DURATION = 0.450     # Dans les faits cette valeur est égale à : 0.650
+                                # Mais comme les updates ne se font pas toutes les nanosecondes, on pourrait dépasser ce temps et l'animation bouclerait, comme un glitch
+                                # Pour éviter cela, on place la fin de l'animation au tout début de la dernière frame
 
 # Contient le joueur
 class Player:
@@ -32,13 +33,12 @@ class Player:
         self.helper = helper
         self.x = position[0]
         self.y = position[1]
-        # TODO: Resize hitbox to fit character best
         self.width = IMG_SIZE
         self.height = IMG_SIZE
         self.id = self.helper.add_image(ANIM_STOP, (self.x, self.y), size=(64, 64), parent="player")
         self.att = False
-        self.rip = False
         self.delta_sum = 0
+        self.current_anim = ANIM_STOP
         
         self.health = 5
         self.max_health = 5
@@ -70,23 +70,20 @@ class Player:
         self.movement_vector[1] = sin(a)
     
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
+        if self.dead:
+            if ANIM_DEATH_DURATION - self.delta_sum > 0.017: # Le temps d'une frame
+                self.delta_sum += delta_time
+            return [0,0]
+        
         if 'KeyR' in keys:
             self.attack(enemies)
             self.att = True
-        if self.delta_sum < ANIM_ATTACK_DURATION:
+            self.delta_sum = 0
+            
+        if ANIM_ATTACK_DURATION - self.delta_sum > 0.017:
             self.delta_sum += delta_time
         else:
             self.att = False
-            self.delta_sum = 0
-        if self.rip:
-            print('coucou')
-            if self.delta_sum < ANIM_DEATH_DURATION:
-                self.delta_sum += delta_time
-                print('Anim pas encore finie')
-            else:
-                self.rip = False
-                self.delta_sum = 0
-                print('Anim finie !')
 
         return self.update_movement(delta_time, keys) 
     
@@ -101,18 +98,24 @@ class Player:
         self.movement_vector[0] *= coef
         self.movement_vector[1] *= coef
         movement = self._process_move_keys(keys)
+        new_anim = None
         if movement != [0, 0]:
             self.move_range(movement)        
             if movement[0] > 0:
-                self.helper.change_image(self.id, ANIM_ATTACK_RIGHT if self.att else ANIM_RIGHT)
+                new_anim = ANIM_ATTACK_RIGHT if self.att else ANIM_RIGHT
             elif movement[0] < 0:
-                self.helper.change_image(self.id, ANIM_ATTACK_LEFT if self.att else ANIM_LEFT)
+                new_anim = ANIM_ATTACK_LEFT if self.att else ANIM_LEFT
             elif movement[1] > 0 :
-                self.helper.change_image(self.id, ANIM_ATTACK_BOTTOM if self.att else ANIM_BOTTOM)
+                new_anim = ANIM_ATTACK_BOTTOM if self.att else ANIM_BOTTOM
             elif movement[1] < 0:
-                self.helper.change_image(self.id, ANIM_ATTACK_TOP if self.att else ANIM_TOP)
+                new_anim = ANIM_ATTACK_TOP if self.att else ANIM_TOP
         else:
-            self.helper.change_image(self.id, ANIM_ATTACK_BOTTOM if self.att else ANIM_STOP)
+            new_anim = ANIM_ATTACK_BOTTOM if self.att else ANIM_STOP
+        
+        # On évite de changer trop les images, surtout pour les GIFs
+        if new_anim != self.current_anim:
+            self.current_anim = new_anim
+            self.helper.change_image(self.id, self.current_anim, self.att)
 
         self.x += self.movement_vector[0]
         self.y += self.movement_vector[1]   
@@ -167,11 +170,10 @@ class Player:
         Renvoie True si le joueur est mort, False sinon
         """
         self.health = max(0, self.health - damage)
-        if self.health == 0:
+        if not self.dead and self.health == 0:
             self.dead = True
-            self.rip = True
-            while self.rip:
-                self.helper.change_image(self.id, ANIM_DEATH)
+            self.delta_sum = 0
+            self.helper.change_image(self.id, ANIM_DEATH, True)
         return self.dead
     
     def attack(self, enemies: list[Enemy]):

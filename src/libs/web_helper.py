@@ -60,8 +60,11 @@ class Helper:
         self.last_img_id += 1
         return self.add_image_id(img_id, path, position, size, zindex, parent)
     
-    def change_image(self, id, img):
-        self.ws.attributs(id, attr = {'src' : f'../{img}'})
+    def change_image(self, id, img, load_start: bool = False):
+        if load_start:
+            self.ws.injecte(f"document.getElementById(\"{id}\").src=\"../{img}?time=\" + Date.now();")
+        else:
+            self.ws.attributs(id, attr = {'src' : f'../{img}'})
     
     def change_dimensions(self, id: str, position: tuple = None, size: tuple = None):
         """
