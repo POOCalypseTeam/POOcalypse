@@ -138,11 +138,10 @@ class CollisionResolver:
     """
     
     def __init__(self):
-        self.colliders: list[Collider] = []
-        self.to_check: list[Collider] = []
+        self.colliders: dict[str, Collider] = {}
     
-    def add_collider(self, position: tuple[float, float, float, float], tag_code: int, handler: callable = None) -> None:
-        """
+    """def add_collider(self, position: tuple[float, float, float, float], tag_code: int, handler: callable = None) -> None:
+        ""
         Permet d'ajouter un rectangle qui fait office de collider
 
         Parametres:
@@ -155,13 +154,13 @@ class CollisionResolver:
         Leve une erreur lorsque le tag_code a TRIGGER mais qu'il n'y a pas de handler, ou l'inverse
         
         Renvoie le collider nouvellement créé
-        """
+        ""
         collider = Collider(position, tag_code, handler)
         collider.set_id(len(self.colliders))
         self.colliders.append(collider)
-        return collider
+        return collider"""
     
-    def add_block(self, position: tuple[float, float, float, float], block_lods):
+    def add_block(self, block_id: str, position: tuple[float, float, float, float], block_lods):
         """
         Ajoute un bloc a la liste des colliders
         
@@ -175,16 +174,14 @@ class CollisionResolver:
             return
         block = Block(position, block_lods, BLOCKS_SIZE)
         block.set_id(len(self.colliders))
-        self.colliders.append(block)
+        self.colliders[block_id] = block
         return block
     
-    def remove_collider(self, collider):
+    def remove_collider(self, block_id: str):
         """
         Enleve ce collider de la liste des collider
         """
-        assert collider.id != -1
-        # TODO: ATTENTION, ça peut grandir très vite ça si on ne supprime pas vraiment les colliders
-        self.colliders[collider.id] = None
+        del self.colliders[block_id]
 
     def attempt_movement(self, pos, mov):
         """
@@ -194,7 +191,7 @@ class CollisionResolver:
         """
         validate = True
         nearby = []
-        for collision_candidate in self.colliders:
+        for collision_candidate in self.colliders.values():
             # On regarde s'il y a collision avec la map
             if validate and collision_candidate.is_block() and collision_candidate.check_for_collision((pos[0] + mov[0], pos[1] + mov[1], pos[2] + mov[0], pos[3] + mov[1])):
                 # Si tel est le cas, on renvoie False pour la validation du mouvement

@@ -37,8 +37,6 @@ class Board:
         # On prete attention a la taille de board
         self.board_size = self.update_board_size()
         
-        # Pour chaque couche, on crée un div
-        # TODO: Utiliser un système asynchrone commun aux plusieurs threads dans lesquels link et base peuvent etre utilises, comme ca il n'y a qu'une seule instance de link (ou un objet resource par exemple)
         self.link = sqlite3.connect(BOARD_PATH, check_same_thread=False)
         self.base = self.link.cursor()
         
@@ -69,6 +67,7 @@ class Board:
             self.block_pixel_sizes[layer[0]] = layer[2] * BLOCKS_SIZE
             self.collisions[layer[0]] = layer[3]
             
+            # Pour chaque couche, on crée un div
             self.helper.ws.insere("layer_" + str(layer[0]), "div", style={"z-index": layer[0] * 2}, parent="tiles")
         
         self.load_all()
@@ -85,6 +84,19 @@ class Board:
         h = size[1]
         self.board_size = (w, h)
         return self.board_size
+    
+    def calculate_shift(self, w, h):
+        self.shift = (w / 2 - self.origin[0] * TRANSLATE_AMOUNT, h / 2 - self.origin[1] * TRANSLATE_AMOUNT)
+        
+    def get_block_id(self, layer: int, block_x: int, block_y: int) -> str:
+        """
+        Renvoie l'id du bloc spécifié sous forme de chaine de caractères
+        """
+        self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=? LIMIT 1;", (self.world, layer, block_x, block_y))
+        block = self.base.fetchone()
+        if block == None:
+            return None
+        return str(block[0])
     
     def render_block(self, block_id, layer, block_x, block_y):
         """
@@ -123,9 +135,8 @@ class Board:
         
         Renvoie le block_id
         """
-        self.base.execute("SELECT block_id FROM blocks WHERE block_x=? AND block_y=? AND world=? AND layer_index=? LIMIT 1;", (block_x, block_y, self.world, layer))
-        block = self.base.fetchone()
-        if block == None:
+        block_id = self.get_block_id(layer, block_x, block_y)
+        if block_id == None or block_id in self.rendered_blocks.keys():
             return
         
         block_id = block[0]
@@ -159,7 +170,25 @@ class Board:
         
         return self.get_block_presence(block[0], 0, 0, BLOCKS_SIZE)
 
+    def add_collider_block(self, layer, block_x, block_y, bps):
+        position = (block_x * bps, block_y * bps, bps * (block_x + 1) - 1, bps * (block_y + 1) - 1)
+        lods = self.get_block_lods(layer, block_x, block_y)
+        if lods != None:
+            block_id = self.get_block_id(layer, block_x, block_y)
+            if block_id in self.rendered_blocks.keys():
+                return
+            self.rendered_blocks[block_id] = (layer, block_x, block_y)
+            self.collision_resolver.add_block(block_id, position, lods)
+
     def add_collider_layer(self, layer: int, center_block: tuple = (0, 0)):
+        """
+        Ajoute une couche de collisionneurs au collision_resolver
+        
+        Paramètres:
+            - layer: Entier donnant la couche de collisionneurs
+            
+            - center_block: Tuple d'entiers donnant les coordonnées du bloc qui doit être placé au centre
+        """
         w,h = self.board_size
         block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
         block_w_offset = block_w // 2 + 1
@@ -172,12 +201,11 @@ class Board:
         
         bps = self.block_pixel_sizes[layer] * self.zoom
         
-        for block_x in range(x_start, x_end):
-            for block_y in range(y_start, y_end):
-                position = (block_x * bps, block_y * bps, bps * (block_x + 1) - 1, bps * (block_y + 1) - 1)
-                lods = self.get_block_lods(layer, block_x, block_y)
-                if lods != None:
-                    self.collision_resolver.add_block(position, lods)
+        for block_x in range(x_start, x_end + 1):
+            for block_y in range(y_start, y_end + 1):
+                self.add_collider_block(layer, block_x, block_y, bps)
+        
+        return (x_start, y_start, x_end, y_end)
 
     def load(self, layer: int, center_block: tuple = (0, 0)):
         """
@@ -194,16 +222,18 @@ class Board:
         y_start = center_block[1] - block_h_offset
         y_end = center_block[1] + block_h_offset
         
-        for block_x in range(x_start, x_end):
-            for block_y in range(y_start, y_end):
+        for block_x in range(x_start, x_end + 1):
+            for block_y in range(y_start, y_end + 1):
                 self.add_block(layer, block_x, block_y)
+                
+        return (x_start, y_start, x_end, y_end)
 
     def load_all(self):
         """
         Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
         """
         w,h = self.update_board_size()
-        self.shift = (w / 2 - self.origin[0] * TRANSLATE_AMOUNT, h / 2 - self.origin[1] * TRANSLATE_AMOUNT)
+        self.calculate_shift(w,h)
         self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
         for layer in self.layers.keys():
             if self.collisions[layer]:
@@ -266,7 +296,7 @@ class EditorBoard(Board):
         Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
         """
         w,h = self.update_board_size()
-        self.shift = (w / 2 - self.origin[0] * TRANSLATE_AMOUNT, h / 2 - self.origin[1] * TRANSLATE_AMOUNT)
+        self.calculate_shift(w, h)
         self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
         self.helper.ws.attributs("board", style={"background-position-x": str(self.shift[0]) + "px"\
                                                 ,"background-position-y": str(self.shift[1]) + "px"})
@@ -335,19 +365,6 @@ class EditorBoard(Board):
         self.helper.ws.add_class("corner-1", "hidden")
         self.helper.ws.add_class("corner-2", "hidden")
         
-    """def translate(self, move: tuple):
-        ox,oy = self.origin
-        mx = move[0] * self.zoom
-        my = move[1] * self.zoom
-        
-        self.origin = (ox + mx, oy + my)
-        
-        w,h = self.update_board_size()
-        
-        self.helper.ws.attributs("tiles", style={"left": str(-(self.origin[0]) + w / 2) + "px", "top": str(-(self.origin[1]) + h / 2) + "px"})
-        self.helper.ws.attributs("board", style={"background-position-x": str(-(self.origin[0]) + w / 2) + "px"\
-                                                ,"background-position-y": str(-(self.origin[1]) + h / 2) + "px"})"""
-        
     def translate_direction(self, move: tuple):
         """
         Bouge la carte en utilisant les directions donnees par le vecteur move, on bouge en utilisant TRANSLATE_AMOUNT
@@ -367,22 +384,16 @@ class EditorBoard(Board):
         Parametres:
             - (block_x, block_y): Les coordonnees du bloc
             
-            - create: True si bloc doit etre cree lorsqu'il n'existe pas, False sinon
+            - create: True si bloc doit être créé lorsqu'il n'existe pas, False sinon
         """
-        self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_x, block_y))
-        res = self.base.fetchall()
-        block_id = None
-        if len(res) > 1:
-            raise ValueError("Plusieurs blocs existent")
-        elif len(res) == 0:
-            if create:
-                # On cree un nouveau bloc
-                self.base.execute("INSERT INTO blocks(world,layer_index,block_x,block_y) VALUES (?,?,?,?);", (self.world, self.layer, block_x, block_y))
-                self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_x, block_y))
-                block_id = self.base.fetchone()[0]
-                self.helper.ws.insere(block_id, "div", parent="layer_" + str(self.layer))
-        else:
-            block_id = res[0][0]
+        block_id = super().get_block_id(self.layer, block_x, block_y)
+        
+        if block_id == None and create:
+            # On crée un nouveau bloc
+            self.base.execute("INSERT INTO blocks(world,layer_index,block_x,block_y) VALUES (?,?,?,?);", (self.world, self.layer, block_x, block_y))
+            self.base.execute("SELECT block_id FROM blocks WHERE world=? AND layer_index=? AND block_x=? AND block_y=?;", (self.world, self.layer, block_x, block_y))
+            block_id = self.base.fetchone()[0]
+            self.helper.ws.insere(block_id, "div", parent="layer_" + str(self.layer))
             
         return block_id
     
@@ -551,8 +562,8 @@ class EditorBoard(Board):
         
         x,y = click_pos[0] - int(self.shift[0]), click_pos[1] - int(self.shift[1])
         
-        block_x = (x) // (self.block_pixel_sizes[self.layer] * self.zoom)
-        block_y = (y) // (self.block_pixel_sizes[self.layer] * self.zoom)
+        block_x = x // (self.block_pixel_sizes[self.layer] * self.zoom)
+        block_y = y // (self.block_pixel_sizes[self.layer] * self.zoom)
         
         block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
         block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
