@@ -1,4 +1,5 @@
 from math import sqrt, atan2, sin, cos
+import time
 import web_helper
 from constants import PLAYER_SPRITESHEET_PATH
 
@@ -12,7 +13,6 @@ ANIM_BOTTOM         = PLAYER_SPRITESHEET_PATH + 'player_bottom.gif'
 ANIM_RIGHT          = PLAYER_SPRITESHEET_PATH + 'player_right.gif'
 ANIM_TOP            = PLAYER_SPRITESHEET_PATH + 'player_top.gif'
 ANIM_DEATH          = PLAYER_SPRITESHEET_PATH + 'player_death.gif'
-ANIM_DEATH_END      = PLAYER_SPRITESHEET_PATH + 'player_050.png'
 ANIM_ATTACK_TOP     = PLAYER_SPRITESHEET_PATH + 'player_attack_top.gif'
 ANIM_ATTACK_BOTTOM  = PLAYER_SPRITESHEET_PATH + 'player_attack_bottom.gif'
 ANIM_ATTACK_RIGHT   = PLAYER_SPRITESHEET_PATH + 'player_attack_right.gif'
@@ -42,7 +42,7 @@ class Player:
         
         self.health = 5
         self.max_health = 5
-        self.last_heal = time()
+        self.last_heal = time.time()
         self.dead = False
 
         self.weapon = Weapon(10, 40, 0.3)
@@ -163,18 +163,19 @@ class Player:
         """
         self.helper.change_dimensions(self.id, (self.x, self.y))
         
-    def hit(self, damage: float):
+    def hit(self, damage: int):
         """
         Fait des degats au joueur
         
         Parametres:
-            - damage: un flottant donnant le nombre de PV que l'attaque doit infliger
+            - damage: un entier donnant le nombre de PV que l'attaque doit infliger
         
         Renvoie True si le joueur est mort, False sinon
         """
+        assert type(damage) == int, "Le nombre de dégats donné n'est pas entier"
+        for i in range(min(5, damage)):
+            self.helper.ws.add_class("heart"+str(self.health - i), "hit")
         self.health = max(0, self.health - damage)
-        for i in range(5-self.health):
-            self.helper.ws.add_class("heart"+str(5-i), "hit")
         if not self.dead and self.health == 0:
             self.dead = True
             self.delta_sum = 0
@@ -182,10 +183,10 @@ class Player:
         return self.dead
     
     def heal(self, cooldown: float):
-        if time() - self.last_heal >= cooldown:
-            self.health = min(self.health+1, self.max_health)
-            self.helper.ws.remove_class("heart"+str(self.health), "hit")
-            self.last_heal = time()
+        if time.time() - self.last_heal >= cooldown:
+            self.health = min(self.health + 1, self.max_health)
+            self.helper.ws.remove_class("heart" + str(self.health), "hit")
+            self.last_heal = time.time()
 
     def attack(self, enemies: list[Enemy]):
         self.weapon.attack(enemies)
