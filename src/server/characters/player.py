@@ -1,49 +1,31 @@
-from random import randint
-from time import sleep, time
 from math import sqrt, atan2, sin, cos
 import web_helper
+from constants import PLAYER_SPRITESHEET_PATH
 
 from .weapon import Weapon
 from .enemy import Enemy
 
-IMG_STOP1 = 'assets/spritesheets/blonde_man/blonde_man_001.png'
-IMG_STOP2 = 'assets/spritesheets/blonde_man/blonde_man_002.png'
-IMG_STOP3 = 'assets/spritesheets/blonde_man/blonde_man_003.png'
-IMG_STOP4 = 'assets/spritesheets/blonde_man/blonde_man_004.png'
-STOP = [IMG_STOP1, IMG_STOP2, IMG_STOP3, IMG_STOP4]
 
-PNG_PATH = 'assets/spritesheets/blonde_man/blonde_man_000.png'
+ANIM_STOP           = PLAYER_SPRITESHEET_PATH + 'player_stop.gif'
+ANIM_LEFT           = PLAYER_SPRITESHEET_PATH + 'player_left.gif'
+ANIM_BOTTOM         = PLAYER_SPRITESHEET_PATH + 'player_bottom.gif'
+ANIM_RIGHT          = PLAYER_SPRITESHEET_PATH + 'player_right.gif'
+ANIM_TOP            = PLAYER_SPRITESHEET_PATH + 'player_top.gif'
+ANIM_DEATH          = PLAYER_SPRITESHEET_PATH + 'player_death.gif'
+ANIM_DEATH_END      = PLAYER_SPRITESHEET_PATH + 'player_050.png'
+ANIM_ATTACK_TOP     = PLAYER_SPRITESHEET_PATH + 'player_attack_top.gif'
+ANIM_ATTACK_BOTTOM  = PLAYER_SPRITESHEET_PATH + 'player_attack_bottom.gif'
+ANIM_ATTACK_RIGHT   = PLAYER_SPRITESHEET_PATH + 'player_attack_right.gif'
+ANIM_ATTACK_LEFT    = PLAYER_SPRITESHEET_PATH + 'player_attack_left.gif'
 
-IMG_LEFT1 = 'assets/spritesheets/blonde_man/blonde_man_005.png'
-IMG_LEFT2 = 'assets/spritesheets/blonde_man/blonde_man_006.png'
-IMG_LEFT3 = 'assets/spritesheets/blonde_man/blonde_man_007.png'
-IMG_LEFT4 = 'assets/spritesheets/blonde_man/blonde_man_008.png'
-LEFT = [IMG_LEFT1, IMG_LEFT2, IMG_LEFT3, IMG_LEFT4]
-
-IMG_RIGHT1 = 'assets/spritesheets/blonde_man/blonde_man_009.png'
-IMG_RIGHT2 = 'assets/spritesheets/blonde_man/blonde_man_010.png'
-IMG_RIGHT3 = 'assets/spritesheets/blonde_man/blonde_man_011.png'
-IMG_RIGHT4 = 'assets/spritesheets/blonde_man/blonde_man_012.png'
-RIGHT = [IMG_RIGHT1, IMG_RIGHT2, IMG_RIGHT3, IMG_RIGHT4]
-
-IMG_TOP1 = 'assets/spritesheets/blonde_man/blonde_man_013.png'
-IMG_TOP2 = 'assets/spritesheets/blonde_man/blonde_man_014.png'
-IMG_TOP3 = 'assets/spritesheets/blonde_man/blonde_man_015.png'
-IMG_TOP4 = 'assets/spritesheets/blonde_man/blonde_man_016.png'
-TOP = [IMG_TOP1, IMG_TOP2, IMG_TOP3, IMG_TOP4]
-
-IMG_BOTTOM1 = 'assets/spritesheets/blonde_man/blonde_man_017.png'
-IMG_BOTTOM2 = 'assets/spritesheets/blonde_man/blonde_man_018.png'
-IMG_BOTTOM3 = 'assets/spritesheets/blonde_man/blonde_man_019.png'
-IMG_BOTTOM4 = 'assets/spritesheets/blonde_man/blonde_man_020.png'
-BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
-
-IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 64
 MOVE_AMOUNT = 50
 MIN_X = 0
 MIN_Y = 0
-ANIMATION_UPDATE_FREQUENCY = 32
+ANIM_ATTACK_DURATION = 0.450    # 0.550
+ANIM_DEATH_DURATION = 0.450     # Dans les faits cette valeur est égale à : 0.650
+                                # Mais comme les updates ne se font pas toutes les nanosecondes, on pourrait dépasser ce temps et l'animation bouclerait, comme un glitch
+                                # Pour éviter cela, on place la fin de l'animation au tout début de la dernière frame
 
 # Contient le joueur
 class Player:
@@ -51,21 +33,12 @@ class Player:
         self.helper = helper
         self.x = position[0]
         self.y = position[1]
-        # TODO: Resize hitbox to fit character best
         self.width = IMG_SIZE
         self.height = IMG_SIZE
-        self.id = self.helper.add_image(IMG_STOP1, (self.x, self.y), size=(64, 64), parent="player")
-        self.id2 = self.helper.add_image(PNG_PATH, (0,0), size=(64, 64), parent="player")
-        self.r = 0
-        self.l = 0
-        self.b = 0
-        self.t = 0
-        self.s = 0
-        for i in range(5):
-            for j in range(4):
-                self.helper.change_image(self.id2, IMG[i][j])
-                sleep(0.1)
-        self.helper.change_image(self.id2, PNG_PATH)
+        self.id = self.helper.add_image(ANIM_STOP, (self.x, self.y), size=(64, 64), parent="player")
+        self.att = False
+        self.delta_sum = 0
+        self.current_anim = ANIM_STOP
         
         self.health = 5
         self.max_health = 5
@@ -98,11 +71,24 @@ class Player:
         self.movement_vector[1] = sin(a)
     
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
+        if self.dead:
+            if ANIM_DEATH_DURATION - self.delta_sum > 0.017: # Le temps d'une frame
+                self.delta_sum += delta_time
+            return [0,0]
+        
         if 'KeyR' in keys:
             self.attack(enemies)
+            self.att = True
+            self.delta_sum = 0
+            
+        if ANIM_ATTACK_DURATION - self.delta_sum > 0.017:
+            self.delta_sum += delta_time
+        else:
+            self.att = False
+
         if 'KeyH' in keys:
             self.heal(1)
-        return self.update_movement(delta_time, keys)
+        return self.update_movement(delta_time, keys) 
     
     def update_movement(self, delta_time: float, keys: list) -> tuple[float, float]:
         """
@@ -115,34 +101,25 @@ class Player:
         self.movement_vector[0] *= coef
         self.movement_vector[1] *= coef
         movement = self._process_move_keys(keys)
+        new_anim = None
         if movement != [0, 0]:
             self.move_range(movement)        
             if movement[0] > 0:
-                self.r += 1
-                self.r %= ANIMATION_UPDATE_FREQUENCY
-                IMG_RIGHT = RIGHT[self.r // 8]
-                self.helper.change_image(self.id, IMG_RIGHT)
+                new_anim = ANIM_ATTACK_RIGHT if self.att else ANIM_RIGHT
             elif movement[0] < 0:
-                self.l += 1
-                self.l %= ANIMATION_UPDATE_FREQUENCY
-                IMG_LEFT = LEFT[self.l // 8]
-                self.helper.change_image(self.id, IMG_LEFT)
+                new_anim = ANIM_ATTACK_LEFT if self.att else ANIM_LEFT
             elif movement[1] > 0 :
-                self.b += 1
-                self.b %= ANIMATION_UPDATE_FREQUENCY
-                IMG_BOTTOM = BOTTOM[self.b // 8]
-                self.helper.change_image(self.id, IMG_BOTTOM)
+                new_anim = ANIM_ATTACK_BOTTOM if self.att else ANIM_BOTTOM
             elif movement[1] < 0:
-                self.t += 1
-                self.t %= ANIMATION_UPDATE_FREQUENCY
-                IMG_TOP = TOP[self.t // 8]
-                self.helper.change_image(self.id, IMG_TOP)
+                new_anim = ANIM_ATTACK_TOP if self.att else ANIM_TOP
         else:
-            self.s += 1
-            self.s %= ANIMATION_UPDATE_FREQUENCY
-            IMG_STOP = STOP[self.s // 8]
-            self.helper.change_image(self.id, IMG_STOP)
-            
+            new_anim = ANIM_ATTACK_BOTTOM if self.att else ANIM_STOP
+        
+        # On évite de changer trop les images, surtout pour les GIFs
+        if new_anim != self.current_anim:
+            self.current_anim = new_anim
+            self.helper.change_image(self.id, self.current_anim, self.att)
+
         self.x += self.movement_vector[0]
         self.y += self.movement_vector[1]   
 
@@ -198,9 +175,10 @@ class Player:
         self.health = max(0, self.health - damage)
         for i in range(5-self.health):
             self.helper.ws.add_class("heart"+str(5-i), "hit")
-        if self.health == 0:
+        if not self.dead and self.health == 0:
             self.dead = True
-            # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement
+            self.delta_sum = 0
+            self.helper.change_image(self.id, ANIM_DEATH, True)
         return self.dead
     
     def heal(self, cooldown: float):
@@ -217,4 +195,5 @@ class Player:
         Renvoie True si le joueur est mort, False sinon
         """
         return self.dead
-    
+
+        
