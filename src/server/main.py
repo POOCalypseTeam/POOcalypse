@@ -69,6 +69,8 @@ class Game:
         base_npc_2 = Npc(self.web_helper, (150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
         self.npc.append(base_npc_1)
         self.npc.append(base_npc_2)
+        self.collision_resolver.add_collider((150, 50, 250, 150), collision_resolver.INTERACTABLE, base_npc_1)
+        self.collision_resolver.add_collider((100, 200, 200, 300), collision_resolver.INTERACTABLE, base_npc_2)
 
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
         self.enemies: list[Enemy] = []
@@ -131,6 +133,7 @@ class Game:
                     self.enemies.remove(enemy)
 
             # Toutes les instructions ici sont mises en pauses lorsqu'un menu est ouvert par le joueur
+            new_interactable = -1
             if self.interactable is None or not self.interactable.is_opened():
                 in_range_enemies = []
                 player_range = self.player.weapon.range
@@ -142,20 +145,23 @@ class Game:
                 if not self.player.is_dead():
                     player_movement = self.player.update(delta_time, keys, in_range_enemies)
                     if player_movement != [0, 0]:
-                        res = self.collision_resolver.attempt_movement(self.player.get_boundaries(player_movement), player_movement)
-                        if res[0]:
+                        mov_validate, new_interactable = self.collision_resolver.attempt_movement(self.player.get_boundaries(player_movement), player_movement)
+                        if mov_validate:
                             self.player.render(player_movement)
                             # Actualiser les blocs rendus sur la carte et scroller si nécessaire
                             self.board.translate(web_helper.multiply_list(player_movement, -1))
 
-            self.interactable = None
-            for npc in self.npc:
-                if npc.within_distance(self.player.get_position()):
-                    self.interactable = npc
-                    self.web_manager.inner_text("action-bar", "Appuyez sur E pour interagir")
-
-            if self.interactable == None:
-                self.web_manager.inner_text("action-bar", "")
+            if new_interactable != -1:
+                if new_interactable == None:
+                    self.web_manager.inner_text("action-bar", "")
+                    if isinstance(self.interactable, Npc):
+                        self.web_manager.remove_class(self.interactable.id, "highlight-blink")
+                    self.interactable = None
+                else:
+                    self.interactable = new_interactable
+                    self.web_manager.inner_text("action-bar", "Appuyez sur E pour intéragir")
+                    if isinstance(self.interactable, Npc):
+                        self.web_manager.add_class(self.interactable.id, "highlight-blink")
 
     def stop(self):
         """

@@ -64,9 +64,24 @@ img {
 
 /* Player */
 #img0 {
-    transition: top 50ms linear, left 50ms linear;
     /* margin-left = (60px - 32px) / 2 
     60px = health-bar.width
     32px = self.width */
     margin-left: 14px;
+}
+
+.highlight-blink {
+    animation-name: highlight-blinking;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes highlight-blinking {
+    from {
+        filter: brightness(1.1);
+    }
+    to {
+        filter: brightness(1.4);
+    }
 }

@@ -57,7 +57,6 @@ class Enemy:
         return self.dead
 
     def update(self, delta_time: float, player):
-        # TODO: Reflechir si c'est pas mieux de faire ca dans la boucle principale pour tous les ennemis et appeler les fonction d'attaques de tous les ennemis concernes a la place
         if self.within_range(player.get_center_pos()):
             self.attack(player)
         else:

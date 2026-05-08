@@ -1,3 +1,4 @@
+from math import sqrt
 from constants import BLOCKS_SIZE
 
 # ==== Tags ==== #
@@ -5,8 +6,7 @@ CANT_PASS    = 1       # Impossible de passer a travers
 TRIGGER      = 2       # Déclenche un événement au passage
 MOVABLE      = 4       # Possible de bouger le collider (ex: joueur, ennemis)
 BLOCK        = 8       # Bloc qui contient des collisions mais pas sur toute sa surface, il sera divisé en 4 blocs égaux jusq'une tile
-TARGET       = 16      # Collider qui peut être visé par un projectile
-INTERACTABLE = 32      # Il est possible d'intéragir en appuyant sur E
+INTERACTABLE = 16      # Il est possible d'intéragir en appuyant sur E
 
 
 class Collider:
@@ -24,16 +24,19 @@ class Collider:
         self.position: tuple[float, float, float, float] = position
         self.tag_code: int = tag_code
         self.handler: callable = handler
-        if tag_code & TRIGGER and (handler == None or type(handler) != callable):
-            raise ValueError("Le code est TRIGGER mais il n'y a pas de handler")
-        if (handler != None and type(handler) == callable) and not tag_code & TRIGGER:
-            raise ValueError("Il y a un handler mais le code n'est pas TRIGGER")
-        
-        self.id: int = -1
+        if (tag_code & TRIGGER or tag_code & INTERACTABLE) and handler == None:
+            raise ValueError("Le collisionneur nécessite un handler")
+        if handler != None and not (tag_code & TRIGGER or tag_code & INTERACTABLE):
+            raise ValueError("Il y a un handler mais le collisionneur n'en a pas besoin")
         
     def get_position_after_movement(self, mov: tuple[float, float]) -> tuple[float, float, float, float]:
         pos = self.position
         return (pos[0] + mov[0], pos[1] + mov[1], pos[2] + mov[0], pos[3] + mov[1])
+    
+    def get_center_distance(self, box):
+        self_center = ((self.position[0] + self.position[2]) / 2, (self.position[1] + self.position[3]) / 2)
+        box_center = ((box[0] + box[2]) / 2, (box[1] + box[3]) / 2)
+        return sqrt((self_center[0] - box_center[0]) ** 2 + (self_center[1] - box_center[1]) ** 2)
         
     def check_for_collision(self, box: tuple[float, float, float, float]) -> bool:
         """
@@ -51,12 +54,6 @@ class Collider:
             if self.position[0] <= point[0] <= self.position[2] and self.position[1] <= point[1] <= self.position[3]:
                 return True
         return False
-        
-    def get_id(self):
-        return self.id
-    
-    def set_id(self, id: int):
-        self.id = id
 
     def is_cant_pass(self):
         return self.tag_code & CANT_PASS
@@ -70,8 +67,8 @@ class Collider:
     def is_block(self):
         return self.tag_code & BLOCK
     
-    def is_target(self):
-        return self.tag_code & TARGET
+    def is_interactable(self):
+        return self.tag_code & INTERACTABLE
 
 class Block(Collider):
     def __init__(self, position: tuple[float, float, float, float], lods, size: int):
@@ -140,8 +137,8 @@ class CollisionResolver:
     def __init__(self):
         self.colliders: dict[str, Collider] = {}
     
-    """def add_collider(self, position: tuple[float, float, float, float], tag_code: int, handler: callable = None) -> None:
-        ""
+    def add_collider(self, position: tuple[float, float, float, float], tag_code: int, handler: callable = None) -> None:
+        """
         Permet d'ajouter un rectangle qui fait office de collider
 
         Parametres:
@@ -154,11 +151,10 @@ class CollisionResolver:
         Leve une erreur lorsque le tag_code a TRIGGER mais qu'il n'y a pas de handler, ou l'inverse
         
         Renvoie le collider nouvellement créé
-        ""
+        """
         collider = Collider(position, tag_code, handler)
-        collider.set_id(len(self.colliders))
-        self.colliders.append(collider)
-        return collider"""
+        self.colliders[position] = collider
+        return collider
     
     def add_block(self, block_id: str, position: tuple[float, float, float, float], block_lods):
         """
@@ -173,17 +169,16 @@ class CollisionResolver:
         if not block_lods[0]:
             return
         block = Block(position, block_lods, BLOCKS_SIZE)
-        block.set_id(len(self.colliders))
-        self.colliders[block_id] = block
+        self.colliders['b' + block_id] = block
         return block
     
-    def remove_collider(self, block_id: str):
+    def remove_block(self, block_id: str):
         """
         Enleve ce collider de la liste des collider
         """
-        if not block_id in self.colliders:
+        if not ('b' + block_id) in self.colliders:
             return
-        del self.colliders[block_id]
+        del self.colliders['b' + block_id]
 
     def attempt_movement(self, pos, mov):
         """
@@ -191,11 +186,26 @@ class CollisionResolver:
 
         Vérifie pour chaque mouvement de la liste s'il est valide ou non et s'il faut déclencher des événements
         """
+        
+        box = (pos[0] + mov[0], pos[1] + mov[1], pos[2] + mov[0], pos[3] + mov[1])
         validate = True
-        nearby = []
+        closest_interact = None
+        
+        collision_candidate: Collider
         for collision_candidate in self.colliders.values():
+            
             # On regarde s'il y a collision avec la map
-            if validate and collision_candidate.is_block() and collision_candidate.check_for_collision((pos[0] + mov[0], pos[1] + mov[1], pos[2] + mov[0], pos[3] + mov[1])):
+            if validate and collision_candidate.is_block() and collision_candidate.check_for_collision(box):
                 # Si tel est le cas, on renvoie False pour la validation du mouvement
                 validate = False
-        return (validate, nearby)
+                
+            # On regarde si le joueur peut intéragir avec quoi que ce soit
+            if collision_candidate.is_interactable() and collision_candidate.check_for_collision(box):
+                if closest_interact == None:
+                    closest_interact = (collision_candidate, collision_candidate.get_center_distance(box))
+                else:
+                    d_a = closest_interact[1]
+                    d_b = collision_candidate.get_center_distance(box)
+                    closest_interact = closest_interact if d_a <= d_b else (collision_candidate, d_b)
+                
+        return (validate, closest_interact[0].handler if closest_interact != None else None)

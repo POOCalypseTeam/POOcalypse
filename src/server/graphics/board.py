@@ -254,6 +254,9 @@ class Board:
             self.layer_bounds[layer] = self.add_layer(layer)
 
     def remove_block(self, layer: int, block_x: int, block_y: int, collider: bool) -> None:
+        """
+        Enlève un bloc de l'affichage ET de la logique s'il y est bien
+        """
         block_id = self.get_block_id(layer, block_x, block_y)
         if block_id == None or not (block_x, block_y) in self.rendered_blocks[layer]:
             return
@@ -263,7 +266,7 @@ class Board:
             if isinstance(self, EditorBoard):
                 self.helper.ws.remove(block_id)
             else:
-                self.collision_resolver.remove_collider(block_id)
+                self.collision_resolver.remove_block(block_id)
         else:
             self.helper.ws.remove(block_id)
 
@@ -326,6 +329,9 @@ class Board:
         self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
 
     def window_size_changed(self):
+        """
+        Fonction à appeler lorsque la taille de la fenêtre change, cela permet de garder le joueur à la même position, et de cacher / afficher les blocs invisibles / visibles maintenant
+        """
         ow,oh = self.board_size
         w,h = self.update_board_size()
         self.shift = (self.shift[0] + (w - ow) / 2, self.shift[1] + (h - oh) / 2)
@@ -363,9 +369,16 @@ class EditorBoard(Board):
         self.board_size = (w, h)
         return self.board_size
     
+    def window_size_changed(self):
+        super().window_size_changed()
+        self.helper.ws.attributs("board", style={"background-position-x": str(self.shift[0]) + "px"\
+                                                ,"background-position-y": str(self.shift[1]) + "px"})
+    
     def load(self):
         """
         Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
+        
+        Les couches de collisions sont affichées
         """
         w,h = self.update_board_size()
         self.calculate_shift(w, h)
