@@ -120,7 +120,7 @@ class Game:
             window_size = self.web_manager.get_window_size_if_changed()
             
             if window_size != None:
-                # TODO: Aussi faire le rendu de la carte, en veillant à supprimer les autres tiles, il faut attendre le chargement dynamique, ce sont les mêmes valeurs
+                self.board.window_size_changed()
                 self.player.update_graphics(window_size)
 
             keys = self.keyboard_manager.get_keys()

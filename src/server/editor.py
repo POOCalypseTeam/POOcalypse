@@ -101,6 +101,11 @@ class Editor:
             
             delta_time += 0.01
             
+            window_size = self.web_manager.get_window_size_if_changed()
+            
+            if window_size != None:
+                self.board.window_size_changed()
+            
             keys = self.keyboard_manager.get_keys()
             buttons = self.mouse_manager.get_buttons()
 

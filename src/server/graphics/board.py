@@ -202,11 +202,11 @@ class Board:
         top = (-self.shift[1]) / block_size
         bottom = (h - self.shift[1]) / block_size
         
-        min_x = floor(left) - 1
-        max_x = floor(right) + 1
+        min_x = floor(left)
+        max_x = ceil(right)
         
-        min_y = floor(top) - 1
-        max_y = floor(bottom) + 1
+        min_y = floor(top)
+        max_y = ceil(bottom)
         
         for block_x in range(min_x, max_x + 1):
             for block_y in range(min_y, max_y + 1):
@@ -227,11 +227,11 @@ class Board:
         top = (-self.shift[1]) / block_size
         bottom = (h - self.shift[1]) / block_size
         
-        min_x = floor(left) - 1
-        max_x = floor(right) + 1
+        min_x = floor(left)
+        max_x = ceil(right)
         
-        min_y = floor(top) - 1
-        max_y = floor(bottom) + 1
+        min_y = floor(top)
+        max_y = ceil(bottom)
         
         for block_x in range(min_x, max_x + 1):
             for block_y in range(min_y, max_y + 1):
@@ -267,13 +267,9 @@ class Board:
         else:
             self.helper.ws.remove(block_id)
 
-    def update_displayed_blocks(self, move):
+    def update_displayed_blocks(self):
         """
         Cette fonction doit après un mouvement de la carte, afficher de nouveaux blocs et supprimer les anciens
-        
-        Pour optimiser cela, on utilise le vecteur move qui donne la direction du mouvement effectué
-        
-        Ainsi les nouveaux blocs a afficher sont dans la direction de move et les blocs à supprimer sont à l'opposé
         
         Étant donné que les mouvements sont petits (même pour l'éditeur ?), on peut se contenter de regarder qu'une couche en plus de celle actuelle
         """
@@ -289,11 +285,14 @@ class Board:
             top = (-self.shift[1]) / block_size
             bottom = (h - self.shift[1]) / block_size
             
-            min_x = floor(left) - 1
-            max_x = floor(right) + 1
+            min_x = floor(left)
+            max_x = ceil(right)
             
-            min_y = floor(top) - 1
-            max_y = floor(bottom) + 1
+            min_y = floor(top)
+            max_y = ceil(bottom)
+            
+            if (min_x, min_y, max_x, max_y) == bounds:
+                continue
             
             now_rendered_blocks = set()
             
@@ -303,14 +302,13 @@ class Board:
                     
             to_add = now_rendered_blocks - self.rendered_blocks[layer]
             to_remove = self.rendered_blocks[layer] - now_rendered_blocks
-            
+
             for x, y in to_add:
                 (self.add_collider_block(layer, x, y, block_size) if (collider and not isinstance(self, EditorBoard)) else self.add_block(layer, x, y))
             
             for x, y in to_remove:
                 self.remove_block(layer, x, y, collider)
-            
-
+                
     def translate(self, move: tuple):
         """
         Bouge la carte en utilisant le vecteur move, on bouge en utilisant le nombre de pixels dans move
@@ -323,9 +321,16 @@ class Board:
         
         self.shift = (ox + mx, oy + my)
         
-        self.update_displayed_blocks(move)
+        self.update_displayed_blocks()
         
         self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
+
+    def window_size_changed(self):
+        ow,oh = self.board_size
+        w,h = self.update_board_size()
+        self.shift = (self.shift[0] + (w - ow) / 2, self.shift[1] + (h - oh) / 2)
+        self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
+        self.update_displayed_blocks()
 
 
 class EditorBoard(Board):
