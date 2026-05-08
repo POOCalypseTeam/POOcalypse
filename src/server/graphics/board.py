@@ -1,6 +1,6 @@
 import sqlite3
 import os # listdir
-from math import ceil
+from math import ceil, floor
 
 import web_helper
 import collision_resolver
@@ -33,7 +33,10 @@ class Board:
         self.collisions = {}
         
         self.layers: dict[int, str] = {}
+        self.layer_bounds: dict[int, str] = {}
         
+        self.rendered_blocks: dict[set[tuple[int, int]]] = {}
+                
         # On prete attention a la taille de board
         self.board_size = self.update_board_size()
         
@@ -66,11 +69,12 @@ class Board:
             self.tile_pixel_sizes[layer[0]] = layer[2]
             self.block_pixel_sizes[layer[0]] = layer[2] * BLOCKS_SIZE
             self.collisions[layer[0]] = layer[3]
+            self.rendered_blocks[layer[0]] = set()
             
             # Pour chaque couche, on crée un div
             self.helper.ws.insere("layer_" + str(layer[0]), "div", style={"z-index": layer[0] * 2}, parent="tiles")
         
-        self.load_all()
+        self.load()
         
     def update_board_size(self) -> tuple[float, float]:
         """
@@ -114,6 +118,11 @@ class Board:
         block_offset = ((block_x) * self.block_pixel_sizes[layer], (block_y) * self.block_pixel_sizes[layer])
         self.base.execute("SELECT x,y,image_name FROM tiles WHERE block_id=?;", (block_id,))
         tiles = self.base.fetchall()
+        
+        if len(tiles) > 0:
+            self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
+            self.rendered_blocks[layer].add((block_x, block_y))
+        
         for tile in tiles:
             img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
             img_path = TILESET_PATH_PLACEHOLDER.replace("%SET%", self.layers[layer]).replace("%IMG%", tile[2])
@@ -136,11 +145,9 @@ class Board:
         Renvoie le block_id
         """
         block_id = self.get_block_id(layer, block_x, block_y)
-        if block_id == None or block_id in self.rendered_blocks.keys():
+        if block_id == None:
             return
         
-        block_id = block[0]
-        self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
         self.render_block(block_id, layer, block_x, block_y)
         
         return block_id
@@ -175,12 +182,10 @@ class Board:
         lods = self.get_block_lods(layer, block_x, block_y)
         if lods != None:
             block_id = self.get_block_id(layer, block_x, block_y)
-            if block_id in self.rendered_blocks.keys():
-                return
-            self.rendered_blocks[block_id] = (layer, block_x, block_y)
+            self.rendered_blocks[layer].add((block_x, block_y))
             self.collision_resolver.add_block(block_id, position, lods)
 
-    def add_collider_layer(self, layer: int, center_block: tuple = (0, 0)):
+    def add_collider_layer(self, layer: int):
         """
         Ajoute une couche de collisionneurs au collision_resolver
         
@@ -190,47 +195,53 @@ class Board:
             - center_block: Tuple d'entiers donnant les coordonnées du bloc qui doit être placé au centre
         """
         w,h = self.board_size
-        block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer])), ceil(h / self.block_pixel_sizes[layer]))
-        block_w_offset = block_w // 2 + 1
-        block_h_offset = block_h // 2 + 1
+        block_size = self.block_pixel_sizes[layer] * self.zoom
+        left = (-self.shift[0]) / block_size
+        right = (w - self.shift[0]) / block_size
         
-        x_start = center_block[0] - block_w_offset
-        x_end = center_block[0] + block_w_offset
-        y_start = center_block[1] - block_h_offset
-        y_end = center_block[1] + block_h_offset
+        top = (-self.shift[1]) / block_size
+        bottom = (h - self.shift[1]) / block_size
         
-        bps = self.block_pixel_sizes[layer] * self.zoom
+        min_x = floor(left) - 1
+        max_x = floor(right) + 1
         
-        for block_x in range(x_start, x_end + 1):
-            for block_y in range(y_start, y_end + 1):
-                self.add_collider_block(layer, block_x, block_y, bps)
+        min_y = floor(top) - 1
+        max_y = floor(bottom) + 1
         
-        return (x_start, y_start, x_end, y_end)
+        for block_x in range(min_x, max_x + 1):
+            for block_y in range(min_y, max_y + 1):
+                self.add_collider_block(layer, block_x, block_y, block_size)
+        
+        return (min_x, min_y, max_x, max_y)
 
-    def load(self, layer: int, center_block: tuple = (0, 0)):
+    def add_layer(self, layer: int):
         """
         Charge le layer specifie sur la page en centrant sur le block donne 
         """
         # On récupère la taille de la fenetre
         w,h = self.board_size
-        block_w,block_h = (ceil(w / (self.block_pixel_sizes[layer] * self.zoom)), ceil(h / self.block_pixel_sizes[layer] * self.zoom))
-        block_w_offset = block_w // 2 + 1
-        block_h_offset = block_h // 2 + 1
+        block_size = self.block_pixel_sizes[layer] * self.zoom
+        left = (-self.shift[0]) / block_size
+        right = (w - self.shift[0]) / block_size
         
-        x_start = center_block[0] - block_w_offset
-        x_end = center_block[0] + block_w_offset
-        y_start = center_block[1] - block_h_offset
-        y_end = center_block[1] + block_h_offset
+        top = (-self.shift[1]) / block_size
+        bottom = (h - self.shift[1]) / block_size
         
-        for block_x in range(x_start, x_end + 1):
-            for block_y in range(y_start, y_end + 1):
+        min_x = floor(left) - 1
+        max_x = floor(right) + 1
+        
+        min_y = floor(top) - 1
+        max_y = floor(bottom) + 1
+        
+        for block_x in range(min_x, max_x + 1):
+            for block_y in range(min_y, max_y + 1):
                 self.add_block(layer, block_x, block_y)
                 
-        return (x_start, y_start, x_end, y_end)
+        return (min_x, min_y, max_x, max_y)
 
-    def load_all(self):
+    def load(self):
         """
-        Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
+        Charge toute la carte spécifiée sur la page en centrant aux coordonnées données
         """
         w,h = self.update_board_size()
         self.calculate_shift(w,h)
@@ -238,9 +249,67 @@ class Board:
         for layer in self.layers.keys():
             if self.collisions[layer]:
                 # Il n'est pas nécessaire de vérifier si self.collisions est à None car c'est le cas seulement si board est EditorBoard, auquel cas load_all est surchargé
-                self.add_collider_layer(layer, self.origin)
+                self.layer_bounds[layer] = self.add_collider_layer(layer)
                 continue
-            self.load(layer, self.origin)
+            self.layer_bounds[layer] = self.add_layer(layer)
+
+    def remove_block(self, layer: int, block_x: int, block_y: int, collider: bool) -> None:
+        block_id = self.get_block_id(layer, block_x, block_y)
+        if block_id == None or not (block_x, block_y) in self.rendered_blocks[layer]:
+            return
+        
+        self.rendered_blocks[layer].remove((block_x, block_y))
+        if collider:
+            if isinstance(self, EditorBoard):
+                self.helper.ws.remove(block_id)
+            else:
+                self.collision_resolver.remove_collider(block_id)
+        else:
+            self.helper.ws.remove(block_id)
+
+    def update_displayed_blocks(self, move):
+        """
+        Cette fonction doit après un mouvement de la carte, afficher de nouveaux blocs et supprimer les anciens
+        
+        Pour optimiser cela, on utilise le vecteur move qui donne la direction du mouvement effectué
+        
+        Ainsi les nouveaux blocs a afficher sont dans la direction de move et les blocs à supprimer sont à l'opposé
+        
+        Étant donné que les mouvements sont petits (même pour l'éditeur ?), on peut se contenter de regarder qu'une couche en plus de celle actuelle
+        """
+        w,h = self.update_board_size()
+        for layer in self.layers:
+            collider = self.collisions[layer]
+            bounds = self.layer_bounds[layer]
+            block_size = self.block_pixel_sizes[layer] * self.zoom
+            
+            left = (-self.shift[0]) / block_size
+            right = (w - self.shift[0]) / block_size
+            
+            top = (-self.shift[1]) / block_size
+            bottom = (h - self.shift[1]) / block_size
+            
+            min_x = floor(left) - 1
+            max_x = floor(right) + 1
+            
+            min_y = floor(top) - 1
+            max_y = floor(bottom) + 1
+            
+            now_rendered_blocks = set()
+            
+            for block_x in range(min_x, max_x + 1):
+                for block_y in range(min_y, max_y + 1):
+                    now_rendered_blocks.add((block_x, block_y))
+                    
+            to_add = now_rendered_blocks - self.rendered_blocks[layer]
+            to_remove = self.rendered_blocks[layer] - now_rendered_blocks
+            
+            for x, y in to_add:
+                (self.add_collider_block(layer, x, y, block_size) if (collider and not isinstance(self, EditorBoard)) else self.add_block(layer, x, y))
+            
+            for x, y in to_remove:
+                self.remove_block(layer, x, y, collider)
+            
 
     def translate(self, move: tuple):
         """
@@ -254,9 +323,7 @@ class Board:
         
         self.shift = (ox + mx, oy + my)
         
-        w,h = self.update_board_size()
-        
-        
+        self.update_displayed_blocks(move)
         
         self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
 
@@ -291,7 +358,7 @@ class EditorBoard(Board):
         self.board_size = (w, h)
         return self.board_size
     
-    def load_all(self):
+    def load(self):
         """
         Charge toute la carte specifiee sur la page en centrant au coordonnees donnees
         """
@@ -301,7 +368,7 @@ class EditorBoard(Board):
         self.helper.ws.attributs("board", style={"background-position-x": str(self.shift[0]) + "px"\
                                                 ,"background-position-y": str(self.shift[1]) + "px"})
         for layer in self.layers.keys():
-            self.load(layer, (0, 0))
+            self.layer_bounds[layer] = self.add_layer(layer)
         
     # Methodes pour l'interaction PAGE -> BOARD
     
@@ -375,7 +442,7 @@ class EditorBoard(Board):
         self.helper.ws.attributs("board", style={"background-position-x": str(self.shift[0]) + "px"\
                                                 ,"background-position-y": str(self.shift[1]) + "px"})
 
-    def get_block_id(self, block_x: int, block_y: int, create: bool = False) -> str:
+    def get_block_id_or_create(self, block_x: int, block_y: int, create: bool = False) -> str:
         """
         Renvoie l'id du bloc dans la base de donnees et le cree si create est a True
         
@@ -386,7 +453,7 @@ class EditorBoard(Board):
             
             - create: True si bloc doit être créé lorsqu'il n'existe pas, False sinon
         """
-        block_id = super().get_block_id(self.layer, block_x, block_y)
+        block_id = self.get_block_id(self.layer, block_x, block_y)
         
         if block_id == None and create:
             # On crée un nouveau bloc
@@ -476,7 +543,7 @@ class EditorBoard(Board):
         
         block_x = corner1[0][0]
         block_y = corner1[0][1]
-        current_block_id = self.get_block_id(block_x, block_y, create=True)
+        current_block_id = self.get_block_id_or_create(block_x, block_y, create=True)
         
         x_count = (corner2[0][0] * self.block_size + corner2[1][0]) - (corner1[0][0] * self.block_size + corner1[1][0])
         y_count = (corner2[0][1] * self.block_size + corner2[1][1]) - (corner1[0][1] * self.block_size + corner1[1][1])
@@ -500,7 +567,7 @@ class EditorBoard(Board):
                 tile_y += 1
                 if tile_y == self.block_size:
                     block_y += 1
-                    current_block_id = self.get_block_id(block_x, block_y, create=create)
+                    current_block_id = self.get_block_id_or_create(block_x, block_y, create=create)
                     block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
                     block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
                     tile_y = 0
@@ -511,7 +578,7 @@ class EditorBoard(Board):
                 tile_x = 0
             tile_y = corner1[1][1]
             block_y = corner1[0][1]
-            current_block_id = self.get_block_id(block_x, block_y, create=create)
+            current_block_id = self.get_block_id_or_create(block_x, block_y, create=create)
             block_offset_x = block_x * self.block_pixel_sizes[self.layer] * self.zoom
             block_offset_y = block_y * self.block_pixel_sizes[self.layer] * self.zoom
 
@@ -528,14 +595,14 @@ class EditorBoard(Board):
             """
             Cette methode ajoute une tile a la position donnee sur la page et actualise la base de donnees, elle ajoute un bloc si necessaire
             """
-            block_id = self.get_block_id(block_pos[0], block_pos[1], create=True)
+            block_id = self.get_block_id_or_create(block_pos[0], block_pos[1], create=True)
             self.add_or_edit_tile(block_id, block_pos, block_offsets, tile_pos)
                         
         def remove_tile(block_pos, tile_pos):
             """
             Cette methode supprime la tile specifiee de la page et actualise la base de donnees
             """
-            block_id = self.get_block_id(block_pos[0], block_pos[1])
+            block_id = self.get_block_id_or_create(block_pos[0], block_pos[1])
             
             self.base.execute("SELECT COUNT(image_name) FROM tiles WHERE block_id=? AND x=? AND y=?;", (block_id, tile_pos[0], tile_pos[1]))
             res = self.base.fetchall()[0][0]

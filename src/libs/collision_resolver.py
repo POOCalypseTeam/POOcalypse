@@ -181,6 +181,8 @@ class CollisionResolver:
         """
         Enleve ce collider de la liste des collider
         """
+        if not block_id in self.colliders:
+            return
         del self.colliders[block_id]
 
     def attempt_movement(self, pos, mov):
