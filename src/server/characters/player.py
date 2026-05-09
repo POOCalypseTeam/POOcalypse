@@ -45,6 +45,8 @@ class Player:
         
         self.health = 5
         self.max_health = 5
+        for i in range(self.health):
+            self.helper.ws.remove_class("heart" + str(i), "hit")
         self.last_heal = time.time()
         self.dead = False
 
@@ -91,15 +93,17 @@ class Player:
             angle = atan2(movement_direction[1], movement_direction[0])
             movement = (cos(angle) * MOVE_AMOUNT * delta_time * 2, sin(angle) * MOVE_AMOUNT * delta_time * 2)
             self.movement_vector[0] += movement[0]
-            self.movement_vector[1] += movement[1]       
-            if movement[0] > 0:
-                new_anim = ANIM_ATTACK_RIGHT if self.att else ANIM_RIGHT
-            elif movement[0] < 0:
-                new_anim = ANIM_ATTACK_LEFT if self.att else ANIM_LEFT
-            elif movement[1] > 0 :
-                new_anim = ANIM_ATTACK_BOTTOM if self.att else ANIM_BOTTOM
-            elif movement[1] < 0:
-                new_anim = ANIM_ATTACK_TOP if self.att else ANIM_TOP
+            self.movement_vector[1] += movement[1]
+            if abs(self.movement_vector[0]) > abs(self.movement_vector[1]):
+                if self.movement_vector[0] > 0:
+                    new_anim = ANIM_ATTACK_RIGHT if self.att else ANIM_RIGHT
+                else:
+                    new_anim = ANIM_ATTACK_LEFT if self.att else ANIM_LEFT
+            else:
+                if self.movement_vector[1] > 0 :
+                    new_anim = ANIM_ATTACK_BOTTOM if self.att else ANIM_BOTTOM
+                else:
+                    new_anim = ANIM_ATTACK_TOP if self.att else ANIM_TOP
         else:
             new_anim = ANIM_ATTACK_BOTTOM if self.att else ANIM_STOP
         
@@ -108,10 +112,6 @@ class Player:
             self.current_anim = new_anim
             self.helper.change_image(self.id, self.current_anim, self.att)
 
-        self.x += self.movement_vector[0]
-        self.y += self.movement_vector[1]   
-
-        self.render()
         return self.movement_vector
         
     def _process_move_keys(self, keys: dict) -> list:

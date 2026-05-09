@@ -133,6 +133,7 @@ class Game:
             if 'KeyP' in keys and self.player.is_dead():
                 self.web_manager.remove_children("player")
                 self.init_player(self.board.origin, 7)
+                self.board.reset_view()
 
             # On actualise la liste des ennemis en supprimant ceux qui sont morts
             for enemy in self.enemies:

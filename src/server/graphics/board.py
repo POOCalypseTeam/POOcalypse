@@ -337,6 +337,12 @@ class Board:
         self.shift = (self.shift[0] + (w - ow) / 2, self.shift[1] + (h - oh) / 2)
         self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
         self.update_displayed_blocks()
+        
+    def reset_view(self):
+        w,h = self.board_size
+        self.calculate_shift(w,h)
+        self.helper.ws.attributs("tiles", style={"left": str(self.shift[0]) + "px", "top": str(self.shift[1]) + "px"})
+        self.update_displayed_blocks()
 
 
 class EditorBoard(Board):
