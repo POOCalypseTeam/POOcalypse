@@ -32,7 +32,7 @@ class Player:
     def __init__(self, helper: web_helper.Helper, map_center: tuple):
         self.helper = helper
         # X1, Y1, X2, Y2 pour l'image dans sa taille originale, il faut appliquer le zoom
-        self.hitbox = (9, 18, 23, 25)
+        self.hitbox = (9, 19, 22, 23)
         self.width = IMG_SIZE
         self.height = IMG_SIZE
         self.x = map_center[0] - self.width / 2
