@@ -9,19 +9,26 @@
     </head>
     <body ondragstart="return false;" ondrop="return false;">
         
-        <div id="board">
-            <div id="tiles"></div>
+        <div id="board" class="grid-background">
+            <div id="tiles">
+                <div id="select_corners">
+                    <img src="../assets/misc/select_corner_1.png" class="corner hidden" id="corner-1">
+                    <img src="../assets/misc/select_corner_2.png" class="corner hidden" id="corner-2">
+                </div>
+            </div>
         </div>
 
         <ul id="tools">
-            <li onclick="transmettre('tool_changed', 'draw');">✏</li>
-            <li onclick="transmettre('tool_changed', 'erase');">🧼</li>
-            <li onclick="transmettre('tool_changed', 'select');">□</li>
+            <li class="tool" onclick="tool(this, 'draw');">✏</li>
+            <li class="tool" onclick="tool(this, 'erase');">🧼</li>
+            <li class="tool" onclick="tool(this, 'select');">□</li>
+            <br>
+            <li class="tool" onclick="hideBackground()"                      >⌗</li>
         </ul>
 
         <div id="world-info">
             <select name="world-choice" id="world">
-                <option disabled selected value>-- Select an option --</option>
+                <option disabled selected value>-- Select a world --</option>
             </select>
 
             <h2>Couches</h2>

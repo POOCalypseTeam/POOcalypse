@@ -12,9 +12,11 @@ createLayerButton = document.getElementById("add");
 tileset = document.getElementById("tileset");
 tilesetSelect = document.getElementById("tileset-choice");
 brush = null;
+activeTool = null;
 
 worldSelect.addEventListener("change", (event) => {
-    while (tiles.firstChild) {
+    // On souhaite garder le premier enfant, sachant que c'est les cases de selection
+    while (tiles.children.length > 1) {
         tiles.removeChild(tiles.lastChild);
     }
     transmettre("world_changed", event.target.value);
@@ -55,6 +57,7 @@ function addLayer(layer) {
             e.target.innerText = "🕶";
             layer.style["display"] = "block";
         }
+        e.stopPropagation();
     });
 
     deleteInput = document.createElement("span");
@@ -129,5 +132,27 @@ function addTilesEvent() {
             // On ne recupere que le fichier image
             transmettre("tile_changed", src.substring(src.lastIndexOf("/") + 1));
         });
+    }
+}
+
+function tool(toolElement, newActiveTool) {
+    transmettre("tool_changed", newActiveTool);
+    if (activeTool != null)
+    {
+        // Si c'est l'outil de sélection et qu'on gomme on veut pas sélectionner l'outil gomme mais effacer la sélection
+        if (activeTool.innerText === "□" && newActiveTool === "erase" && !document.getElementById("corner-1").classList.contains("hidden") && !document.getElementById("corner-2").classList.contains("hidden"))
+            return;
+        activeTool.classList.remove("tool-selected");
+    }
+    activeTool = toolElement;
+    toolElement.classList.add("tool-selected");
+}
+
+function hideBackground() {
+    if (board.classList.contains("grid-background")) {
+        board.classList.remove("grid-background");
+    }
+    else {
+        board.classList.add("grid-background");
     }
 }

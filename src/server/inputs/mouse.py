@@ -21,7 +21,7 @@ class Mouse:
   board.addEventListener("mousedown", (e) => { 
     transmettre('**MD**',[e.target.id,e.buttons,e.clientX,e.clientY]);
   });
-  board.addEventListener("mouseup", (e) => {
+  window.addEventListener("mouseup", (e) => {
     transmettre('**MU**',[e.target.id,e.buttons,e.clientX,e.clientY]);    
   });
         """)

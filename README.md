@@ -22,7 +22,7 @@ Pour stopper le serveur, écrire la commande `stop()` dans le terminal intéract
 
 Pour lancer l'éditeur il faut sélectionner la bonne configuration sur VSCode, en passant par le terminal, il faut exécuter le script `server/editor.py` au lieu de `server/main.py`.<br>
 La première chose à faire une fois lancé, c'est sélectionner un monde en haut à droite, puis une couche sur laquelle on veut travailler.<br>
-En selectionnant une couche, toutes les tiles disponibles s'affichent en bas, il est possible de les sélectionner puis de dessiner ave clic gauche ou effacer avec clic droite ou l'outil gomme.<br>
+En selectionnant une couche, toutes les tiles disponibles s'affichent en bas, il est possible de les sélectionner puis de dessiner avec clic gauche ou effacer avec clic droit ou l'outil gomme.<br>
 
 ## Creation de monde
 
@@ -31,10 +31,11 @@ La base de donnée se situe, par rapport à la racine du projet: `/src/content/d
 Pour la modifier, il faut taper dans un terminal: `sqlite3 worlds.db`<br>
 Ensuite, il faut ajouter un monde avec la commande: `INSERT INTO worlds VALUES (%NOM_DU_MONDE%);` et remplacer `%NOM_DU_MONDE%`.
 
-## Ajoute de couches
+## Ajout de couches
 
 Si le monde vient d'être créé il n'a surement aucune couche, pour se faire il est possible de passer par sqlite3 ou par l'interface, il suffit de sélectionner les options souhaitées et cliquer sur le bouton **Ajouter**.
 Si vous ne voyez pas la couche s'afficher dans la liste, c'est probablement qu'une autre couche est au même niveau, ce qui n'est pas permis.
+Pour ajouter des collisions, il faut ajouter des couches spéciales, qui ne s'affichent que dans l'éditeur et non en jeu (comme les Barrier Block dans Minecraft)
 
 ## Suppression d'une couche
 
@@ -47,3 +48,23 @@ Puis les blocks: `DELETE FROM blocks WHERE world=%MONDE% AND layer_index=%NIVEAU
 
 Pour supprimer un monde il faut supprimer toutes les couches, pour cela se référer à <a href="#suppression-dune-couche">la séction précédente</a> sans ajouter le paramètre `layer_index`.
 Enfin, supprimer le monde lui-même avec `DELETE FROM worlds WHERE name=%MONDE%;`
+
+## Outils
+
+Il y a trois outils disponibles: le crayon, la gomme et la sélection
+
+### Crayon
+
+Permet de dessiner, il faut sélectionner une couche et une tile pour dessiner en utilisant le clic gauche.<br>
+En utilisant le clic droit, il est possible d'effacer les tiles (gomme).
+
+### Gomme
+
+Permet de gommer, il faut sélectionner une couche, s'utilise avec le clic gauche
+
+### Sélection
+
+Permet de sélectionner une zone pour dessiner ou gommer.<br>
+Pour sélectionner il faut 2 coins, le premier coin avec clic gauche et le deuxième avec clic droit.<br>
+Puis pour dessiner, cliquer sur une tile avec une couche sélectionnée.<br>
+Et pour gommer, cliquer sur la gomme, avec une couche sélectionnée.

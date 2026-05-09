@@ -5,6 +5,7 @@ from math import sqrt
 
 import wsinter
 import web_helper
+import collision_resolver
 
 import graphics.board
 from characters.player import Player
@@ -44,15 +45,21 @@ class Game:
         self.web_manager.demarre(clavier=True)
 
         self.web_helper = web_helper.Helper(self.web_manager)
+        
+        # On attend que la page soit prête, surtout pour la taille de la page
+        while not self.web_manager.ready:
+            time.sleep(0.01)
 
         # Gestionnaires inputs
         self.keyboard_manager = Keyboard(self.web_manager)
         self.mouse_manager = Mouse(self.web_manager)
 
+        self.collision_resolver = collision_resolver.CollisionResolver()
+        self.board = graphics.board.Board(self.web_helper, "spawn", self.collision_resolver)
+        
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
-        self.init_player((50, 50), 10)
-
-        self.board = graphics.board.Board(self.web_helper, "spawn")
+        # Les coordonnées qui lui sont passées sont celles
+        self.init_player(self.board.origin, 7)
 
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
@@ -61,13 +68,14 @@ class Game:
         base_npc_2 = Npc(self.web_helper, (150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
         self.npc.append(base_npc_1)
         self.npc.append(base_npc_2)
+        self.collision_resolver.add_collider((150, 50, 250, 150), collision_resolver.INTERACTABLE, base_npc_1)
+        self.collision_resolver.add_collider((100, 200, 200, 300), collision_resolver.INTERACTABLE, base_npc_2)
 
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
         self.enemies: list[Enemy] = []
         base_enemy = Enemy(self.web_helper, (300, 150), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
         self.enemies.append(base_enemy)
 
-        # TODO: Passer dans player ?
         self.interactable: Interactable = None
 
         self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Enter'])
@@ -113,12 +121,19 @@ class Game:
             
             delta_time += 0.017
             last_loop_time = time.time()
+            
+            window_size = self.web_manager.get_window_size_if_changed()
+            
+            if window_size != None:
+                self.board.window_size_changed()
+                self.player.update_graphics(window_size)
 
             keys = self.keyboard_manager.get_keys()
             
             if 'KeyP' in keys and self.player.is_dead():
                 self.web_manager.remove_children("player")
-                self.init_player((50, 50), 10)
+                self.init_player(self.board.origin, 7)
+                self.board.reset_view()
 
             # On actualise la liste des ennemis en supprimant ceux qui sont morts
             for enemy in self.enemies:
@@ -126,6 +141,7 @@ class Game:
                     self.enemies.remove(enemy)
 
             # Toutes les instructions ici sont mises en pauses lorsqu'un menu est ouvert par le joueur
+            new_interactable = -1
             if self.interactable is None or not self.interactable.is_opened():
                 in_range_enemies = []
                 player_range = self.player.weapon.range
@@ -134,17 +150,26 @@ class Game:
                     dst = sqrt((enemy.x - self.player.x) ** 2 + (enemy.y - self.player.y) ** 2)
                     if dst <= player_range:
                         in_range_enemies.append(enemy)
-                player_movement = self.player.update(delta_time, keys, in_range_enemies)
-                self.board.translate(player_movement)
+                if not self.player.is_dead():
+                    player_movement = self.player.update(delta_time, keys, in_range_enemies)
+                    if player_movement != [0, 0]:
+                        mov_validate, new_interactable = self.collision_resolver.attempt_movement(self.player.get_boundaries(player_movement), player_movement)
+                        if mov_validate:
+                            self.player.render(player_movement)
+                            # Actualiser les blocs rendus sur la carte et scroller si nécessaire
+                            self.board.translate(web_helper.multiply_list(player_movement, -1))
 
-            self.interactable = None
-            for npc in self.npc:
-                if npc.within_distance(self.player.get_position()):
-                    self.interactable = npc
-                    self.web_manager.inner_text("action-bar", "Appuyez sur E pour interagir")
-
-            if self.interactable == None:
-                self.web_manager.inner_text("action-bar", "")
+            if new_interactable != -1:
+                if new_interactable == None:
+                    self.web_manager.inner_text("action-bar", "")
+                    if isinstance(self.interactable, Npc):
+                        self.web_manager.remove_class(self.interactable.id, "highlight-blink")
+                    self.interactable = None
+                else:
+                    self.interactable = new_interactable
+                    self.web_manager.inner_text("action-bar", "Appuyez sur E pour intéragir")
+                    if isinstance(self.interactable, Npc):
+                        self.web_manager.add_class(self.interactable.id, "highlight-blink")
 
     def stop(self):
         """
@@ -153,6 +178,8 @@ class Game:
         self.do_loop = False
         self.loop_thread.join()
         self.web_manager.stop()
+        self.board.link.commit()
+        self.board.link.close()
 
 # On verifie que le programme n'est pas importe mais bien lance
 if __name__ == "__main__":

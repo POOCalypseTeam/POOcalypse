@@ -88,8 +88,9 @@ class Npc(Interactable):
     def __init__(self, helper: web_helper.Helper, position: tuple, img_path: str, dialogs: str = "", distance: int = 30):
         self.helper = helper
         
-        self.x = position[0]
-        self.y = position[1]
+        self.width = self.height = 64
+        self.x = position[0] - self.width / 2
+        self.y = position[1] - self.height / 2
         self.distance = distance
         
         if dialogs != "":
@@ -104,7 +105,7 @@ class Npc(Interactable):
         
         self.opened = False
         
-        self.id = self.helper.add_image(img_path, (self.x, self.y), size=(64, 64))
+        self.id = self.helper.add_image(img_path, (self.x, self.y), size=(self.width, self.height), parent="tiles")
         
     def interact(self):
         """
@@ -131,13 +132,13 @@ class Npc(Interactable):
         return self.opened
     
     def key(self, key: str):
-        if key == "ArrowUp" or key == 'ArrowLeft':
+        if len(self.choices) > 0 and (key == "ArrowUp" or key == 'ArrowLeft'):
             self.helper.ws.attributs(self.choices[self.choice], style={"text-decoration":"none"})
             self.choice -= 1
             if self.choice < 0:
                 self.choice = len(self.choices) - 1
             self.helper.ws.attributs(self.choices[self.choice], style={"text-decoration":"underline"})
-        elif key == "ArrowDown" or key == 'ArrowRight':
+        elif len(self.choices) > 0 and (key == "ArrowDown" or key == 'ArrowRight'):
             self.helper.ws.attributs(self.choices[self.choice], style={"text-decoration":"none"})
             self.choice += 1
             if self.choice >= len(self.choices):

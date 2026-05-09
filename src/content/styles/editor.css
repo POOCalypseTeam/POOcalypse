@@ -7,11 +7,12 @@ body {
     margin: 0;
 
     display: grid;
-    grid-template-columns: 4fr auto 1fr;
+    grid-template-columns: 4fr 1fr;
 }
 
 * {
     user-select: none;
+    font-family: sans-serif;
 }
 
 img {
@@ -29,7 +30,9 @@ div > * {
 #board {
     /* -6px pour le padding de #tileset */
     height: calc(85% - 6px);
+}
 
+.grid-background {
     image-rendering: pixelated;
     background-image: url("../assets/misc/editor_grid.png");
     background-repeat: repeat;
@@ -40,8 +43,12 @@ div > * {
     position: absolute;
 }
 
+#tiles > * {
+    position: absolute;
+}
+
 #tools {
-    position: relative;
+    position: absolute;
     padding: 0;
     margin: 5px;
     z-index: 1000;
@@ -49,15 +56,20 @@ div > * {
     color:#e4e4e4;
 }
 
-#tools > * {
+.tool {
     text-align:center;
     font-weight:bold;
 
     margin-bottom: 2px;
     padding:2px;
 
-    background-color: rgba(130, 130, 130, 10);
+    background-color: rgba(108, 108, 108, 10);
     cursor:pointer;
+}
+
+.tool-selected {
+    background-color: rgba(157, 157, 157, 10);
+    color: black;
 }
 
 #world-info {
@@ -152,4 +164,14 @@ select, input {
 .brush {
     outline: 2px solid white;
     outline-offset: -1px;
+}
+
+.corner {
+    display: block;
+    position: absolute;
+    z-index: 999;
+}
+
+.hidden {
+    display: none;
 }

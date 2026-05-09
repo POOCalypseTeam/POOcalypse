@@ -2,7 +2,6 @@ from math import atan2, sin, cos, sqrt
 import time
 import web_helper
 
-# TODO: Afficher une barre de vie, seulement lorsqu'elle n'est pas pleine
 class Enemy:
     def __init__(self, web_helper: web_helper.Helper, position: tuple, img_path: str, health: int):
         self.helper = web_helper
@@ -10,7 +9,7 @@ class Enemy:
         self.x = position[0]
         self.y = position[1]
         
-        self.id = self.helper.add_image(img_path, position, size=(64, 64))
+        self.id = self.helper.add_image(img_path, position, size=(64, 64), parent="tiles")
         
         # TODO: Ajouter de la regen
         self.health = health
@@ -34,7 +33,7 @@ class Enemy:
         dY = Y - self.y
         a = atan2(dY, dX)
         # On ajuste le mouvement de l'ennemi pour aller vers le joueur
-        self.move = (cos(a) * self.movement_coef, sin(a) * self.movement_coef)        
+        self.move = (cos(a) * self.movement_coef, sin(a) * self.movement_coef)
         
     def within_range(self, position: tuple):
         distance = (position[0] - self.x) ** 2
@@ -58,7 +57,6 @@ class Enemy:
         return self.dead
 
     def update(self, delta_time: float, player):
-        # TODO: Reflechir si c'est pas mieux de faire ca dans la boucle principale pour tous les ennemis et appeler les fonction d'attaques de tous les ennemis concernes a la place
         if self.within_range(player.get_center_pos()):
             self.attack(player)
         else:

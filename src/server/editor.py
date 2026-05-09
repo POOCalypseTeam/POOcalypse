@@ -101,19 +101,24 @@ class Editor:
             
             delta_time += 0.01
             
+            window_size = self.web_manager.get_window_size_if_changed()
+            
+            if window_size != None:
+                self.board.window_size_changed()
+            
             keys = self.keyboard_manager.get_keys()
             buttons = self.mouse_manager.get_buttons()
 
             # On bouge la carte
             move = [0, 0]
             if "ArrowDown" in keys:
-                move[1] += 1
-            if "ArrowLeft" in keys:
-                move[0] -= 1
-            if "ArrowUp" in keys:
                 move[1] -= 1
-            if "ArrowRight" in keys:
+            if "ArrowLeft" in keys:
                 move[0] += 1
+            if "ArrowUp" in keys:
+                move[1] += 1
+            if "ArrowRight" in keys:
+                move[0] -= 1
             if move != [0, 0]:
                 self.board.translate_direction(move)
             
@@ -131,6 +136,9 @@ class Editor:
         if self.loop_thread.is_alive():
             self.loop_thread.join()
         self.web_manager.stop()
+        if self.board != None and self.board.link != None:
+            self.board.link.commit()
+            self.board.link.close()
         
 if __name__ == "__main__":
     main()

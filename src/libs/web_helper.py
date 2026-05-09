@@ -1,5 +1,11 @@
 import wsinter
 
+def multiply_list(L, coef):
+    """
+    Multiplie tous les éléments de L par coef et renvoie le résultat
+    """
+    return [l * coef for l in L]
+
 class Helper:
     def __init__(self, ws: wsinter.Inter):
         """

@@ -7,6 +7,8 @@ Une première table `worlds` stocke les différents mondes:
 ```SQL
 CREATE TABLE worlds (
     name VARCHAR PRIMARY KEY,
+    origin_x INTEGER, -- Les coordonées de la tile qui
+    origin_y INTEGER, -- doit être chargée au centre 
 );
 ```
 
@@ -57,12 +59,12 @@ CREATE TABLE NPCs (
     FOREIGN KEY (block_id) REFERENCES blocks(block_id)
 );
 
-CREATE TABLE ennemies (
-    ennemy_id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE enemies (
+    enemy_id INTEGER PRIMARY KEY AUTOINCREMENT,
     block_id INT,
     x INT,
     y INT,
-    ennemy_type VARCHAR, -- Suppose qu'il existe une table avec les types d'ennemis et leurs attributs
+    enemy_type VARCHAR, -- Suppose qu'il existe une table avec les types d'ennemis et leurs attributs
     FOREIGN KEY (block_id) REFERENCES blocks(block_id)
 );
 ```
