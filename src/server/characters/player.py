@@ -1,75 +1,51 @@
-from time import sleep
-from math import pi, atan2, sin, cos
+from math import sqrt, atan2, sin, cos
+import time
 import web_helper
+from constants import PLAYER_SPRITESHEET_PATH
 
 from .weapon import Weapon
 from .enemy import Enemy
 
-IMG_STOP1 = 'assets/spritesheets/blonde_man/blonde_man_001.png'
-IMG_STOP2 = 'assets/spritesheets/blonde_man/blonde_man_002.png'
-IMG_STOP3 = 'assets/spritesheets/blonde_man/blonde_man_003.png'
-IMG_STOP4 = 'assets/spritesheets/blonde_man/blonde_man_004.png'
-STOP = [IMG_STOP1, IMG_STOP2, IMG_STOP3, IMG_STOP4]
 
-PNG_PATH = 'assets/spritesheets/blonde_man/blonde_man_000.png'
+ANIM_STOP           = PLAYER_SPRITESHEET_PATH + 'player_stop.gif'
+ANIM_LEFT           = PLAYER_SPRITESHEET_PATH + 'player_left.gif'
+ANIM_BOTTOM         = PLAYER_SPRITESHEET_PATH + 'player_bottom.gif'
+ANIM_RIGHT          = PLAYER_SPRITESHEET_PATH + 'player_right.gif'
+ANIM_TOP            = PLAYER_SPRITESHEET_PATH + 'player_top.gif'
+ANIM_DEATH          = PLAYER_SPRITESHEET_PATH + 'player_death.gif'
+ANIM_ATTACK_TOP     = PLAYER_SPRITESHEET_PATH + 'player_attack_top.gif'
+ANIM_ATTACK_BOTTOM  = PLAYER_SPRITESHEET_PATH + 'player_attack_bottom.gif'
+ANIM_ATTACK_RIGHT   = PLAYER_SPRITESHEET_PATH + 'player_attack_right.gif'
+ANIM_ATTACK_LEFT    = PLAYER_SPRITESHEET_PATH + 'player_attack_left.gif'
 
-IMG_LEFT1 = 'assets/spritesheets/blonde_man/blonde_man_005.png'
-IMG_LEFT2 = 'assets/spritesheets/blonde_man/blonde_man_006.png'
-IMG_LEFT3 = 'assets/spritesheets/blonde_man/blonde_man_007.png'
-IMG_LEFT4 = 'assets/spritesheets/blonde_man/blonde_man_008.png'
-LEFT = [IMG_LEFT1, IMG_LEFT2, IMG_LEFT3, IMG_LEFT4]
-
-IMG_RIGHT1 = 'assets/spritesheets/blonde_man/blonde_man_009.png'
-IMG_RIGHT2 = 'assets/spritesheets/blonde_man/blonde_man_010.png'
-IMG_RIGHT3 = 'assets/spritesheets/blonde_man/blonde_man_011.png'
-IMG_RIGHT4 = 'assets/spritesheets/blonde_man/blonde_man_012.png'
-RIGHT = [IMG_RIGHT1, IMG_RIGHT2, IMG_RIGHT3, IMG_RIGHT4]
-
-IMG_TOP1 = 'assets/spritesheets/blonde_man/blonde_man_013.png'
-IMG_TOP2 = 'assets/spritesheets/blonde_man/blonde_man_014.png'
-IMG_TOP3 = 'assets/spritesheets/blonde_man/blonde_man_015.png'
-IMG_TOP4 = 'assets/spritesheets/blonde_man/blonde_man_016.png'
-TOP = [IMG_TOP1, IMG_TOP2, IMG_TOP3, IMG_TOP4]
-
-IMG_BOTTOM1 = 'assets/spritesheets/blonde_man/blonde_man_017.png'
-IMG_BOTTOM2 = 'assets/spritesheets/blonde_man/blonde_man_018.png'
-IMG_BOTTOM3 = 'assets/spritesheets/blonde_man/blonde_man_019.png'
-IMG_BOTTOM4 = 'assets/spritesheets/blonde_man/blonde_man_020.png'
-BOTTOM = [IMG_BOTTOM1, IMG_BOTTOM2, IMG_BOTTOM3, IMG_BOTTOM4]
-
-IMG = [LEFT, RIGHT, TOP, BOTTOM, STOP]
 IMG_SIZE = 64
 MOVE_AMOUNT = 32
 MIN_X = 0
 MIN_Y = 0
-ANIMATION_UPDATE_FREQUENCY = 32
+ANIM_ATTACK_DURATION = 0.450    # 0.550
+ANIM_DEATH_DURATION = 0.450     # Dans les faits cette valeur est égale à : 0.650
+                                # Mais comme les updates ne se font pas toutes les nanosecondes, on pourrait dépasser ce temps et l'animation bouclerait, comme un glitch
+                                # Pour éviter cela, on place la fin de l'animation au tout début de la dernière frame
 
 # Contient le joueur
 class Player:
     def __init__(self, helper: web_helper.Helper, map_center: tuple):
         self.helper = helper
         # X1, Y1, X2, Y2 pour l'image dans sa taille originale, il faut appliquer le zoom
-        self.hitbox = (9, 26, 22, 32)
+        self.hitbox = (9, 18, 23, 25)
         self.width = IMG_SIZE
         self.height = IMG_SIZE
         self.x = map_center[0] - self.width / 2
         self.y = map_center[1] - self.height / 2
-        self.id2 = self.helper.add_image(PNG_PATH, (0,0), size=(64, 64), parent="player")
-        self.r = 0
-        self.l = 0
-        self.b = 0
-        self.t = 0
-        self.s = 0
-        for i in range(5):
-            for j in range(4):
-                self.helper.change_image(self.id2, IMG[i][j])
-                sleep(0.1)
-        self.helper.change_image(self.id2, PNG_PATH)
+        self.current_anim = ANIM_STOP
         w,h = self.helper.ws.get_window_size()
-        self.id = self.helper.add_image(IMG_STOP1, ((w - self.width) / 2, (h - self.height) / 2), size=(64, 64), parent="player")
+        self.id = self.helper.add_image(self.current_anim, ((w - self.width) / 2, (h - self.height) / 2), size=(self.width, self.height), parent="player")
+        self.att = False
+        self.delta_sum = 0
         
         self.health = 5
         self.max_health = 5
+        self.last_heal = time.time()
         self.dead = False
 
         self.weapon = Weapon(10, 40, 0.3)
@@ -81,54 +57,61 @@ class Player:
         self.helper.change_dimensions(self.id, position=((window_size[0] - self.width) / 2, (window_size[1] - self.height) / 2))
     
     def update(self, delta_time: float, keys: list, enemies: list[Enemy]) -> tuple[float, float]:
+        if self.dead:
+            if ANIM_DEATH_DURATION - self.delta_sum > 0.017: # Le temps d'une frame
+                self.delta_sum += delta_time
+            return [0,0]
+        
         if 'KeyR' in keys:
             self.attack(enemies)
-        return self.update_movement(delta_time, keys)
+            self.att = True
+            self.delta_sum = 0
+            
+        if ANIM_ATTACK_DURATION - self.delta_sum > 0.017:
+            self.delta_sum += delta_time
+        else:
+            self.att = False
+
+        if 'KeyH' in keys:
+            self.heal(1)
+
+        return self.update_movement(delta_time, keys) 
     
     def update_movement(self, delta_time: float, keys: list) -> tuple[float, float]:
         """
         delta_time est le temps en secondes depuis la derniere update, il sert de coefficient sur la vitesse de deplacement notamment
         """
-        # On applique le vecteur mouvement sur la position, en tenant compte des inputs et de la friction s'il n'y a pas d'inputs
-        # Tant que la friction n'est pas supérieure à 1, on a pas besoin de vérifier avec le vecteur max_movement, car le mouvement diminue,
-        # Mais si dans le futur il y a changement sur ca il faudra check tout le temps
         coef = delta_time * self.friction_coef
         self.movement_vector[0] *= coef
         self.movement_vector[1] *= coef
         self.movement_vector = [round(self.movement_vector[0], 3), round(self.movement_vector[1], 3)]
         movement_direction = self._process_move_keys(keys)
+        new_anim = None
         if movement_direction != [0, 0]:
             angle = atan2(movement_direction[1], movement_direction[0])
             movement = (cos(angle) * MOVE_AMOUNT * delta_time * 2, sin(angle) * MOVE_AMOUNT * delta_time * 2)
             self.movement_vector[0] += movement[0]
-            self.movement_vector[1] += movement[1] 
-            if abs(movement[0]) > abs(movement[1]):
-                if movement[0] > 0:
-                    self.r += 1
-                    self.r %= ANIMATION_UPDATE_FREQUENCY
-                    IMG_RIGHT = RIGHT[self.r // 8]
-                    self.helper.change_image(self.id, IMG_RIGHT)
-                elif movement[0] < 0:
-                    self.l += 1
-                    self.l %= ANIMATION_UPDATE_FREQUENCY
-                    IMG_LEFT = LEFT[self.l // 8]
-                    self.helper.change_image(self.id, IMG_LEFT)
+            self.movement_vector[1] += movement[1]       
+            if movement[0] > 0:
+                new_anim = ANIM_ATTACK_RIGHT if self.att else ANIM_RIGHT
+            elif movement[0] < 0:
+                new_anim = ANIM_ATTACK_LEFT if self.att else ANIM_LEFT
             elif movement[1] > 0 :
-                self.b += 1
-                self.b %= ANIMATION_UPDATE_FREQUENCY
-                IMG_BOTTOM = BOTTOM[self.b // 8]
-                self.helper.change_image(self.id, IMG_BOTTOM)
-            else:
-                self.t += 1
-                self.t %= ANIMATION_UPDATE_FREQUENCY
-                IMG_TOP = TOP[self.t // 8]
-                self.helper.change_image(self.id, IMG_TOP)
+                new_anim = ANIM_ATTACK_BOTTOM if self.att else ANIM_BOTTOM
+            elif movement[1] < 0:
+                new_anim = ANIM_ATTACK_TOP if self.att else ANIM_TOP
         else:
-            self.s += 1
-            self.s %= ANIMATION_UPDATE_FREQUENCY
-            IMG_STOP = STOP[self.s // 8]
-            self.helper.change_image(self.id, IMG_STOP)
+            new_anim = ANIM_ATTACK_BOTTOM if self.att else ANIM_STOP
+        
+        # On évite de changer trop les images, surtout pour les GIFs
+        if new_anim != self.current_anim:
+            self.current_anim = new_anim
+            self.helper.change_image(self.id, self.current_anim, self.att)
 
+        self.x += self.movement_vector[0]
+        self.y += self.movement_vector[1]   
+
+        self.render()
         return self.movement_vector
         
     def _process_move_keys(self, keys: dict) -> list:
@@ -177,21 +160,31 @@ class Player:
         # Pas besoin, c'est la map qui le fait, on a cependant toujours besoin de savoir ou est le joueur
         #self.helper.change_dimensions(self.id, (self.x, self.y))
         
-    def hit(self, damage: float):
+    def hit(self, damage: int):
         """
         Fait des degats au joueur
         
         Parametres:
-            - damage: un flottant donnant le nombre de PV que l'attaque doit infliger
+            - damage: un entier donnant le nombre de PV que l'attaque doit infliger
         
         Renvoie True si le joueur est mort, False sinon
         """
+        assert type(damage) == int, "Le nombre de dégats donné n'est pas entier"
+        for i in range(min(5, damage)):
+            self.helper.ws.add_class("heart"+str(self.health - i), "hit")
         self.health = max(0, self.health - damage)
-        if self.health == 0:
+        if not self.dead and self.health == 0:
             self.dead = True
-            # TODO: Faire quelque chose quand le joueur meurt, afficher un menu par exemple, pour l'instant il y a plus de mouvement
+            self.delta_sum = 0
+            self.helper.change_image(self.id, ANIM_DEATH, True)
         return self.dead
     
+    def heal(self, cooldown: float):
+        if time.time() - self.last_heal >= cooldown:
+            self.health = min(self.health + 1, self.max_health)
+            self.helper.ws.remove_class("heart" + str(self.health), "hit")
+            self.last_heal = time.time()
+
     def attack(self, enemies: list[Enemy]):
         self.weapon.attack(enemies)
         
@@ -200,4 +193,5 @@ class Player:
         Renvoie True si le joueur est mort, False sinon
         """
         return self.dead
-    
+
+        

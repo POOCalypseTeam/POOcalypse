@@ -59,8 +59,7 @@ class Game:
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         # Les coordonnées qui lui sont passées sont celles
-        self.player = Player(self.web_helper, self.board.origin)
-        self.web_manager.attributs(self.player.id, style={"z-index": 7})
+        self.init_player(self.board.origin, 7)
 
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
@@ -74,8 +73,8 @@ class Game:
 
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
         self.enemies: list[Enemy] = []
-        base_enemy = Enemy(self.web_helper, (600, 300), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
-        #self.enemies.append(base_enemy)
+        base_enemy = Enemy(self.web_helper, (300, 150), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
+        self.enemies.append(base_enemy)
 
         self.interactable: Interactable = None
 
@@ -84,6 +83,10 @@ class Game:
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()
+        
+    def init_player(self, position: tuple[int, int], zindex: int):
+        self.player = Player(self.web_helper, position)
+        self.web_manager.attributs(self.player.id, style={"z-index": zindex})
 
     def interact_key_handler(self, key):
         if self.interactable == None or not issubclass(type(self.interactable), Interactable):
@@ -126,6 +129,10 @@ class Game:
                 self.player.update_graphics(window_size)
 
             keys = self.keyboard_manager.get_keys()
+            
+            if 'KeyP' in keys and self.player.is_dead():
+                self.web_manager.remove_children("player")
+                self.init_player(self.board.origin, 7)
 
             # On actualise la liste des ennemis en supprimant ceux qui sont morts
             for enemy in self.enemies:

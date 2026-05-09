@@ -62,6 +62,10 @@ img {
     image-rendering: pixelated;
 }
 
+.background {
+    display: none;
+}
+
 /* Player */
 #img0 {
     /* margin-left = (60px - 32px) / 2 
@@ -84,4 +88,23 @@ img {
     to {
         filter: brightness(1.4);
     }
+}
+.credits {
+    display: none;
+}
+
+.vie {
+    position: absolute;
+    top: 0;
+}
+
+.vie img {
+        width: 60px;
+        /*filter: grayscale(0.8);*/
+        z-index: 20;
+        position: relative;
+}
+
+.hit {
+    filter: grayscale(0.8);
 }

@@ -14,12 +14,12 @@ class Enemy:
         # TODO: Ajouter de la regen
         self.health = health
         self.dead = False
-        self.range = 40
+        self.range = 25
         self.last_attack = time.time()
-        self.cooldown = 0.7
+        self.cooldown = 1.3
         self.attack_amount = 1
         
-        self.movement_coef = 15
+        self.movement_coef = 30
         self.movement = (0, 0)
         
     def track_player(self, player_position: tuple):

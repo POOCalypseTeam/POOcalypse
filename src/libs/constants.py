@@ -1,3 +1,5 @@
+PLAYER_SPRITESHEET_PATH = 'assets/spritesheets/player/'
+
 # Chemins
 BOARD_PATH = "content/data/worlds/worlds.db"
 TILESET_PATH_PLACEHOLDER = "assets/tilesets/%SET%/%IMG%.png"
