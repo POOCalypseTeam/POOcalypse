@@ -54,7 +54,7 @@ div > * {
     z-index: 1000;
     list-style-type: none;
     color:#C9E4CA;
-    backdrop-filter: hue-rotate(180deg) brightness(0.6) blur(2px);
+    backdrop-filter: hue-rotate(240deg) brightness(0.6) blur(2px);
     border-radius: 5px;
 }
 
