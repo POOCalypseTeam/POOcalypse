@@ -155,7 +155,7 @@ class Npc(Interactable):
             self._display_dialog()
             
     def _display_dialog(self):
-        self.helper.ws.inner_text("dialog-content", self.get_dialog()[0])
+        self.helper.ws.change_text("dialog-content", self.get_dialog()[0])
         
         self.helper.ws.remove_children("choices")
         
@@ -164,7 +164,7 @@ class Npc(Interactable):
             if choice == self.choices[self.choice]:
                 style["text-decoration"] = "underline"
             self.helper.ws.insere(choice, "li", style=style, parent="choices")
-            self.helper.ws.inner_text(choice, choice)
+            self.helper.ws.change_text(choice, choice)
         
     def get_dialog(self):
         return self.dialogs[self.dialog_step]

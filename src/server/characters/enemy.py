@@ -47,11 +47,13 @@ class Enemy:
             self.last_attack = time.time()
             
     def hit(self, damage: int):
-        self.health -= damage
-        self.health = max(0, self.health)
-        if self.health == 0:
-            self.helper.remove_html(self.id)
-            self.dead = True
+        if not self.dead:
+            self.helper.ws.add_tmp_class(self.id, "hit", 750)
+            self.health -= damage
+            self.health = max(0, self.health)
+            if self.health == 0:
+                self.helper.remove_html(self.id)
+                self.dead = True
             
     def is_dead(self):
         return self.dead

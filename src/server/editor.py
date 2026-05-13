@@ -59,14 +59,14 @@ class Editor:
             self.world_changed(None, worlds[0][0])
         for world in worlds:
             self.web_manager.insere(world[0], "option", attr={"value":world[0]}, parent="world")
-            self.web_manager.inner_text(world[0], world[0])
+            self.web_manager.change_text(world[0], world[0])
             
         # On ajoute toutes les tilesets possibles
         for file in os.listdir("content/assets/tilesets"):
             if os.path.isfile("content/assets/tilesets" + file):
                 continue
             self.web_manager.insere(file, "option", attr={"value":file}, parent="tileset-choice")
-            self.web_manager.inner_text(file, file)                
+            self.web_manager.change_text(file, file)                
         
         # On crée des gestionnaires pour les divers evenements
         self.web_manager.gestionnaire("world_changed", self.world_changed)

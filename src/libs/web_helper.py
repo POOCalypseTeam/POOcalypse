@@ -104,7 +104,7 @@ class Helper:
 
             - new_text: Nouveau texte a remplacer
         """
-        self.ws.inner_text(id, new_text)
+        self.ws.change_text(id, new_text)
 
     def remove_html(self, id: str):
         """

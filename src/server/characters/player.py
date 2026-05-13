@@ -1,4 +1,4 @@
-from math import sqrt, atan2, sin, cos
+from math import atan2, sin, cos
 import time
 import web_helper
 from constants import PLAYER_SPRITESHEET_PATH
@@ -19,7 +19,7 @@ ANIM_ATTACK_RIGHT   = PLAYER_SPRITESHEET_PATH + 'player_attack_right.gif'
 ANIM_ATTACK_LEFT    = PLAYER_SPRITESHEET_PATH + 'player_attack_left.gif'
 
 IMG_SIZE = 64
-MOVE_AMOUNT = 32
+MOVE_AMOUNT = 48
 MIN_X = 0
 MIN_Y = 0
 ANIM_ATTACK_DURATION = 0.450    # 0.550
@@ -46,7 +46,7 @@ class Player:
         self.health = 5
         self.max_health = 5
         for i in range(self.health):
-            self.helper.ws.remove_class("heart" + str(i), "hit")
+            self.helper.ws.remove_class("heart" + str(i), "heart-hit")
         self.last_heal = time.time()
         self.dead = False
 
@@ -170,19 +170,21 @@ class Player:
         Renvoie True si le joueur est mort, False sinon
         """
         assert type(damage) == int, "Le nombre de dégats donné n'est pas entier"
-        for i in range(min(5, damage)):
-            self.helper.ws.add_class("heart"+str(self.health - i), "hit")
-        self.health = max(0, self.health - damage)
-        if not self.dead and self.health == 0:
-            self.dead = True
-            self.delta_sum = 0
-            self.helper.change_image(self.id, ANIM_DEATH, True)
+        if not self.dead:
+            self.helper.ws.add_tmp_class(self.id, "hit", 750)
+            for i in range(min(5, damage)):
+                self.helper.ws.add_class("heart"+str(self.health - i), "heart-hit")
+            self.health = max(0, self.health - damage)
+            if self.health == 0:
+                self.dead = True
+                self.delta_sum = 0
+                self.helper.change_image(self.id, ANIM_DEATH, True)
         return self.dead
     
     def heal(self, cooldown: float):
         if time.time() - self.last_heal >= cooldown:
             self.health = min(self.health + 1, self.max_health)
-            self.helper.ws.remove_class("heart" + str(self.health), "hit")
+            self.helper.ws.remove_class("heart" + str(self.health), "heart-hit")
             self.last_heal = time.time()
 
     def attack(self, enemies: list[Enemy]):

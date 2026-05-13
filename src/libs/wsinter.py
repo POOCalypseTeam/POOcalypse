@@ -153,6 +153,11 @@ function faire(o){
         {
             elem.classList.add(data);
         }
+        else if (type == "class-t")
+        {
+            elem.classList.add(data["c"]);
+            setTimeout(function(){elem.classList.remove(data["c"]);},data["t"]);
+        }
         else if (type == "class-r")
         {
             elem.classList.remove(data);
@@ -933,9 +938,38 @@ const ueh = (event) => {
             self.pending.append(data)
             
     def add_class(self,id_objet:str,classe:str):
+        """
+        Ajoute une classe à un objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de l'objet
+            
+            - classe: classe à ajouter à l'objet
+        """
         self._push([{"id":id_objet,"type":"class-a","data":classe}])
         
+    def add_tmp_class(self,id_objet:str,classe:str,duration:int):
+        """
+        Ajoute temporairement une classe à un objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de l'objet
+            
+            - classe: classe à ajouter temporairement
+            
+            - duration: durée pendant laquelle la classe est ajoutée
+        """
+        self._push([{"id":id_objet,"type":"class-t","data":{"c":classe,"t":duration}}])
+        
     def remove_class(self,id_objet:str,classe:str):
+        """
+        Supprime une classe à un objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de l'objet
+            
+            - classe: classe à supprimer de l'objet
+        """
         self._push([{"id":id_objet,"type":"class-r","data":classe}])
 
     def attributs(self,id_objet,attr={},style={}):
@@ -954,12 +988,32 @@ const ueh = (event) => {
             self._push([{"id":id_objet,"type":"style","data":{"style":style}}])
             
     def remove(self,id_objet:str):
+        """
+        Supprime un objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de l'objet
+        """
         self._push([{"id":id_objet,"type":"delete"}])
         
     def remove_children(self,id_objet:str):
+        """
+        Supprime tous les éléments dont l'objet est le parent
+        
+        Paramètres:
+            -id_objet: attribut id de l'objet
+        """
         self._push([{"id":id_objet,"type":"children"}])
     
-    def inner_text(self,id_objet:str,inner_text:str):
+    def change_text(self,id_objet:str,inner_text:str):
+        """
+        Change l'attribut inner_text de l'objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de la page
+            
+            - inner_text: texte à remplacer
+        """
         self._push([{"id":id_objet,"type":"content","data":inner_text}])
 
     def insere(self, id_objet:str,balise:str,attr:dict={},style:dict={},parent:str="body"):

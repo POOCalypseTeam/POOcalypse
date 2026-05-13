@@ -161,13 +161,13 @@ class Game:
 
             if new_interactable != -1:
                 if new_interactable == None:
-                    self.web_manager.inner_text("action-bar", "")
+                    self.web_manager.change_text("action-bar", "")
                     if isinstance(self.interactable, Npc):
                         self.web_manager.remove_class(self.interactable.id, "highlight-blink")
                     self.interactable = None
                 else:
                     self.interactable = new_interactable
-                    self.web_manager.inner_text("action-bar", "Appuyez sur E pour intéragir")
+                    self.web_manager.change_text("action-bar", "Appuyez sur E pour intéragir")
                     if isinstance(self.interactable, Npc):
                         self.web_manager.add_class(self.interactable.id, "highlight-blink")
 
