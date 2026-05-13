@@ -19,12 +19,15 @@
         </div>
 
         <ul id="tools">
-            <li class="tool" onclick="tool(this, 'draw');">✏</li>
+            <li class="tool" onclick="tool(this, 'draw');">🖌️</li>
             <li class="tool" onclick="tool(this, 'erase');">🧼</li>
-            <li class="tool" onclick="tool(this, 'select');">□</li>
+            <li class="tool" onclick="tool(this, 'select');">🔳</li>
             <br>
-            <li class="tool" onclick="hideBackground()"                      >⌗</li>
+            <li class="tool" onclick="hideBackground()">🪟</li>
         </ul>
+
+        <div id="tileset">
+        </div>
 
         <div id="world-info">
             <select name="world-choice" id="world">
@@ -38,35 +41,31 @@
 
             <div id="layer-options">
 
-                <label for="tileset-choice">Tileset: </label>
-                <select name="tileset-choice" id="tileset-choice">
-                </select>
+                <div id="tileset-form">
+                    <label class="layer-option-label" for="tileset-choice">Tileset: </label>
+                    <select name="tileset-choice" id="tileset-choice"></select>    
+                </div>
     
-                <br>
+                <div id="index-form">
+                    <label class="layer-option-label" for="index">Index: </label>
+                    <input type="number" name="index" id="index" value="0">
+                </div>
     
-                <label for="index">Index: </label>
-                <input type="number" name="index" id="index" value="0">
+                <div id="size-form">
+                    <label class="layer-option-label" for="tile_size">Tiles size: </label>
+                    <input type="number" name="tile_size" id="tile_size" value="16" min="1">
+                </div>
     
-                <br>
-    
-                <label for="tile_size">Tiles size: </label>
-                <input type="number" name="tile_size" id="tile_size" value="16" min="1">
-
-                <br>
-    
-                <label for="collisions">Collisions: </label>
-                <input type="checkbox" name="collisions" id="collisions">
-
-                <br>
+                <div id="collisions-form">
+                    <label class="layer-option-label" for="collisions">Collisions: </label>
+                    <input type="checkbox" name="collisions" id="collisions">
+                </div>
 
                 <button id="add">Ajouter</button>
                 
-            </div>
+            </div>    
 
-        </div>
-
-        <div id="tileset">
-        </div>
+        </div>    
 
         <script src="../scripts/editor.js"></script>
     </body>
