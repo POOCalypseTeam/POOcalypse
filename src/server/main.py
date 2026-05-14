@@ -14,6 +14,8 @@ from characters.npc import Interactable, Npc
 from inputs.keyboard import Keyboard
 from inputs.mouse import Mouse
 
+from graphics.board import enemies_board
+
 game = None
 
 def main():
@@ -72,9 +74,13 @@ class Game:
         self.collision_resolver.add_collider((100, 200, 200, 300), collision_resolver.INTERACTABLE, base_npc_2)
 
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
-        self.enemies: list[Enemy] = []
-        base_enemy = Enemy(self.web_helper, (300, 150), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
-        self.enemies.append(base_enemy)
+        #self.enemie: list[Enemy] = []
+        #base_enemy = Enemy(self.web_helper, (300, 150), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
+        self.enemies = []
+        for enemy in enemies_board:
+            position = (enemy[1], enemy[2])
+            current_enemy = Enemy(self.web_helper, position, "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
+            self.enemies.append(current_enemy)
 
         self.interactable: Interactable = None
 
