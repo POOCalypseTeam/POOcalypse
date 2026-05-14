@@ -117,14 +117,19 @@ class Board:
         tiles = self.base.fetchall()
         
         if len(tiles) > 0:
-            self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
+            #self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
+            self.helper.ws.insere(block_id, "canvas", \
+                attr={"width":self.block_pixel_sizes[layer] * self.zoom,"height":self.block_pixel_sizes[layer] * self.zoom}, \
+                style={"left":str(block_offset[0] * self.zoom)+"px","top":str(block_offset[1] * self.zoom)+"px"}, \
+                parent="layer_" + str(layer))
             self.rendered_blocks[layer].add((block_x, block_y))
         
         for tile in tiles:
             img_id = "_".join(map(str, [layer, block_x * self.block_size + tile[0], block_y * self.block_size + tile[1]]))
             img_path = TILESET_PATH_PLACEHOLDER.replace("%SET%", self.layers[layer]).replace("%IMG%", tile[2])
             position = (self.zoom * (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer]), self.zoom * (block_offset[1] + tile[1] * self.tile_pixel_sizes[layer]))
-            self.helper.add_image_id(img_id, img_path, position, (self.zoom * self.tile_pixel_sizes[layer], self.zoom * self.tile_pixel_sizes[layer]), parent=block_id)
+            #self.helper.add_image_id(img_id, img_path, position, (self.zoom * self.tile_pixel_sizes[layer], self.zoom * self.tile_pixel_sizes[layer]), parent=block_id)
+            self.helper.ws.draw(block_id, img_path, tile[0] * self.tile_pixel_sizes[layer] * self.zoom, tile[1] * self.tile_pixel_sizes[layer] * self.zoom, self.tile_pixel_sizes[layer] * self.zoom)
     
     def add_block(self, layer, block_x, block_y) -> int:
         """

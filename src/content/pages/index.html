@@ -23,7 +23,7 @@
 
             <ul id="choices"></ul>
         </div>
-        <div id="board">
+        <div id="board" hidden>
             <div id="tiles"></div>
         </div>
         <div class="background">
@@ -58,6 +58,7 @@
         function start_game() {
             document.getElementById("menu").disabled = true;
             document.getElementById("game").disabled = false;
+            document.getElementById("board").hidden = false;
         }
         function start_credits() {
             document.getElementById("menu").disabled = true;
@@ -68,7 +69,6 @@
             document.getElementById("credits").disabled = true;
             const musique = document.getElementById("music");
             musique.muted = false;
-
         }
         /*
         document.addEventListener("mousemove",(e) => {
