@@ -74,9 +74,8 @@ class Game:
         self.collision_resolver.add_collider((100, 200, 200, 300), collision_resolver.INTERACTABLE, base_npc_2)
 
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
-        #self.enemie: list[Enemy] = []
-        #base_enemy = Enemy(self.web_helper, (300, 150), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
-        self.enemies = []
+        
+        self.enemies: list[Enemy] = []
         for enemy in enemies_board:
             position = (enemy[1], enemy[2])
             current_enemy = Enemy(self.web_helper, position, "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
