@@ -182,14 +182,6 @@ class Game:
                     self.web_manager.change_text("action-bar", "Appuyez sur E pour intéragir")
                     if isinstance(self.interactable, Npc):
                         self.web_manager.add_class(self.interactable.id, "highlight-blink")
-            self.interactable = None
-            for npc in self.npc:
-                if npc.within_distance(self.player.get_position()):
-                    self.interactable = npc
-                    self.web_manager.inner_text("action-bar", "Appuyez sur E pour interagir")
-
-            if self.interactable == None:
-                self.web_manager.inner_text("action-bar", "")
 
     def stop(self):
         """
