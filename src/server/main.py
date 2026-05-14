@@ -23,9 +23,7 @@ def main():
         lock = open("launched", "x")
         lock.close()
     except FileExistsError:
-        print("Une instance du serveur est deja lancee")
-        exit(0)
-        return
+        raise FileExistsError("Une instance du serveur est deja lancee")
 
     game = Game("index.html")
 
@@ -73,7 +71,7 @@ class Game:
 
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
         self.enemies: list[Enemy] = []
-        base_enemy = Enemy(self.web_helper, (300, 150), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
+        base_enemy = Enemy(self.web_helper, (0, 0), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
         self.enemies.append(base_enemy)
 
         self.interactable: Interactable = None

@@ -19,10 +19,8 @@ def main():
         lock = open("launched", "x")
         lock.close()
     except FileExistsError:
-        print("Une instance du serveur est deja lancee")
-        exit(0)
-        return
-    
+        raise FileExistsError("Une instance du serveur est deja lancee")
+
     editor = Editor(start_page = "editor.html")
     
 def stop():
