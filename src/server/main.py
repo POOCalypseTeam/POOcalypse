@@ -17,7 +17,7 @@ from inputs.mouse import Mouse
 from graphics.board import enemies_board
 from graphics.board import npc_board
 
-from constants import BASE_TILE_SIZE
+import constants
 
 game = None
 
@@ -78,7 +78,7 @@ class Game:
         self.collision_resolver.add_collider((100, 200, 200, 300), collision_resolver.INTERACTABLE, base_npc_2)
         """
         for npc in npc_board:
-            position = (npc[1]*BASE_TILE_SIZE, npc[2]*BASE_TILE_SIZE)
+            position = (npc[1]*constants.BASE_TILE_SIZE*constants.BLOCKS_SIZE, npc[2]*constants.BASE_TILE_SIZE*constants.BLOCKS_SIZE)
             current_npc = Npc(self.web_helper, position, "assets/spritesheets/blue_haired_woman/"+str(npc[3]), dialogs="dialog2")
             self.collision_resolver.add_collider(position, collision_resolver.INTERACTABLE, current_npc)
             self.npc.append(current_npc)
@@ -88,7 +88,7 @@ class Game:
         
         self.enemies: list[Enemy] = []
         for enemy in enemies_board:
-            position = (enemy[1]*BASE_TILE_SIZE, enemy[2]*BASE_TILE_SIZE)
+            position = (enemy[1]*constants.BASE_TILE_SIZE*constants.BLOCKS_SIZE, enemy[2]*constants.BASE_TILE_SIZE*constants.BLOCKS_SIZE)
             current_enemy = Enemy(self.web_helper, position, "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
             self.enemies.append(current_enemy)
 
