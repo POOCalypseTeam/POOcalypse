@@ -95,6 +95,64 @@ img {
     display: none;
 }
 
+#menu {
+position: absolute;
+display: flex;
+flex-direction: column;
+justify-content: center;
+gap: 2%;
+left: 25%;
+top: 25%;
+width: 50vw;
+height: 50vh;
+background-color: #808080e8;
+border: 1em inset #000000ad;
+z-index: 100;
+visibility: hidden;
+}
+#div1 {
+height: 30%;
+width: 100%;
+display: flex;
+flex-direction: row;
+}
+#div5 {
+width: 20%;
+height: 100%;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+#div6 {
+width: 80%;
+height: 100%;
+display: flex;
+align-items: center;
+justify-content: space-around;
+}
+#case-menu {
+height: 80%;
+width: 60%;
+border: 7px inset #000000ad;
+}
+.case-first {
+height: 80%;
+width: 20%;
+border: 7px inset #000000ad;
+}
+.ligne {
+height: 30%;
+width: 100%;
+display: flex;
+flex-direction: row;
+justify-content: space-around;
+}
+.case {
+height: 80%;
+width: 16%;
+border: 7px inset #000000ad;
+}
+
 .vie {
     position: absolute;
     top: 0;

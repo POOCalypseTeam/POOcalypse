@@ -107,3 +107,8 @@ p {
 .credits > button {
     color: white;
 }
+
+#menu{
+display: none;
+visibility: hidden;
+}

@@ -83,10 +83,15 @@ class Game:
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
         self.loop_thread.start()
-        
+
+        self.menu_cooldown = 0.5
+        self.last_menu_time = time.time()
+        self.menu = False
+
     def init_player(self, position: tuple[int, int], zindex: int):
         self.player = Player(self.web_helper, position)
         self.web_manager.attributs(self.player.id, style={"z-index": zindex})
+
 
     def interact_key_handler(self, key):
         if self.interactable == None or not issubclass(type(self.interactable), Interactable):
@@ -135,6 +140,13 @@ class Game:
                 self.init_player(self.board.origin, 7)
                 self.board.reset_view()
 
+            if "KeyI" in keys and time.time() - self.last_menu_time >= self.menu_cooldown:
+                self.menu = not self.menu
+                self.last_menu_time = time.time()
+                if self.menu == True :
+                    self.web_manager.attributs("menu",{}, style={"visibility": "visible"})
+                else:
+                    self.web_manager.attributs("menu",{}, style={"visibility": "hidden"})
             # On actualise la liste des ennemis en supprimant ceux qui sont morts
             for enemy in self.enemies:
                 if enemy.is_dead():
@@ -142,7 +154,7 @@ class Game:
 
             # Toutes les instructions ici sont mises en pauses lorsqu'un menu est ouvert par le joueur
             new_interactable = -1
-            if self.interactable is None or not self.interactable.is_opened():
+            if (self.interactable is None or not self.interactable.is_opened()) and self.menu == False :
                 in_range_enemies = []
                 player_range = self.player.weapon.range
                 for enemy in self.enemies:
@@ -170,6 +182,14 @@ class Game:
                     self.web_manager.change_text("action-bar", "Appuyez sur E pour intéragir")
                     if isinstance(self.interactable, Npc):
                         self.web_manager.add_class(self.interactable.id, "highlight-blink")
+            self.interactable = None
+            for npc in self.npc:
+                if npc.within_distance(self.player.get_position()):
+                    self.interactable = npc
+                    self.web_manager.inner_text("action-bar", "Appuyez sur E pour interagir")
+
+            if self.interactable == None:
+                self.web_manager.inner_text("action-bar", "")
 
     def stop(self):
         """
