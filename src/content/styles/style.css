@@ -15,6 +15,10 @@ body {
     position: absolute;
 }
 
+#tiles > * {
+    position: absolute;
+}
+
 #action-bar {
     font-family: 'Segoe UI', Arial;
     font-size: 42px;
@@ -22,6 +26,7 @@ body {
     text-align: center;
 
     position: absolute;
+    z-index: 1000;
     left: 0;
     bottom: 0;
     margin-bottom: 25px;
@@ -30,6 +35,7 @@ body {
 
 #dialogs {
     position: absolute;
+    z-index:1001;
     left: 0;
     bottom: 0;
     margin: 10px 0.5% 20px 0.5%;
@@ -54,13 +60,57 @@ body {
 
 img {
     image-rendering: pixelated;
+    transition: filter linear 100ms;
+}
+
+.background {
+    display: none;
 }
 
 /* Player */
 #img0 {
-    transition: top 50ms linear, left 50ms linear;
     /* margin-left = (60px - 32px) / 2 
     60px = health-bar.width
     32px = self.width */
     margin-left: 14px;
+}
+
+.highlight-blink {
+    animation-name: highlight-blinking;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes highlight-blinking {
+    0% {
+        filter: brightness(1.1);
+    }
+    100% {
+        filter: brightness(1.4);
+    }
+}
+
+.credits {
+    display: none;
+}
+
+.vie {
+    position: absolute;
+    top: 0;
+}
+
+.vie img {
+        width: 60px;
+        /*filter: grayscale(0.8);*/
+        z-index: 20;
+        position: relative;
+}
+
+.heart-hit {
+    filter: grayscale(0.8);
+}
+
+.hit {
+    filter: sepia(100%) brightness(0.9) contrast(0.9) hue-rotate(305deg) saturate(8);
 }

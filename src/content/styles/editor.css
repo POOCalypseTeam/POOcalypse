@@ -12,7 +12,7 @@ body {
 
 * {
     user-select: none;
-    font-family: sans-serif;
+    font-family: Inter, sans-serif;
 }
 
 img {
@@ -24,7 +24,7 @@ body > div {
 }
 
 div > * {
-    color: lightgray;
+    color: #C9E4CA;
 }
 
 #board {
@@ -43,13 +43,19 @@ div > * {
     position: absolute;
 }
 
+#tiles > * {
+    position: absolute;
+}
+
 #tools {
     position: absolute;
-    padding: 0;
+    padding: 5px;
     margin: 5px;
     z-index: 1000;
     list-style-type: none;
-    color:#e4e4e4;
+    color:#C9E4CA;
+    backdrop-filter: hue-rotate(240deg) brightness(0.6) blur(2px);
+    border-radius: 5px;
 }
 
 .tool {
@@ -59,7 +65,6 @@ div > * {
     margin-bottom: 2px;
     padding:2px;
 
-    background-color: rgba(108, 108, 108, 10);
     cursor:pointer;
 }
 
@@ -72,66 +77,158 @@ div > * {
     height: 100vh;
     padding-left: 5px;
 
-    background-color: #272729;
+    background-color: #28343d;
+}
+
+#world,
+#tileset-choice,
+#index,
+#tile_size {
+    width: 75%;
+    background: rgba(255,255,255,0.04);
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    color: #C9E4CA;
+    padding: 8px 9px;
+    font-size: 16px;
+    outline: none;
+    transition: 0.2s ease;
 }
 
 #world {
-    font-size: 28px;
+    font-size: 18px;
     text-align: center;
     font-weight: bold;
     width: 90%;
     margin: 5px 0 0 5%;
-    background-color: transparent;
-    color:lightgray;
-    border: none;
+}
+
+#world:hover,
+#tileset-choice:hover,
+#index:hover,
+#tile_size:hover {
+    border-color: #87BBA273;
+}
+
+#world:focus,
+#tileset-choice:focus,
+#index:focus,
+#tile_size:focus {
+    border-color: #55828B;
+    box-shadow: 0 0 0 4px #87BBA226;
 }
 
 #layers {
-    margin: 0 5px;
-    height: 20%;
-    background-color:#58585a;
+    margin: 5px;
+    height: 40%;
+    background-color:#32404b;
     overflow: scroll;
+    overscroll-behavior: none;
 }
 
 .layer {
     display: grid;
-    grid-template-columns: 2fr 6fr 2fr 2fr;
-    border: 1px solid #707070;
+    grid-template-columns: auto 6fr auto auto;
+    justify-content: space-between;
+    gap: 5px;
+    padding: 8px;
+    margin: 4px 0;
+    background: rgba(255,255,255,0.035);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    transition: 0.2s ease;
+}
+
+.layer:hover {
+    border-color: #87BBA240;
+    background: rgba(255,255,255,0.05);
 }
 
 .layer > * {
     margin: 2px;
+    line-height: 100%;
     text-align:center;
+}
+
+.layer-tileset {
+    font-size: 14px;
 }
 
 .layer > span {
     cursor: pointer;
+    transition: color linear 100ms;
 }
 
-.selected {
-    background-color: #707070;
+.layer-enable:hover {
+    color: #CB904D;
 }
 
-#layer-options > * {
-    margin-top: 15px;
+.layer-delete:hover {
+    color: #F71735;
 }
 
-select, input {
-    color:#272729;
+.layer.selected {
+    background-color: #55828B;
 }
 
-#index, #tile_size {
-    width: 30%;
+.layer.selected:hover {
+    background-color: #5596a3;
+}
+
+#layer-options div {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    margin-top: 5px
+}
+
+label {
+    margin: auto 0;
+}
+
+#collisions {
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 9px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+#collisions:checked {
+    background: #DE541E;
+    box-shadow:
+        0 0 15px #DE541E73;
 }
 
 #add {
-    color:#272729;
+    color: #C9E4CA;
     width: 98%;
     font-size: 24px;
     text-transform: uppercase;
     font-weight:bold;
     margin: 5px 2% 5px 0;
     cursor: pointer;
+
+    border: none;
+    border-radius: 16px;
+    padding: 18px;
+    background:
+        linear-gradient(
+            135deg,
+            #E57A44,
+            #DE541E
+        );
+    transition: 0.2s ease;
+}
+
+#add:hover {
+    transform: translateY(2px);
+}
+
+#add:active {
+    transform: scale(0.98);
 }
 
 #tileset {
@@ -142,7 +239,7 @@ select, input {
     /* Pour compenser le padding */
     width: calc(100vw - 6px);
 
-    background-color: #272729;
+    background-color: #28343d;
 
     display: grid;
     grid-auto-flow: column;
@@ -158,7 +255,7 @@ select, input {
 }
 
 .brush {
-    outline: 2px solid white;
+    outline: 2px solid #C9E4CA;
     outline-offset: -1px;
 }
 

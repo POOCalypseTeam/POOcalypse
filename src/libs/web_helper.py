@@ -1,5 +1,11 @@
 import wsinter
 
+def multiply_list(L, coef):
+    """
+    Multiplie tous les éléments de L par coef et renvoie le résultat
+    """
+    return [l * coef for l in L]
+
 class Helper:
     def __init__(self, ws: wsinter.Inter):
         """
@@ -60,8 +66,11 @@ class Helper:
         self.last_img_id += 1
         return self.add_image_id(img_id, path, position, size, zindex, parent)
     
-    def change_image(self, id, img):
-        self.ws.attributs(id, attr = {'src' : f'../{img}'})
+    def change_image(self, id, img, load_start: bool = False):
+        if load_start:
+            self.ws.injecte(f"document.getElementById(\"{id}\").src=\"../{img}?time=\" + Date.now();")
+        else:
+            self.ws.attributs(id, attr = {'src' : f'../{img}'})
     
     def change_dimensions(self, id: str, position: tuple = None, size: tuple = None):
         """
@@ -95,7 +104,7 @@ class Helper:
 
             - new_text: Nouveau texte a remplacer
         """
-        self.ws.inner_text(id, new_text)
+        self.ws.change_text(id, new_text)
 
     def remove_html(self, id: str):
         """

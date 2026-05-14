@@ -40,13 +40,16 @@ function addLayer(layer) {
     
     layerText = document.createElement("p");
     layerText.innerText = layer[0];
+    layerText.classList.add("layer-id");
     
     tilesetText = document.createElement("p");
     tilesetText.innerText = layer[1];
+    tilesetText.classList.add("layer-tileset");
     
     enabledInput = document.createElement("span");
     enabledInput.innerText = "🕶";
-    enabledInput["layer"] = layer[0]
+    enabledInput["layer"] = layer[0];
+    enabledInput.classList.add("layer-enable");
     enabledInput.addEventListener("click", (e) => {
         layer = document.getElementById("layer_" + e.target.layer);
         if (e.target.innerText === "🕶") {
@@ -57,10 +60,12 @@ function addLayer(layer) {
             e.target.innerText = "🕶";
             layer.style["display"] = "block";
         }
+        e.stopPropagation();
     });
 
     deleteInput = document.createElement("span");
     deleteInput.innerText = "🗑";
+    deleteInput.classList.add("layer-delete");
     deleteInput.addEventListener("click", (e) => {
         if (confirm("Voulez-vous vraiment supprimer cette couche ?\nCette action sera définitive!")) {
             transmettre("delete_layer", selected.children[0].innerText);

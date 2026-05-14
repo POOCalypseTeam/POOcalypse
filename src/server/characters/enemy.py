@@ -2,7 +2,6 @@ from math import atan2, sin, cos, sqrt
 import time
 import web_helper
 
-# TODO: Afficher une barre de vie, seulement lorsqu'elle n'est pas pleine
 class Enemy:
     def __init__(self, web_helper: web_helper.Helper, position: tuple, img_path: str, health: int):
         self.helper = web_helper
@@ -10,17 +9,17 @@ class Enemy:
         self.x = position[0]
         self.y = position[1]
         
-        self.id = self.helper.add_image(img_path, position, size=(64, 64))
+        self.id = self.helper.add_image(img_path, position, size=(64, 64), parent="tiles")
         
         # TODO: Ajouter de la regen
         self.health = health
         self.dead = False
-        self.range = 40
+        self.range = 25
         self.last_attack = time.time()
-        self.cooldown = 0.7
+        self.cooldown = 1.3
         self.attack_amount = 1
         
-        self.movement_coef = 15
+        self.movement_coef = 30
         self.movement = (0, 0)
         
     def track_player(self, player_position: tuple):
@@ -34,7 +33,7 @@ class Enemy:
         dY = Y - self.y
         a = atan2(dY, dX)
         # On ajuste le mouvement de l'ennemi pour aller vers le joueur
-        self.move = (cos(a) * self.movement_coef, sin(a) * self.movement_coef)        
+        self.move = (cos(a) * self.movement_coef, sin(a) * self.movement_coef)
         
     def within_range(self, position: tuple):
         distance = (position[0] - self.x) ** 2
@@ -48,17 +47,18 @@ class Enemy:
             self.last_attack = time.time()
             
     def hit(self, damage: int):
-        self.health -= damage
-        self.health = max(0, self.health)
-        if self.health == 0:
-            self.helper.remove_html(self.id)
-            self.dead = True
+        if not self.dead:
+            self.helper.ws.add_tmp_class(self.id, "hit", 750)
+            self.health -= damage
+            self.health = max(0, self.health)
+            if self.health == 0:
+                self.helper.remove_html(self.id)
+                self.dead = True
             
     def is_dead(self):
         return self.dead
 
     def update(self, delta_time: float, player):
-        # TODO: Reflechir si c'est pas mieux de faire ca dans la boucle principale pour tous les ennemis et appeler les fonction d'attaques de tous les ennemis concernes a la place
         if self.within_range(player.get_center_pos()):
             self.attack(player)
         else:

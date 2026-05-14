@@ -36,7 +36,7 @@ socket.onopen = function(e) {
   console.log("[open] Connection established");
   if (readySent == false)
   {
-      transmettre("ready", "");
+      transmettre("ready", [window.innerWidth, window.innerHeight]);
   }
   for (let i = 0; i < waiting.length; i++)
   {
@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", (event) => {
     document.getElementsByTagName('HEAD')[0].id="head"; 
     document.body.oncontextmenu=(e)=>{return false;};
     if (socket.readyState == 1) {
-        transmettre("ready", "");
+        transmettre("ready", [window.innerWidth, window.innerHeight]);
     }
     else {
         readySent = false;
@@ -152,6 +152,11 @@ function faire(o){
         else if (type == "class-a")
         {
             elem.classList.add(data);
+        }
+        else if (type == "class-t")
+        {
+            elem.classList.add(data["c"]);
+            setTimeout(function(){elem.classList.remove(data["c"]);},data["t"]);
         }
         else if (type == "class-r")
         {
@@ -239,8 +244,9 @@ const ueh = (event) => {
 
         self._stopped=False
 
-        self.window_width = 1280
-        self.window_height = 720
+        self.window_width = -1
+        self.window_height = -1
+        self.window_size_changed = False
 
     def touches(self):
         """
@@ -467,11 +473,12 @@ const ueh = (event) => {
         self.gestionnaire("get_window_size", self._set_window_size)
         self.injecte("transmettre('get_window_size', [window.innerWidth, window.innerHeight]);")
 
-    def _ready(self, _m, _o):
+    def _ready(self, _m, o):
         self.ready = True
         for pending in self.pending:
             self._envoi(pending)
         del self._handlers["ready"]
+        self._set_window_size(_m, o)
 
     def _set_window_size(self, _, size: list[int, int]):
         """
@@ -483,9 +490,17 @@ const ueh = (event) => {
         """
         self.window_width = size[0]
         self.window_height = size[1]
+        self.window_size_changed = True
 
     def get_window_size(self):
         return (self.window_width, self.window_height)
+    
+    def get_window_size_if_changed(self):
+        if self.window_size_changed:
+            self.window_size_changed = False
+            return self.get_window_size()
+        else:
+            return None
 
     def gestionnaire_stop(self, handler:callable=lambda : print("Extinction.")):
         """
@@ -638,7 +653,8 @@ const ueh = (event) => {
                 'jpg':b'image/jpeg',
                 'jpeg':b'image/jpeg',
                 'gif':b'image/gif',
-                'ico':b'image/x-icon'
+                'ico':b'image/x-icon',
+                'mp3':b'audio/mpeg'
             }
             mime_t = { # contenus textuels
                 'htm': b'text/html',
@@ -922,9 +938,38 @@ const ueh = (event) => {
             self.pending.append(data)
             
     def add_class(self,id_objet:str,classe:str):
+        """
+        Ajoute une classe à un objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de l'objet
+            
+            - classe: classe à ajouter à l'objet
+        """
         self._push([{"id":id_objet,"type":"class-a","data":classe}])
         
+    def add_tmp_class(self,id_objet:str,classe:str,duration:int):
+        """
+        Ajoute temporairement une classe à un objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de l'objet
+            
+            - classe: classe à ajouter temporairement
+            
+            - duration: durée pendant laquelle la classe est ajoutée
+        """
+        self._push([{"id":id_objet,"type":"class-t","data":{"c":classe,"t":duration}}])
+        
     def remove_class(self,id_objet:str,classe:str):
+        """
+        Supprime une classe à un objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de l'objet
+            
+            - classe: classe à supprimer de l'objet
+        """
         self._push([{"id":id_objet,"type":"class-r","data":classe}])
 
     def attributs(self,id_objet,attr={},style={}):
@@ -943,12 +988,32 @@ const ueh = (event) => {
             self._push([{"id":id_objet,"type":"style","data":{"style":style}}])
             
     def remove(self,id_objet:str):
+        """
+        Supprime un objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de l'objet
+        """
         self._push([{"id":id_objet,"type":"delete"}])
         
     def remove_children(self,id_objet:str):
+        """
+        Supprime tous les éléments dont l'objet est le parent
+        
+        Paramètres:
+            -id_objet: attribut id de l'objet
+        """
         self._push([{"id":id_objet,"type":"children"}])
     
-    def inner_text(self,id_objet:str,inner_text:str):
+    def change_text(self,id_objet:str,inner_text:str):
+        """
+        Change l'attribut inner_text de l'objet de la page
+        
+        Paramètres:
+            - id_objet: attribut id de la page
+            
+            - inner_text: texte à remplacer
+        """
         self._push([{"id":id_objet,"type":"content","data":inner_text}])
 
     def insere(self, id_objet:str,balise:str,attr:dict={},style:dict={},parent:str="body"):
