@@ -51,7 +51,7 @@ class Player:
         self.last_heal = time.time()
         self.dead = False
 
-        self.weapon = Weapon(10, 40, 0.3)
+        self.weapon = Weapon(1, 40, 0.3)
         
         self.movement_vector = [0, 0]
         self.friction_coef = 0.8

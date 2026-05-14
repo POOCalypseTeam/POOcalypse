@@ -62,16 +62,16 @@ class Game:
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
         self.npc: list[Npc] = []
-        base_npc_1 = Npc(self.web_helper, (200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
-        base_npc_2 = Npc(self.web_helper, (150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
+        base_npc_1 = Npc(self.web_helper, (-200, -100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
+        base_npc_2 = Npc(self.web_helper, (-150, -250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
         self.npc.append(base_npc_1)
         self.npc.append(base_npc_2)
-        self.collision_resolver.add_collider((150, 50, 250, 150), collision_resolver.INTERACTABLE, base_npc_1)
-        self.collision_resolver.add_collider((100, 200, 200, 300), collision_resolver.INTERACTABLE, base_npc_2)
+        self.collision_resolver.add_collider((-250, -150, -150, -50), collision_resolver.INTERACTABLE, base_npc_1)
+        self.collision_resolver.add_collider((-200, -300, -100, -200), collision_resolver.INTERACTABLE, base_npc_2)
 
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
         self.enemies: list[Enemy] = []
-        base_enemy = Enemy(self.web_helper, (0, 0), "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
+        base_enemy = Enemy(self.web_helper, (0, 0), "assets/spritesheets/blonde_man/blonde_man_010.png", 3)
         self.enemies.append(base_enemy)
 
         self.interactable: Interactable = None
