@@ -4,10 +4,7 @@ from math import ceil, floor
 
 import web_helper
 import collision_resolver
-from constants import BOARD_PATH, TILESET_PATH_PLACEHOLDER, BLOCKS_SIZE
-
-# La taille d'une tile classique, sans zoom
-TRANSLATE_AMOUNT = 16
+from constants import BOARD_PATH, TILESET_PATH_PLACEHOLDER, BLOCKS_SIZE, BASE_TILE_SIZE
 
 class Board:
     def __init__(self, helper: web_helper.Helper, world: str, collision_resolver: collision_resolver.CollisionResolver, zoom: int = 2):
@@ -90,7 +87,7 @@ class Board:
         return self.board_size
     
     def calculate_shift(self, w, h):
-        self.shift = (w / 2 - self.origin[0] * TRANSLATE_AMOUNT, h / 2 - self.origin[1] * TRANSLATE_AMOUNT)
+        self.shift = (w / 2 - self.origin[0] * BASE_TILE_SIZE * self.zoom, h / 2 - self.origin[1] * BASE_TILE_SIZE * self.zoom)
         
     def get_block_id(self, layer: int, block_x: int, block_y: int) -> str:
         """
@@ -462,7 +459,7 @@ class EditorBoard(Board):
         """
         if move == [0, 0]:
             return
-        self.translate((move[0] * TRANSLATE_AMOUNT, move[1] * TRANSLATE_AMOUNT))
+        self.translate((move[0] * BASE_TILE_SIZE, move[1] * BASE_TILE_SIZE))
         self.helper.ws.attributs("board", style={"background-position-x": str(self.shift[0]) + "px"\
                                                 ,"background-position-y": str(self.shift[1]) + "px"})
 
