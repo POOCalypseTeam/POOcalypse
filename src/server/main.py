@@ -15,6 +15,9 @@ from inputs.keyboard import Keyboard
 from inputs.mouse import Mouse
 
 from graphics.board import enemies_board
+from graphics.board import npc_board
+
+from constants import BASE_TILE_SIZE
 
 game = None
 
@@ -66,18 +69,26 @@ class Game:
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
         self.npc: list[Npc] = []
+        """
         base_npc_1 = Npc(self.web_helper, (200, 100), "assets/spritesheets/blue_haired_woman/blue_haired_woman_001.png", dialogs="dialog1")
         base_npc_2 = Npc(self.web_helper, (150, 250), "assets/spritesheets/blue_haired_woman/blue_haired_woman_009.png", dialogs="dialog2")
         self.npc.append(base_npc_1)
         self.npc.append(base_npc_2)
         self.collision_resolver.add_collider((150, 50, 250, 150), collision_resolver.INTERACTABLE, base_npc_1)
         self.collision_resolver.add_collider((100, 200, 200, 300), collision_resolver.INTERACTABLE, base_npc_2)
+        """
+        for npc in npc_board:
+            position = (npc[1]*BASE_TILE_SIZE, npc[2]*BASE_TILE_SIZE)
+            current_npc = Npc(self.web_helper, position, "assets/spritesheets/blue_haired_woman/"+str(npc[3]), dialogs="dialog2")
+            self.collision_resolver.add_collider(position, collision_resolver.INTERACTABLE, current_npc)
+            self.npc.append(current_npc)
+
 
         # TODO: De la meme maniere que les NPC, les ajouter avec la map
         
         self.enemies: list[Enemy] = []
         for enemy in enemies_board:
-            position = (enemy[1], enemy[2])
+            position = (enemy[1]*BASE_TILE_SIZE, enemy[2]*BASE_TILE_SIZE)
             current_enemy = Enemy(self.web_helper, position, "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
             self.enemies.append(current_enemy)
 
