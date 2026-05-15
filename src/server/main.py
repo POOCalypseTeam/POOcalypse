@@ -209,6 +209,7 @@ class Game:
                             self.tickspeed -= 1
                             self.etat_champs[(x,y)] = True
                 if (int(self.player.x//32+1), int(self.player.y//32+1)) in self.etat_champs :
+                    self.web_manager.remove_class("quete_champs", "pressed")
                     if self.etat_champs[int(self.player.x//32+1), int(self.player.y//32+1)] == True :
                         if "KeyC" in keys :
                             if int(self.player.y//32+1)%2 == 0:
@@ -221,6 +222,8 @@ class Game:
                                 self.tickspeed += 3
                                 self.board.champs_quete["2_"+str(int(self.player.x//32+1))+"_"+str(int(self.player.y//32+1))] = "assets/tilesets/x16_decorations/x16_decorations_058.png"
                                 self.etat_champs[(int(self.player.x//32+1), int(self.player.y//32+1))] = False
+                else:
+                    self.web_manager.add_class("quete_champs", "pressed")
                 in_range_enemies = []
                 player_range = self.player.weapon.range
                 for enemy in self.enemies:

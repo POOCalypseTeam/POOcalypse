@@ -172,3 +172,19 @@ border: 7px inset #000000ad;
 .hit {
     filter: sepia(100%) brightness(0.9) contrast(0.9) hue-rotate(305deg) saturate(8);
 }
+
+#quete_champs {
+    width: 100vw;
+    position: absolute;
+    z-index: 1000;
+    left: 0;
+    bottom: 0;
+    font-size: 64px;
+    text-align: center;
+    font-family: "Pixelify Sans", sans-serif;
+    color: black;
+}
+
+.pressed {
+    display: none;
+}
