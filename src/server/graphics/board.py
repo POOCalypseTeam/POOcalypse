@@ -54,6 +54,8 @@ class Board:
         self.origin = origin[0]
         self.shift = (0,0)
         
+        self.champs_quete = {}
+
         # Ajoute les elements pour ce monde precis
         self.base.execute("SELECT layer_index,tileset,tiles_size,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
         layers = self.base.fetchall()
@@ -128,6 +130,8 @@ class Board:
             img_path = TILESET_PATH_PLACEHOLDER.replace("%SET%", self.layers[layer]).replace("%IMG%", tile[2])
             position = (self.zoom * (block_offset[0] + tile[0] * self.tile_pixel_sizes[layer]), self.zoom * (block_offset[1] + tile[1] * self.tile_pixel_sizes[layer]))
             self.helper.add_image_id(img_id, img_path, position, (self.zoom * self.tile_pixel_sizes[layer], self.zoom * self.tile_pixel_sizes[layer]), parent=block_id)
+            if img_path == "assets/tilesets/x16_decorations/x16_decorations_060.png" or img_path == "assets/tilesets/x16_decorations/x16_decorations_061.png" or img_path == "assets/tilesets/x16_decorations/x16_decorations_067.png" or img_path == "assets/tilesets/x16_decorations/x16_decorations_068.png" or img_path == "assets/tilesets/x16_decorations/x16_decorations_058.png" or img_path == "assets/tilesets/x16_decorations/x16_decorations_059.png"  or img_path == "assets/tilesets/x16_decorations/x16_decorations_065.png" or img_path == "assets/tilesets/x16_decorations/x16_decorations_066.png":
+                self.champs_quete[img_id] = img_path 
     
     def add_block(self, layer, block_x, block_y) -> int:
         """

@@ -2,6 +2,7 @@ import os # remove
 import time # time
 import threading # Threading
 from math import sqrt
+from random import randint
 
 import wsinter
 import web_helper
@@ -88,6 +89,8 @@ class Game:
         self.last_menu_time = time.time()
         self.menu = False
 
+        self.tickspeed = 112
+
     def init_player(self, position: tuple[int, int], zindex: int):
         self.player = Player(self.web_helper, position)
         self.web_manager.attributs(self.player.id, style={"z-index": zindex})
@@ -155,6 +158,36 @@ class Game:
             # Toutes les instructions ici sont mises en pauses lorsqu'un menu est ouvert par le joueur
             new_interactable = -1
             if (self.interactable is None or not self.interactable.is_opened()) and self.menu == False :
+                x = randint(-44, -37)
+                y = randint(-4, 10)
+                if randint(1, self.tickspeed) == 1 :
+                    if "2_"+str(x)+"_"+str(y) in self.board.champs_quete :
+                        if self.board.champs_quete["2_"+str(x)+"_"+str(y)] == "assets/tilesets/x16_decorations/x16_decorations_060.png" :
+                            self.web_helper.change_image("2_"+str(x)+"_"+str(y), "assets/tilesets/x16_decorations/x16_decorations_061.png")
+                            self.board.champs_quete["2_"+str(x)+"_"+str(y)] = "assets/tilesets/x16_decorations/x16_decorations_061.png"
+                            self.tickspeed -= 1
+                        elif self.board.champs_quete["2_"+str(x)+"_"+str(y)] == "assets/tilesets/x16_decorations/x16_decorations_061.png" :
+                            self.web_helper.change_image("2_"+str(x)+"_"+str(y), "assets/tilesets/x16_decorations/x16_decorations_067.png")
+                            self.board.champs_quete["2_"+str(x)+"_"+str(y)] = "assets/tilesets/x16_decorations/x16_decorations_067.png"
+                            self.tickspeed -= 1
+                        elif self.board.champs_quete["2_"+str(x)+"_"+str(y)] == "assets/tilesets/x16_decorations/x16_decorations_067.png" :
+                            self.web_helper.change_image("2_"+str(x)+"_"+str(y), "assets/tilesets/x16_decorations/x16_decorations_068.png")
+                            self.board.champs_quete["2_"+str(x)+"_"+str(y)] = "assets/tilesets/x16_decorations/x16_decorations_068.png"
+                            self.tickspeed -= 1
+                        elif self.board.champs_quete["2_"+str(x)+"_"+str(y)] == "assets/tilesets/x16_decorations/x16_decorations_058.png" :
+                            self.web_helper.change_image("2_"+str(x)+"_"+str(y), "assets/tilesets/x16_decorations/x16_decorations_059.png")
+                            self.board.champs_quete["2_"+str(x)+"_"+str(y)] = "assets/tilesets/x16_decorations/x16_decorations_059.png"
+                            self.tickspeed -= 1
+                        elif self.board.champs_quete["2_"+str(x)+"_"+str(y)] == "assets/tilesets/x16_decorations/x16_decorations_059.png" :
+                            self.web_helper.change_image("2_"+str(x)+"_"+str(y), "assets/tilesets/x16_decorations/x16_decorations_065.png")
+                            self.board.champs_quete["2_"+str(x)+"_"+str(y)] = "assets/tilesets/x16_decorations/x16_decorations_065.png"
+                            self.tickspeed -= 1
+                        elif self.board.champs_quete["2_"+str(x)+"_"+str(y)] == "assets/tilesets/x16_decorations/x16_decorations_065.png" :
+                            self.web_helper.change_image("2_"+str(x)+"_"+str(y), "assets/tilesets/x16_decorations/x16_decorations_066.png")
+                            self.board.champs_quete["2_"+str(x)+"_"+str(y)] = "assets/tilesets/x16_decorations/x16_decorations_066.png"
+                            self.tickspeed -= 1
+                    else:
+                        pass
                 in_range_enemies = []
                 player_range = self.player.weapon.range
                 for enemy in self.enemies:
