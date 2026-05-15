@@ -8,7 +8,7 @@ from constants import BOARD_PATH, TILESET_PATH_PLACEHOLDER, BLOCKS_SIZE
 
 # La taille d'une tile classique, sans zoom
 TRANSLATE_AMOUNT = 16
-enemies_board = []
+#enemies_board = []
 npc_board = []
 
 class Board:
@@ -56,6 +56,10 @@ class Board:
         self.origin = origin[0]
         self.shift = (0,0)
         
+        # Liste les attributs des npc et ennemis
+        self.enemies_board = []
+        self.npc_board = []
+
         # Ajoute les elements pour ce monde precis
         self.base.execute("SELECT layer_index,tileset,tiles_size,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
         layers = self.base.fetchall()
@@ -133,11 +137,11 @@ class Board:
         
         self.base.execute("SELECT enemy_id,x,y FROM enemies WHERE block_id=?;", (block_id,))
         for elt in self.base.fetchall():
-            enemies_board.append(elt)
+            self.enemies_board.append(elt)
 
         self.base.execute("SELECT npc_id,x,y,npc_image,npc_name FROM NPCs WHERE block_id=?;", (block_id,))
         for elt in self.base.fetchall():
-            npc_board.append(elt)
+            self.npc_board.append(elt)
     
     def add_block(self, layer, block_x, block_y) -> int:
         """
