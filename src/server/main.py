@@ -78,9 +78,10 @@ class Game:
         self.collision_resolver.add_collider((100, 200, 200, 300), collision_resolver.INTERACTABLE, base_npc_2)
         """
         for npc in npc_board:
-            position = (npc[1]*constants.BASE_TILE_SIZE*constants.BLOCKS_SIZE, npc[2]*constants.BASE_TILE_SIZE*constants.BLOCKS_SIZE)
-            current_npc = Npc(self.web_helper, position, "assets/spritesheets/blue_haired_woman/"+str(npc[3]), dialogs="dialog2")
-            self.collision_resolver.add_collider(position, collision_resolver.INTERACTABLE, current_npc)
+            position = (npc[1]*constants.BASE_TILE_SIZE*2, npc[2]*constants.BASE_TILE_SIZE*2)
+            position_collider = ((npc[1]*constants.BASE_TILE_SIZE*2)-50, (npc[2]*constants.BASE_TILE_SIZE*2)-50, (npc[1]*constants.BASE_TILE_SIZE*2)+50, (npc[2]*constants.BASE_TILE_SIZE*2)+50)
+            current_npc = Npc(self.web_helper, position, "assets/spritesheets/blue_haired_woman/"+str(npc[3]), dialogs=str(npc[4]))
+            self.collision_resolver.add_collider(position_collider, collision_resolver.INTERACTABLE, current_npc)
             self.npc.append(current_npc)
 
 
@@ -88,7 +89,7 @@ class Game:
         
         self.enemies: list[Enemy] = []
         for enemy in enemies_board:
-            position = (enemy[1]*constants.BASE_TILE_SIZE*constants.BLOCKS_SIZE, enemy[2]*constants.BASE_TILE_SIZE*constants.BLOCKS_SIZE)
+            position = (enemy[1]*constants.BASE_TILE_SIZE*2, enemy[2]*constants.BASE_TILE_SIZE*2)
             current_enemy = Enemy(self.web_helper, position, "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
             self.enemies.append(current_enemy)
 

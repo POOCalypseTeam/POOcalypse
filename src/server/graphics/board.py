@@ -135,7 +135,7 @@ class Board:
         for elt in self.base.fetchall():
             enemies_board.append(elt)
 
-        self.base.execute("SELECT npc_id,x,y,npc_image FROM NPCs WHERE block_id=?;", (block_id,))
+        self.base.execute("SELECT npc_id,x,y,npc_image,npc_name FROM NPCs WHERE block_id=?;", (block_id,))
         for elt in self.base.fetchall():
             npc_board.append(elt)
     
