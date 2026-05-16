@@ -59,11 +59,13 @@ class Game:
         self.mouse_manager = Mouse(self.web_manager)
 
         self.collision_resolver = collision_resolver.CollisionResolver()
+
+        #self.collision_resolver = collision_resolver.CollisionResolver()
         self.board = self.init_board("spawn")
+        self.interieur = False
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         # Les coordonnées qui lui sont passées sont celles
-        self.init_player(self.board.origin, 7)
 
         self.interactable: Interactable = None
 
@@ -101,6 +103,8 @@ class Game:
         self.npc: list[Npc] = []
         self.enemies: list[Enemy] = []
         self.waypoints: list[Waypoint] = []
+
+        self.init_player(self.board.origin, 7)
 
         for npc in self.board.npc_board:
             position = (npc[1]*constants.BASE_TILE_SIZE*self.zoom, npc[2]*constants.BASE_TILE_SIZE*self.zoom)
@@ -261,11 +265,12 @@ class Game:
             
             for waypoint in self.waypoints:
                 if waypoint.tp:
-                    if not waypoint.interieur:
-                        waypoint.interieur = True
+                    if not self.interieur:
+                        self.interieur = True
                         self.board = self.init_board("interieurs")
                     else:
                         self.board = self.init_board("spawn")
+                        self.interieur = False
                     waypoint.tp = False
 
     def stop(self):

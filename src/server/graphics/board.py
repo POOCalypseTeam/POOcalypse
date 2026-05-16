@@ -63,8 +63,9 @@ class Board:
         self.champs_quete = {}
 
         # Ajoute les elements pour ce monde precis
-        self.base.execute("SELECT layer_index,tileset,tiles_size,collisions FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
+        self.base.execute("SELECT layer_index,tileset,tiles_size,collisions,world FROM layers WHERE world=? ORDER BY layer_index ASC;", (self.world,))
         layers = self.base.fetchall()
+
         if layers == None:
             print("Ce monde n'a pas de couche!")
             self.link.close()
@@ -126,7 +127,7 @@ class Board:
         block_offset = ((block_x) * self.block_pixel_sizes[layer], (block_y) * self.block_pixel_sizes[layer])
         self.base.execute("SELECT x,y,image_name FROM tiles WHERE block_id=?;", (block_id,))
         tiles = self.base.fetchall()
-        
+
         if len(tiles) > 0:
             self.helper.ws.insere(block_id, "div", parent="layer_" + str(layer))
             self.rendered_blocks[layer].add((block_x, block_y))
@@ -254,7 +255,7 @@ class Board:
         
         min_y = floor(top)
         max_y = ceil(bottom)
-        
+
         for block_x in range(min_x, max_x + 1):
             for block_y in range(min_y, max_y + 1):
                 self.add_block(layer, block_x, block_y)
