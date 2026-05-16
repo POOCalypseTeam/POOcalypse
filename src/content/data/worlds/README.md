@@ -67,4 +67,14 @@ CREATE TABLE enemies (
     enemy_type VARCHAR, -- Suppose qu'il existe une table avec les types d'ennemis et leurs attributs
     FOREIGN KEY (block_id) REFERENCES blocks(block_id)
 );
+
+CREATE TABLE waypoints (
+    waypoint_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    block_id INT,
+    x INT,
+    y INT,
+    destination_x INT,
+    destination_y INT,
+    FOREIGN KEY (block_id) REFERENCES blocks(block_id)
+);
 ```

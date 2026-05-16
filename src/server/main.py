@@ -12,6 +12,7 @@ import graphics.board
 from characters.player import Player
 from characters.enemy import Enemy
 from characters.npc import Interactable, Npc
+from characters.waypoint import Waypoint
 from inputs.keyboard import Keyboard
 from inputs.mouse import Mouse
 
@@ -63,6 +64,8 @@ class Game:
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         # Les coordonnées qui lui sont passées sont celles
         self.init_player(self.board.origin, 7)
+
+        self.waypoint = Waypoint(self.web_helper, position=self.board.origin, destination=(200, 300))
 
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement

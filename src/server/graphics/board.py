@@ -8,8 +8,7 @@ from constants import BOARD_PATH, TILESET_PATH_PLACEHOLDER, BLOCKS_SIZE
 
 # La taille d'une tile classique, sans zoom
 TRANSLATE_AMOUNT = 16
-#enemies_board = []
-npc_board = []
+
 
 class Board:
     def __init__(self, helper: web_helper.Helper, world: str, collision_resolver: collision_resolver.CollisionResolver, zoom: int = 2):
