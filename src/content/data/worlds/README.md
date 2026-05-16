@@ -73,8 +73,7 @@ CREATE TABLE waypoints (
     block_id INT,
     x INT,
     y INT,
-    destination_x INT,
-    destination_y INT,
+    destination TEXT,
     FOREIGN KEY (block_id) REFERENCES blocks(block_id)
 );
 ```

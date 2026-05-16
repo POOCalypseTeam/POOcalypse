@@ -65,10 +65,6 @@ class Game:
         # Les coordonnées qui lui sont passées sont celles
         self.init_player(self.board.origin, 7)
 
-        self.waypoint = Waypoint(self.web_helper, position=(450, -300), destination=(5000, 1000))
-        position_collider_waypoint = (self.waypoint.x-50, self.waypoint.y-50, self.waypoint.x+50, self.waypoint.y+50)
-        self.collision_resolver.add_collider(position_collider_waypoint,collision_resolver.INTERACTABLE, self.waypoint)
-
         self.interactable: Interactable = None
 
         self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Enter', 'Backspace'])
@@ -104,7 +100,8 @@ class Game:
         self.zoom = self.board.zoom
         self.npc: list[Npc] = []
         self.enemies: list[Enemy] = []
-        
+        self.waypoints: list[Waypoint] = []
+
         for npc in self.board.npc_board:
             position = (npc[1]*constants.BASE_TILE_SIZE*self.zoom, npc[2]*constants.BASE_TILE_SIZE*self.zoom)
             position_collider_npc = ((npc[1]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[1]*constants.BASE_TILE_SIZE*self.zoom)+50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)+50)
@@ -116,6 +113,13 @@ class Game:
             position = (enemy[1]*constants.BASE_TILE_SIZE*self.zoom, enemy[2]*constants.BASE_TILE_SIZE*self.zoom)
             current_enemy = Enemy(self.web_helper, position, "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
             self.enemies.append(current_enemy)
+
+        for waypoint in self.board.waypoints_board:
+            position = (waypoint[1]*constants.BASE_TILE_SIZE*self.zoom, waypoint[2]*constants.BASE_TILE_SIZE*self.zoom)
+            position_collider_waypoint = ((waypoint[1]*constants.BASE_TILE_SIZE*self.zoom)-50, (waypoint[2]*constants.BASE_TILE_SIZE*self.zoom)-50, (waypoint[1]*constants.BASE_TILE_SIZE*self.zoom)+50, (waypoint[2]*constants.BASE_TILE_SIZE*self.zoom)+50)
+            current_waypoint = Waypoint(self.web_helper, position=position, destination=waypoint[3])
+            self.collision_resolver.add_collider(position_collider_waypoint,collision_resolver.INTERACTABLE, current_waypoint)
+            self.waypoints.append(current_waypoint)
         
         return self.board
 
@@ -255,9 +259,14 @@ class Game:
                     if isinstance(self.interactable, Npc):
                         self.web_manager.add_class(self.interactable.id, "highlight-blink")
             
-            if self.waypoint.tp:
-                self.board = self.init_board("test_world")
-                self.waypoint.tp = False
+            for waypoint in self.waypoints:
+                if waypoint.tp:
+                    if not waypoint.interieur:
+                        waypoint.interieur = True
+                        self.board = self.init_board("interieurs")
+                    else:
+                        self.board = self.init_board("spawn")
+                    waypoint.tp = False
 
     def stop(self):
         """

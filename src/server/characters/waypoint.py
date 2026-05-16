@@ -16,6 +16,8 @@ class Waypoint(Interactable):
         self.opened = False
         self.tp = False
 
+        self.interieur = False
+
         self.id = self.helper.add_image(IMAGE_PATH, self.position, size=(self.width, self.height), parent='tiles')
 
     def interact(self):

@@ -55,9 +55,10 @@ class Board:
         self.origin = origin[0]
         self.shift = (0,0)
         
-        # Liste les attributs des npc et ennemis
+        # Liste les attributs des npc, ennemis et waypoints
         self.enemies_board = []
         self.npc_board = []
+        self.waypoints_board = []
 
         self.champs_quete = {}
 
@@ -145,6 +146,10 @@ class Board:
         self.base.execute("SELECT npc_id,x,y,npc_image,npc_name FROM NPCs WHERE block_id=?;", (block_id,))
         for elt in self.base.fetchall():
             self.npc_board.append(elt)
+
+        self.base.execute("SELECT waypoint_id,x,y,destination FROM waypoints WHERE block_id=?;", (block_id,))
+        for elt in self.base.fetchall():
+            self.waypoints_board.append(elt)
     
     def add_block(self, layer, block_x, block_y) -> int:
         """
