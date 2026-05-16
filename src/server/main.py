@@ -66,6 +66,8 @@ class Game:
         self.init_player(self.board.origin, 7)
 
         self.waypoint = Waypoint(self.web_helper, position=self.board.origin, destination=(200, 300))
+        position_collider_waypoint = (self.waypoint.x-50, self.waypoint.y-50, self.waypoint.x+50, self.waypoint.y+50)
+        self.collision_resolver.add_collider(position_collider_waypoint,collision_resolver.INTERACTABLE, self.waypoint)
 
         # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
         # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
@@ -75,9 +77,9 @@ class Game:
 
         for npc in self.board.npc_board:
             position = (npc[1]*constants.BASE_TILE_SIZE*self.zoom, npc[2]*constants.BASE_TILE_SIZE*self.zoom)
-            position_collider = ((npc[1]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[1]*constants.BASE_TILE_SIZE*self.zoom)+50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)+50)
+            position_collider_npc = ((npc[1]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[1]*constants.BASE_TILE_SIZE*self.zoom)+50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)+50)
             current_npc = Npc(self.web_helper, position, "assets/spritesheets/blue_haired_woman/"+str(npc[3]), dialogs=str(npc[4]))
-            self.collision_resolver.add_collider(position_collider, collision_resolver.INTERACTABLE, current_npc)
+            self.collision_resolver.add_collider(position_collider_npc, collision_resolver.INTERACTABLE, current_npc)
             self.npc.append(current_npc)
 
 
