@@ -59,7 +59,7 @@ class Game:
         self.mouse_manager = Mouse(self.web_manager)
 
         self.collision_resolver = collision_resolver.CollisionResolver()
-        self.board = graphics.board.Board(self.web_helper, "spawn", self.collision_resolver)
+        self.board = self.init_board("spawn")
         
         # Pour l'instant, le joueur doit rester en premier, car il a du style sur #img0
         # Les coordonnées qui lui sont passées sont celles
@@ -68,29 +68,6 @@ class Game:
         self.waypoint = Waypoint(self.web_helper, position=self.board.origin, destination=(5000, 1000))
         position_collider_waypoint = (self.waypoint.x-50, self.waypoint.y-50, self.waypoint.x+50, self.waypoint.y+50)
         self.collision_resolver.add_collider(position_collider_waypoint,collision_resolver.INTERACTABLE, self.waypoint)
-
-        # TODO: Gérer les NPC avec les tiles, et les ajouter au fil qu'on se rapproche pour pas avoir tous les NPC ici du monde H24
-        # On crée une lste de NPC pour pouvoir en gérer plusieurs plus facilement
-        self.npc: list[Npc] = []
-
-        self.zoom = self.board.zoom
-
-        for npc in self.board.npc_board:
-            position = (npc[1]*constants.BASE_TILE_SIZE*self.zoom, npc[2]*constants.BASE_TILE_SIZE*self.zoom)
-            position_collider_npc = ((npc[1]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[1]*constants.BASE_TILE_SIZE*self.zoom)+50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)+50)
-            current_npc = Npc(self.web_helper, position, "assets/spritesheets/blue_haired_woman/"+str(npc[3]), dialogs=str(npc[4]))
-            self.collision_resolver.add_collider(position_collider_npc, collision_resolver.INTERACTABLE, current_npc)
-            self.npc.append(current_npc)
-
-
-        # TODO: De la meme maniere que les NPC, les ajouter avec la map
-        
-        self.enemies: list[Enemy] = []
-
-        for enemy in self.board.enemies_board:
-            position = (enemy[1]*constants.BASE_TILE_SIZE*self.zoom, enemy[2]*constants.BASE_TILE_SIZE*self.zoom)
-            current_enemy = Enemy(self.web_helper, position, "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
-            self.enemies.append(current_enemy)
 
         self.interactable: Interactable = None
 
@@ -120,6 +97,27 @@ class Game:
         self.player = Player(self.web_helper, position)
         self.web_manager.attributs(self.player.id, style={"z-index": zindex})
 
+    def init_board(self, world_name):
+        self.web_helper.ws.remove_children("tiles")
+        self.collision_resolver = collision_resolver.CollisionResolver()
+        self.board = graphics.board.Board(self.web_helper, world_name, self.collision_resolver)
+        self.zoom = self.board.zoom
+        self.npc: list[Npc] = []
+        self.enemies: list[Enemy] = []
+        
+        for npc in self.board.npc_board:
+            position = (npc[1]*constants.BASE_TILE_SIZE*self.zoom, npc[2]*constants.BASE_TILE_SIZE*self.zoom)
+            position_collider_npc = ((npc[1]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)-50, (npc[1]*constants.BASE_TILE_SIZE*self.zoom)+50, (npc[2]*constants.BASE_TILE_SIZE*self.zoom)+50)
+            current_npc = Npc(self.web_helper, position, "assets/spritesheets/blue_haired_woman/"+str(npc[3]), dialogs=str(npc[4]))
+            self.collision_resolver.add_collider(position_collider_npc, collision_resolver.INTERACTABLE, current_npc)
+            self.npc.append(current_npc)
+        
+        for enemy in self.board.enemies_board:
+            position = (enemy[1]*constants.BASE_TILE_SIZE*self.zoom, enemy[2]*constants.BASE_TILE_SIZE*self.zoom)
+            current_enemy = Enemy(self.web_helper, position, "assets/spritesheets/blonde_man/blonde_man_010.png", 50)
+            self.enemies.append(current_enemy)
+        
+        return self.board
 
     def interact_key_handler(self, key):
         if self.interactable == None or not issubclass(type(self.interactable), Interactable):
@@ -253,13 +251,12 @@ class Game:
                     self.interactable = None
                 else:
                     self.interactable = new_interactable
-                    self.web_manager.change_text("action-bar", "Appuyez sur E pour intéragir")
+                    self.web_manager.change_text("action-bar", "Appuyez sur E pour interagir")
                     if isinstance(self.interactable, Npc):
                         self.web_manager.add_class(self.interactable.id, "highlight-blink")
             
             if self.waypoint.tp:
-                
-                print(self.player.get_position())
+                self.board = self.init_board("test_world")
                 self.waypoint.tp = False
 
     def stop(self):
