@@ -30,6 +30,8 @@ class Waypoint(Interactable):
             self.opened = False
             self.helper.change_text("action-bar", "")
             self.tp = True
-        elif key == "Return":
+            return
+        elif key == "Backspace":
             self.opened = False
             self.helper.change_text("action-bar", "")
+            return

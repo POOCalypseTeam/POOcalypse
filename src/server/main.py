@@ -65,13 +65,13 @@ class Game:
         # Les coordonnées qui lui sont passées sont celles
         self.init_player(self.board.origin, 7)
 
-        self.waypoint = Waypoint(self.web_helper, position=self.board.origin, destination=(5000, 1000))
+        self.waypoint = Waypoint(self.web_helper, position=(450, -300), destination=(5000, 1000))
         position_collider_waypoint = (self.waypoint.x-50, self.waypoint.y-50, self.waypoint.x+50, self.waypoint.y+50)
         self.collision_resolver.add_collider(position_collider_waypoint,collision_resolver.INTERACTABLE, self.waypoint)
 
         self.interactable: Interactable = None
 
-        self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Enter'])
+        self.keyboard_manager.subscribe_event(self.interact_key_handler, "D", ['KeyE', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Enter', 'Backspace'])
 
         # On lance la boucle principale
         self.loop_thread = threading.Thread(target=self.loop)
@@ -126,7 +126,7 @@ class Game:
             case 'KeyE':
                 if not self.interactable.is_opened():
                     self.interactable.interact()
-            case 'ArrowUp' | 'ArrowLeft' | 'ArrowDown' | 'ArrowRight' | 'Enter':
+            case 'ArrowUp' | 'ArrowLeft' | 'ArrowDown' | 'ArrowRight' | 'Enter' | 'Backspace':
                 if self.interactable.is_opened():
                     self.interactable.key(key)
 
