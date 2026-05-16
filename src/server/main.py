@@ -65,7 +65,7 @@ class Game:
         # Les coordonnées qui lui sont passées sont celles
         self.init_player(self.board.origin, 7)
 
-        self.waypoint = Waypoint(self.web_helper, position=self.board.origin, destination=(200, 300))
+        self.waypoint = Waypoint(self.web_helper, position=self.board.origin, destination=(5000, 1000))
         position_collider_waypoint = (self.waypoint.x-50, self.waypoint.y-50, self.waypoint.x+50, self.waypoint.y+50)
         self.collision_resolver.add_collider(position_collider_waypoint,collision_resolver.INTERACTABLE, self.waypoint)
 
@@ -256,6 +256,11 @@ class Game:
                     self.web_manager.change_text("action-bar", "Appuyez sur E pour intéragir")
                     if isinstance(self.interactable, Npc):
                         self.web_manager.add_class(self.interactable.id, "highlight-blink")
+            
+            if self.waypoint.tp:
+                
+                print(self.player.get_position())
+                self.waypoint.tp = False
 
     def stop(self):
         """

@@ -13,8 +13,8 @@ class Waypoint(Interactable):
         self.destination = destination
         self.width = self.height = 32
         
-
         self.opened = False
+        self.tp = False
 
         self.id = self.helper.add_image(IMAGE_PATH, self.position, size=(self.width, self.height), parent='tiles')
 
@@ -27,5 +27,9 @@ class Waypoint(Interactable):
     
     def key(self, key: str):
         if key == "Enter":
+            self.opened = False
+            self.helper.change_text("action-bar", "")
+            self.tp = True
+        elif key == "Return":
             self.opened = False
             self.helper.change_text("action-bar", "")
